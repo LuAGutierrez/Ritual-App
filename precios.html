@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="es" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Precios — Ritual</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            wine: { DEFAULT: '#722F37', dark: '#4a1c23', light: '#8B3A42' },
+            nude: { DEFAULT: '#E8D5C4', dark: '#D4A574', muted: '#C9B8A8' },
+            ink: '#0f0a0b',
+          },
+          fontFamily: { display: ['Cormorant Garamond', 'serif'], body: ['Outfit', 'sans-serif'] },
+        },
+      },
+    };
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body class="dark bg-ink text-nude font-body antialiased min-h-screen">
+  <header class="fixed top-0 left-0 right-0 z-50 border-b border-white/5 bg-ink/80 backdrop-blur-sm pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]">
+    <nav class="max-w-5xl mx-auto px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
+      <a href="index.html" class="font-display text-2xl font-semibold text-nude touch-target min-w-0">Ritual</a>
+      <div class="hidden md:flex items-center gap-6 lg:gap-8">
+        <a href="index.html#como-funciona" class="text-nude-muted hover:text-nude transition text-sm py-2">Cómo funciona</a>
+        <a href="index.html#que-incluye" class="text-nude-muted hover:text-nude transition text-sm py-2">Qué incluye</a>
+        <a href="precios.html" class="text-nude text-sm py-2">Precios</a>
+        <a href="auth.html" id="nav-auth-link" class="text-nude-muted hover:text-nude transition text-sm py-2">Entrar</a>
+        <button type="button" id="nav-btn-logout" class="hidden text-nude-muted hover:text-nude transition text-sm py-2 bg-transparent border-none cursor-pointer font-inherit">Cerrar sesión</button>
+        <a href="precios.html#empezar" class="rounded-full bg-wine px-5 py-2.5 text-sm font-medium text-nude hover:bg-wine-light transition">Empieza hoy</a>
+      </div>
+      <button type="button" id="btn-menu" aria-label="Abrir menú" class="md:hidden touch-target rounded-full p-2 text-nude hover:bg-white/5">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+      </button>
+    </nav>
+  </header>
+  <div id="nav-mobile" class="fixed inset-0 z-40 bg-ink flex flex-col justify-center items-center gap-8 hidden">
+    <button type="button" id="btn-cerrar" aria-label="Cerrar menú" class="absolute top-4 right-4 touch-target rounded-full p-2 text-nude-muted hover:text-nude">✕</button>
+    <a href="index.html#como-funciona" class="text-nude text-lg py-3 nav-link">Cómo funciona</a>
+    <a href="index.html#que-incluye" class="text-nude text-lg py-3 nav-link">Qué incluye</a>
+    <a href="precios.html" class="text-nude text-lg py-3 nav-link">Precios</a>
+    <a href="auth.html" id="nav-auth-link-mobile" class="text-nude text-lg py-3 nav-link">Entrar</a>
+    <button type="button" id="nav-btn-logout-mobile" class="hidden text-nude text-lg py-3 bg-transparent border-none cursor-pointer font-inherit nav-link">Cerrar sesión</button>
+    <a href="precios.html#empezar" class="rounded-full bg-wine px-8 py-4 text-nude font-medium nav-link">Empieza hoy</a>
+  </div>
+
+  <main class="pt-24 sm:pt-28 pb-16 sm:pb-24 px-4 sm:px-6 max-w-4xl mx-auto">
+    <h1 class="font-display text-3xl sm:text-4xl md:text-5xl text-nude mb-4">Elegí cómo vivirlo</h1>
+    <p class="text-nude-muted text-base sm:text-lg mb-10 sm:mb-16">Probalo sin compromiso. Si os gusta, seguís por muy poco.</p>
+
+    <!-- Prueba gratuita -->
+    <div class="mb-8 sm:mb-12 p-6 sm:p-8 rounded-2xl bg-white/[0.03] border border-white/5">
+      <span class="text-wine text-sm uppercase tracking-wider">Prueba gratuita</span>
+      <h2 class="font-display text-2xl text-nude mt-2 mb-2">Un primer ritual gratis</h2>
+      <p class="text-nude-muted text-sm mb-6">Accedé a una ronda limitada de una experiencia a elección. Sin tarjeta. Para que veas si encaja con vosotros.</p>
+      <button id="btn-prueba" class="touch-target rounded-full border border-nude-muted/40 px-6 py-3 min-h-[48px] text-nude hover:border-nude transition text-sm">Probar gratis</button>
+    </div>
+
+    <!-- Suscripción -->
+    <div id="empezar" class="mb-8 sm:mb-12 p-6 sm:p-8 rounded-2xl border border-wine/50 bg-wine-dark/20">
+      <span class="text-wine text-sm uppercase tracking-wider">Recomendado</span>
+      <h2 class="font-display text-2xl text-nude mt-2 mb-1">Suscripción mensual</h2>
+      <p class="text-3xl font-display text-nude mb-1"><span id="precio-mensual">2,99</span> €<span class="text-nude-muted text-base font-body font-normal">/mes</span></p>
+      <p class="text-nude-muted text-sm mb-6">Las tres experiencias, sin límite. Cancelás cuando quieras.</p>
+      <button id="btn-suscripcion" class="touch-target rounded-full bg-wine px-8 py-4 min-h-[48px] text-nude font-medium hover:bg-wine-light transition">Suscribirme</button>
+    </div>
+
+    <!-- Regalo -->
+    <div class="p-6 sm:p-8 rounded-2xl bg-white/[0.03] border border-white/5">
+      <span class="text-wine text-sm uppercase tracking-wider">Para regalar</span>
+      <h2 class="font-display text-2xl text-nude mt-2 mb-2">Regalar esta experiencia</h2>
+      <p class="text-nude-muted text-sm mb-6">Un mes de Ritual para alguien especial. Recibirán un enlace para activar cuando quieran.</p>
+      <button id="btn-regalo" class="touch-target rounded-full border border-nude-muted/40 px-6 py-3 min-h-[48px] text-nude hover:border-nude transition text-sm">Regalar Ritual</button>
+    </div>
+
+    <!-- Mensaje post-pago o error -->
+    <div id="paywall-msg" class="hidden mt-12 p-6 rounded-xl bg-wine-dark/30 border border-wine/30 text-center">
+      <p class="text-nude mb-4">Al hacer clic en Suscribirme serás redirigido a Mercado Pago para pagar de forma segura.</p>
+      <p class="text-nude-muted text-sm">Tras el pago, tendrás acceso a las tres experiencias desde la <a href="index.html#que-incluye" class="text-wine-light underline">landing</a>.</p>
+    </div>
+  </main>
+
+  <footer class="py-6 sm:py-8 px-4 sm:px-6 border-t border-white/5 text-center text-nude-muted text-sm">
+    <p>Ritual — Momentos que acercan. Para mayores de 18 años.</p>
+  </footer>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/supabase-config.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/precios.js"></script>
+</body>
+</html>

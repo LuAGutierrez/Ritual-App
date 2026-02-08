@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="es" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Picante progresivo — Ritual</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            wine: { DEFAULT: '#722F37', dark: '#4a1c23', light: '#8B3A42' },
+            nude: { DEFAULT: '#E8D5C4', dark: '#D4A574', muted: '#C9B8A8' },
+            ink: '#0f0a0b',
+          },
+          fontFamily: { display: ['Cormorant Garamond', 'serif'], body: ['Outfit', 'sans-serif'] },
+        },
+      },
+    };
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body class="dark bg-ink text-nude font-body antialiased min-h-screen">
+  <header class="fixed top-0 left-0 right-0 z-50 border-b border-white/5 bg-ink/80 backdrop-blur-sm pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]">
+    <nav class="max-w-5xl mx-auto px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
+      <a href="index.html" class="font-display text-2xl font-semibold text-nude touch-target min-w-0">Ritual</a>
+      <a href="index.html#que-incluye" class="text-nude-muted hover:text-nude transition text-sm touch-target min-h-[44px] inline-flex items-center">Volver</a>
+    </nav>
+  </header>
+
+  <main class="pt-24 sm:pt-28 pb-16 sm:pb-24 px-4 sm:px-6 max-w-2xl mx-auto">
+    <!-- Paywall: sin suscripción activa -->
+    <div id="paywall-block" class="hidden p-6 sm:p-8 rounded-2xl bg-white/[0.03] border border-wine/40 text-center">
+      <p class="font-display text-xl text-nude mb-3">Acceso a las experiencias</p>
+      <p class="text-nude-muted text-sm mb-6">Para jugar necesitás una suscripción activa. Suscribite y accedé a las tres experiencias.</p>
+      <a href="precios.html#empezar" class="inline-block rounded-full bg-wine px-6 py-3 text-nude font-medium hover:bg-wine-light transition">Ver precios</a>
+    </div>
+
+    <div id="game-content">
+    <p class="text-wine text-xs sm:text-sm uppercase tracking-[0.2em] mb-2">Experiencia 2</p>
+    <h1 class="font-display text-2xl sm:text-3xl md:text-4xl text-nude mb-4">Picante progresivo</h1>
+    <p class="text-nude-muted text-sm sm:text-base mb-6">Retos que suben de intensidad. Si en algún momento no os apetece, pasáis o lo dejáis. El sí es sí.</p>
+
+    <!-- Niveles -->
+    <div id="selector-nivel" class="mb-10">
+      <p class="text-nude-muted text-sm mb-4">Elegí el nivel:</p>
+      <div class="flex flex-wrap gap-3">
+        <button type="button" data-nivel="nivel1" class="nivel-btn touch-target rounded-full border border-nude-muted/40 px-5 py-3 min-h-[48px] text-sm text-nude hover:border-nude transition">Nivel 1</button>
+        <button type="button" data-nivel="nivel2" class="nivel-btn touch-target rounded-full border border-nude-muted/40 px-5 py-3 min-h-[48px] text-sm text-nude hover:border-nude transition">Nivel 2</button>
+        <button type="button" data-nivel="nivel3" class="nivel-btn touch-target rounded-full border border-nude-muted/40 px-5 py-3 min-h-[48px] text-sm text-nude hover:border-nude transition">Nivel 3</button>
+      </div>
+    </div>
+
+    <!-- Reto -->
+    <div id="zona-reto" class="hidden">
+      <div class="p-6 sm:p-8 rounded-2xl bg-white/[0.03] border border-wine/30 min-h-[180px] sm:min-h-[200px] flex flex-col justify-center">
+        <p class="text-wine text-sm uppercase tracking-wider mb-3 sm:mb-4" id="etiqueta-nivel"></p>
+        <p class="font-display text-lg sm:text-xl md:text-2xl text-nude leading-relaxed" id="texto-reto"></p>
+      </div>
+      <p class="text-nude-muted text-sm mt-4 text-center">Podéis hacer el reto, pasarlo o adaptarlo. Lo importante es que los dos estéis a gusto.</p>
+      <div class="flex flex-col sm:flex-row justify-center gap-3 sm:gap-4 mt-6 sm:mt-8">
+        <button type="button" id="btn-anterior" class="touch-target rounded-full border border-nude-muted/40 px-5 py-3 min-h-[48px] text-sm text-nude hover:border-nude transition order-2 sm:order-1">Anterior</button>
+        <button type="button" id="btn-siguiente" class="touch-target rounded-full bg-wine px-6 py-3 min-h-[48px] text-sm text-nude hover:bg-wine-light transition order-1 sm:order-2">Siguiente reto</button>
+      </div>
+    </div>
+
+    <!-- Ronda completada -->
+    <div id="zona-ronda-completada" class="hidden text-center">
+      <div class="p-6 sm:p-8 rounded-2xl bg-white/[0.03] border border-white/5">
+        <p class="font-display text-lg sm:text-xl text-nude mb-6" id="texto-ronda-completada"></p>
+        <div class="flex flex-col sm:flex-row justify-center gap-3">
+          <button type="button" id="btn-otra-ronda" class="touch-target rounded-full bg-wine px-6 py-3 min-h-[48px] text-sm text-nude hover:bg-wine-light transition">Otra ronda</button>
+          <button type="button" id="btn-cambiar-nivel" class="touch-target rounded-full border border-nude-muted/40 px-5 py-3 min-h-[48px] text-sm text-nude hover:border-nude transition">Cambiar nivel</button>
+        </div>
+      </div>
+    </div>
+    </div>
+  </main>
+
+  <footer class="py-6 sm:py-8 px-4 sm:px-6 border-t border-white/5 text-center text-nude-muted text-sm">
+    <p>Ritual — Momentos que acercan.</p>
+  </footer>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/supabase-config.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/datos-juegos.js"></script>
+  <script src="js/game-gate.js"></script>
+  <script src="js/juego-picante.js"></script>
+</body>
+</html>

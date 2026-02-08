@@ -1,0 +1,5 @@
+node_modules
+.git
+.cursor
+supabase/.temp
+*.log

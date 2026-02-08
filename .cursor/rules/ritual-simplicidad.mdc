@@ -1,0 +1,27 @@
+---
+description: Prioridad simplicidad y código justo; buenas prácticas sin exceso
+alwaysApply: true
+---
+
+# Ritual — Simplicidad y código justo
+
+El objetivo de la app es **ser simple**. No añadir código de más ni granulación innecesaria.
+
+## Principios
+
+- **Código justo**: Solo lo necesario para que funcione y se entienda. Evitar abstracciones, capas o archivos extra "por si acaso".
+- **Buenas prácticas sin exceso**: Nombres claros, un JS por página, no lógica en el HTML, estructura legible. No sobre-optimizar ni sobre-modularizar (evitar muchos archivos tiny, helpers genéricos que solo se usan una vez, etc.).
+- **MVP primero**: Preferir soluciones directas y fáciles de cambiar luego. No preparar "para cuando escalemos" si no hay necesidad concreta.
+
+## Qué evitar
+
+- Crear utilidades o módulos "por si en el futuro" los reutilizamos.
+- Dividir un archivo en muchos pequeños solo por "separación de responsabilidades" cuando el total sigue siendo manejable.
+- Añadir comentarios o documentación exhaustiva que no aporten al que lee el código.
+- Patrones o arquitecturas más complejas de lo que pide la funcionalidad actual.
+
+## Qué priorizar
+
+- Código que se lee de arriba a abajo sin saltar entre muchos archivos.
+- Cambios que resuelven el problema con el mínimo impacto.
+- Mantener el stack actual (HTML, JS vanilla, Tailwind, Supabase) sin introducir capas innecesarias.

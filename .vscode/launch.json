@@ -1,0 +1,26 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "chrome",
+      "request": "launch",
+      "name": "Chrome: index.html",
+      "url": "http://localhost:5500/index.html",
+      "webRoot": "${workspaceFolder}"
+    },
+    {
+      "type": "chrome",
+      "request": "launch",
+      "name": "Chrome: auth.html",
+      "url": "http://localhost:5500/auth.html",
+      "webRoot": "${workspaceFolder}"
+    },
+    {
+      "type": "chrome",
+      "request": "launch",
+      "name": "Chrome: precios.html",
+      "url": "http://localhost:5500/precios.html",
+      "webRoot": "${workspaceFolder}"
+    }
+  ]
+}

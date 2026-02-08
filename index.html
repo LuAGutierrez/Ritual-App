@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="es" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ritual — Momentos que acercan</title>
+  <meta name="description" content="Experiencias en pareja para conectar de verdad. Preguntas, retos y rituales pensados para vos dos." />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            wine: { DEFAULT: '#722F37', dark: '#4a1c23', light: '#8B3A42' },
+            nude: { DEFAULT: '#E8D5C4', dark: '#D4A574', muted: '#C9B8A8' },
+            ink: '#0f0a0b',
+          },
+          fontFamily: {
+            display: ['Cormorant Garamond', 'serif'],
+            body: ['Outfit', 'sans-serif'],
+          },
+        },
+      },
+    };
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body class="dark bg-ink text-nude font-body antialiased min-h-screen">
+  <!-- Mensaje tras registrarse -->
+  <div id="msg-registrado" class="hidden fixed top-0 left-0 right-0 z-[60] py-3 px-4 text-center bg-wine/90 text-nude text-sm">
+    <span>Cuenta creada. Bienvenido a Ritual.</span>
+    <button type="button" id="msg-registrado-cerrar" class="ml-2 underline focus:outline-none" aria-label="Cerrar">✕</button>
+  </div>
+  <!-- Nav -->
+  <header class="fixed top-0 left-0 right-0 z-50 border-b border-white/5 bg-ink/80 backdrop-blur-sm pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]">
+    <nav class="max-w-5xl mx-auto px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
+      <a href="index.html" class="font-display text-2xl font-semibold text-nude touch-target min-w-0">Ritual</a>
+      <div class="hidden md:flex items-center gap-6 lg:gap-8">
+        <a href="#como-funciona" class="text-nude-muted hover:text-nude transition text-sm py-2">Cómo funciona</a>
+        <a href="#que-incluye" class="text-nude-muted hover:text-nude transition text-sm py-2">Qué incluye</a>
+        <a href="precios.html" class="text-nude-muted hover:text-nude transition text-sm py-2">Precios</a>
+        <a href="auth.html" id="nav-auth-link" class="text-nude-muted hover:text-nude transition text-sm py-2">Entrar</a>
+        <button type="button" id="nav-btn-logout" class="hidden text-nude-muted hover:text-nude transition text-sm py-2 bg-transparent border-none cursor-pointer font-inherit">Cerrar sesión</button>
+        <a href="precios.html#empezar" class="rounded-full bg-wine px-5 py-2.5 text-sm font-medium text-nude hover:bg-wine-light transition">Empieza hoy</a>
+      </div>
+      <button type="button" id="btn-menu" aria-label="Abrir menú" class="md:hidden touch-target rounded-full p-2 text-nude hover:bg-white/5">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+      </button>
+    </nav>
+  </header>
+  <!-- Menú móvil -->
+  <div id="nav-mobile" class="fixed inset-0 z-40 bg-ink flex flex-col justify-center items-center gap-8 hidden">
+    <button type="button" id="btn-cerrar" aria-label="Cerrar menú" class="absolute top-4 right-4 touch-target rounded-full p-2 text-nude-muted hover:text-nude">✕</button>
+    <a href="#como-funciona" class="text-nude text-lg py-3 nav-link">Cómo funciona</a>
+    <a href="#que-incluye" class="text-nude text-lg py-3 nav-link">Qué incluye</a>
+    <a href="precios.html" class="text-nude text-lg py-3 nav-link">Precios</a>
+    <a href="auth.html" id="nav-auth-link-mobile" class="text-nude text-lg py-3 nav-link">Entrar</a>
+    <button type="button" id="nav-btn-logout-mobile" class="hidden text-nude text-lg py-3 bg-transparent border-none cursor-pointer font-inherit nav-link">Cerrar sesión</button>
+    <a href="precios.html#empezar" class="rounded-full bg-wine px-8 py-4 text-nude font-medium nav-link">Empieza hoy</a>
+  </div>
+
+  <!-- Hero -->
+  <section class="min-h-screen flex flex-col justify-center px-4 sm:px-6 pt-20 sm:pt-24 pb-16 sm:pb-20 max-w-4xl mx-auto">
+    <p class="text-wine text-xs sm:text-sm uppercase tracking-[0.2em] mb-4 sm:mb-6">Para parejas que quieren más</p>
+    <h1 class="font-display text-4xl sm:text-5xl md:text-7xl font-semibold text-nude leading-tight mb-6 sm:mb-8">
+      No es solo un juego.<br />
+      <span class="italic text-wine-light">Es el momento en que volvés a mirarla.</span>
+    </h1>
+    <p class="text-base sm:text-lg text-nude-muted max-w-xl mb-10 sm:mb-12 leading-relaxed">
+      Preguntas que abren, retos que acercan y rituales que convierten una noche cualquiera en algo que recordás. Sin cursilerías. Sin presión. Solo vos, tu pareja y una experiencia hecha para conectar.
+    </p>
+    <div class="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4">
+      <a href="precios.html#empezar" class="touch-target rounded-full bg-wine px-8 py-4 text-nude font-medium hover:bg-wine-light transition inline-flex items-center justify-center gap-2 min-h-[48px]">
+        Jueguen esta noche
+      </a>
+      <a href="#como-funciona" class="touch-target rounded-full border border-nude-muted/40 px-8 py-4 text-nude hover:border-nude transition inline-flex items-center justify-center min-h-[48px]">Ver cómo funciona</a>
+    </div>
+  </section>
+
+  <!-- Beneficios -->
+  <section class="py-16 sm:py-24 px-4 sm:px-6 border-t border-white/5">
+    <div class="max-w-5xl mx-auto">
+      <h2 class="font-display text-2xl sm:text-3xl md:text-4xl text-nude mb-4 text-center px-2">Algo más que preguntas al azar</h2>
+      <p class="text-nude-muted text-center max-w-2xl mx-auto mb-12 sm:mb-16 text-sm sm:text-base">Diseñado para generar complicidad, confianza y esa tensión que hace que todo cuente.</p>
+      <div class="grid sm:grid-cols-2 md:grid-cols-3 gap-10 sm:gap-12">
+        <div class="text-center">
+          <div class="w-14 h-14 rounded-full bg-wine-dark/50 flex items-center justify-center mx-auto mb-6 text-wine-light text-2xl">✦</div>
+          <h3 class="font-display text-xl text-nude mb-3">Conexión real</h3>
+          <p class="text-nude-muted text-sm leading-relaxed">Preguntas que invitan a contarse cosas que no salen en el día a día. Niveles para ir a su ritmo.</p>
+        </div>
+        <div class="text-center">
+          <div class="w-14 h-14 rounded-full bg-wine-dark/50 flex items-center justify-center mx-auto mb-6 text-wine-light text-2xl">◆</div>
+          <h3 class="font-display text-xl text-nude mb-3">Picante con cuidado</h3>
+          <p class="text-nude-muted text-sm leading-relaxed">Retos sugerentes, siempre con espacio para el no. Lenguaje sexy pero respetuoso.</p>
+        </div>
+        <div class="text-center">
+          <div class="w-14 h-14 rounded-full bg-wine-dark/50 flex items-center justify-center mx-auto mb-6 text-wine-light text-2xl">❧</div>
+          <h3 class="font-display text-xl text-nude mb-3">Ritual, no checklist</h3>
+          <p class="text-nude-muted text-sm leading-relaxed">Pensado para que sea una experiencia: ambiente, ritmo y momentos que se sienten especiales.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Cómo funciona -->
+  <section id="como-funciona" class="py-16 sm:py-24 px-4 sm:px-6 border-t border-white/5">
+    <div class="max-w-3xl mx-auto">
+      <h2 class="font-display text-2xl sm:text-3xl md:text-4xl text-nude mb-4 text-center">Cómo funciona</h2>
+      <p class="text-nude-muted text-center mb-12 sm:mb-16 text-sm sm:text-base">En tres pasos. Sin complicaciones.</p>
+      <ol class="space-y-10 sm:space-y-12">
+        <li class="flex gap-4 sm:gap-8 items-start">
+          <span class="flex-shrink-0 w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-wine flex items-center justify-center text-nude font-display text-xl">1</span>
+          <div>
+            <h3 class="font-display text-xl text-nude mb-2">Elegís la experiencia</h3>
+            <p class="text-nude-muted">Conexión profunda, picante progresivo o elección mutua. Cada una con su ritmo y su onda.</p>
+          </div>
+        </li>
+        <li class="flex gap-4 sm:gap-8 items-start">
+          <span class="flex-shrink-0 w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-wine flex items-center justify-center text-nude font-display text-xl">2</span>
+          <div>
+            <h3 class="font-display text-xl text-nude mb-2">Preparás el momento</h3>
+            <p class="text-nude-muted">Un rato a solas, sin prisas. Lo que recomiendan las instrucciones lo podés adaptar a su estilo.</p>
+          </div>
+        </li>
+        <li class="flex gap-4 sm:gap-8 items-start">
+          <span class="flex-shrink-0 w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-wine flex items-center justify-center text-nude font-display text-xl">3</span>
+          <div>
+            <h3 class="font-display text-xl text-nude mb-2">Juegan y conectan</h3>
+            <p class="text-nude-muted">Preguntas, retos o elecciones. Todo pensado para que la noche gane en intimidad y en confianza.</p>
+          </div>
+        </li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- Qué incluye -->
+  <section id="que-incluye" class="py-16 sm:py-24 px-4 sm:px-6 border-t border-white/5">
+    <div class="max-w-5xl mx-auto">
+      <h2 class="font-display text-2xl sm:text-3xl md:text-4xl text-nude mb-4 text-center">Qué incluye</h2>
+      <p class="text-nude-muted text-center max-w-2xl mx-auto mb-10 sm:mb-16 text-sm sm:text-base">Tres experiencias distintas. Una misma idea: acercarse.</p>
+      <div class="grid sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-8">
+        <a href="juego-conexion.html" class="block p-6 sm:p-8 rounded-2xl bg-white/[0.03] border border-white/5 hover:border-wine/40 transition group touch-target min-h-[120px] active:bg-white/[0.06]">
+          <span class="text-wine text-sm uppercase tracking-wider">Experiencia 1</span>
+          <h3 class="font-display text-2xl text-nude mt-4 mb-3 group-hover:text-wine-light transition">Conexión profunda</h3>
+          <p class="text-nude-muted text-sm leading-relaxed">Preguntas íntimas y emocionales en tres niveles: suave, profundo y vulnerable. Para hablar con honestidad.</p>
+        </a>
+        <a href="juego-picante.html" class="block p-6 sm:p-8 rounded-2xl bg-white/[0.03] border border-white/5 hover:border-wine/40 transition group touch-target min-h-[120px] active:bg-white/[0.06]">
+          <span class="text-wine text-sm uppercase tracking-wider">Experiencia 2</span>
+          <h3 class="font-display text-2xl text-nude mt-4 mb-3 group-hover:text-wine-light transition">Picante progresivo</h3>
+          <p class="text-nude-muted text-sm leading-relaxed">Retos sugerentes con consentimiento en el centro. Subís de nivel cuando ustedes lo decidan.</p>
+        </a>
+        <a href="juego-eleccion.html" class="block p-6 sm:p-8 rounded-2xl bg-white/[0.03] border border-white/5 hover:border-wine/40 transition group touch-target min-h-[120px] active:bg-white/[0.06]">
+          <span class="text-wine text-sm uppercase tracking-wider">Experiencia 3</span>
+          <h3 class="font-display text-2xl text-nude mt-4 mb-3 group-hover:text-wine-light transition">Elección mutua</h3>
+          <p class="text-nude-muted text-sm leading-relaxed">Los dos elegís en secreto. Si coincidís, desbloquean una pregunta o reto especial. Complicidad pura.</p>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA final -->
+  <section class="py-16 sm:py-24 px-4 sm:px-6 border-t border-white/5">
+    <div class="max-w-2xl mx-auto text-center">
+      <h2 class="font-display text-2xl sm:text-3xl md:text-4xl text-nude mb-4 sm:mb-6">Esta noche puede ser distinta</h2>
+      <p class="text-nude-muted mb-8 sm:mb-10 text-sm sm:text-base">Probalo con una prueba limitada. Si los engancha, seguís por muy poco al mes.</p>
+      <a href="precios.html#empezar" class="touch-target inline-flex items-center justify-center rounded-full bg-wine px-10 py-4 text-nude font-medium hover:bg-wine-light transition min-h-[48px]">Empieza hoy</a>
+    </div>
+  </section>
+
+  <footer class="py-6 sm:py-8 px-4 sm:px-6 border-t border-white/5 text-center text-nude-muted text-sm">
+    <p>Ritual — Momentos que acercan. Para mayores de 18 años.</p>
+  </footer>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/supabase-config.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/index.js"></script>
+</body>
+</html>

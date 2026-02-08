@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="es" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Entrar — Ritual</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            wine: { DEFAULT: '#722F37', dark: '#4a1c23', light: '#8B3A42' },
+            nude: { DEFAULT: '#E8D5C4', dark: '#D4A574', muted: '#C9B8A8' },
+            ink: '#0f0a0b',
+          },
+          fontFamily: { display: ['Cormorant Garamond', 'serif'], body: ['Outfit', 'sans-serif'] },
+        },
+      },
+    };
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body class="dark bg-ink text-nude font-body antialiased min-h-screen">
+  <header class="fixed top-0 left-0 right-0 z-50 border-b border-white/5 bg-ink/80 backdrop-blur-sm pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]">
+    <nav class="max-w-5xl mx-auto px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
+      <a href="index.html" class="font-display text-2xl font-semibold text-nude">Ritual</a>
+      <a href="index.html" class="text-nude-muted hover:text-nude transition text-sm">Volver al inicio</a>
+    </nav>
+  </header>
+
+  <main class="pt-24 sm:pt-28 pb-16 sm:pb-24 px-4 sm:px-6 max-w-md mx-auto">
+    <h1 class="font-display text-3xl text-nude mb-8">Entrar a tu cuenta</h1>
+
+    <!-- Tabs: Iniciar sesión / Crear cuenta -->
+    <div class="flex border-b border-white/10 mb-8">
+      <button type="button" id="tab-login" class="flex-1 py-3 text-center text-nude border-b-2 border-wine font-medium tab-auth">Iniciar sesión</button>
+      <button type="button" id="tab-signup" class="flex-1 py-3 text-center text-nude-muted border-b-2 border-transparent tab-auth">Crear cuenta</button>
+    </div>
+
+    <div id="auth-error" class="hidden mb-6 p-4 rounded-xl bg-wine-dark/40 border border-wine/40 text-nude text-sm"></div>
+
+    <!-- Form Iniciar sesión -->
+    <form id="form-login" class="space-y-5">
+      <div>
+        <label for="login-email" class="block text-nude-muted text-sm mb-2">Email</label>
+        <input type="email" id="login-email" name="email" required autocomplete="email"
+          class="w-full rounded-xl bg-white/[0.06] border border-white/10 px-4 py-3 text-nude placeholder-nude-muted/60 focus:outline-none focus:border-wine/50" placeholder="tu@email.com" />
+      </div>
+      <div>
+        <label for="login-password" class="block text-nude-muted text-sm mb-2">Contraseña</label>
+        <input type="password" id="login-password" name="password" required autocomplete="current-password"
+          class="w-full rounded-xl bg-white/[0.06] border border-white/10 px-4 py-3 text-nude placeholder-nude-muted/60 focus:outline-none focus:border-wine/50" placeholder="••••••••" />
+      </div>
+      <button type="submit" id="btn-login" class="w-full touch-target rounded-full bg-wine py-3 min-h-[48px] text-nude font-medium hover:bg-wine-light transition">
+        Entrar
+      </button>
+    </form>
+
+    <!-- Form Crear cuenta -->
+    <form id="form-signup" class="hidden space-y-5">
+      <div>
+        <label for="signup-email" class="block text-nude-muted text-sm mb-2">Email</label>
+        <input type="email" id="signup-email" name="email" required autocomplete="email"
+          class="w-full rounded-xl bg-white/[0.06] border border-white/10 px-4 py-3 text-nude placeholder-nude-muted/60 focus:outline-none focus:border-wine/50" placeholder="tu@email.com" />
+      </div>
+      <div>
+        <label for="signup-password" class="block text-nude-muted text-sm mb-2">Contraseña</label>
+        <input type="password" id="signup-password" name="password" required autocomplete="new-password" minlength="6"
+          class="w-full rounded-xl bg-white/[0.06] border border-white/10 px-4 py-3 text-nude placeholder-nude-muted/60 focus:outline-none focus:border-wine/50" placeholder="Mínimo 6 caracteres" />
+      </div>
+      <button type="submit" id="btn-signup" class="w-full touch-target rounded-full bg-wine py-3 min-h-[48px] text-nude font-medium hover:bg-wine-light transition">
+        Crear cuenta
+      </button>
+    </form>
+
+    <p class="mt-8 text-nude-muted text-sm text-center">
+      <a href="index.html" class="text-wine-light hover:underline">Volver al inicio</a>
+    </p>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/supabase-config.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/auth-page.js"></script>
+</body>
+</html>
