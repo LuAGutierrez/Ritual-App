@@ -31,7 +31,7 @@
       <a href="index.html" class="font-display text-2xl font-semibold text-nude touch-target min-w-0">Ritual</a>
       <div class="hidden md:flex items-center gap-6 lg:gap-8">
         <a href="index.html#como-funciona" class="text-nude-muted hover:text-nude transition text-sm py-2">Cómo funciona</a>
-        <a href="index.html#que-incluye" class="text-nude-muted hover:text-nude transition text-sm py-2">Qué incluye</a>
+        <a href="precios.html#empezar" class="text-nude-muted hover:text-nude transition text-sm py-2">Qué incluye</a>
         <a href="precios.html" class="text-nude text-sm py-2">Precios</a>
         <a href="auth.html" id="nav-auth-link" class="text-nude-muted hover:text-nude transition text-sm py-2">Entrar</a>
         <button type="button" id="nav-btn-logout" class="hidden text-nude-muted hover:text-nude transition text-sm py-2 bg-transparent border-none cursor-pointer font-inherit">Cerrar sesión</button>
@@ -45,7 +45,7 @@
   <div id="nav-mobile" class="fixed inset-0 z-40 bg-ink flex flex-col justify-center items-center gap-8 hidden">
     <button type="button" id="btn-cerrar" aria-label="Cerrar menú" class="absolute top-4 right-4 touch-target rounded-full p-2 text-nude-muted hover:text-nude">✕</button>
     <a href="index.html#como-funciona" class="text-nude text-lg py-3 nav-link">Cómo funciona</a>
-    <a href="index.html#que-incluye" class="text-nude text-lg py-3 nav-link">Qué incluye</a>
+    <a href="precios.html#empezar" class="text-nude text-lg py-3 nav-link">Qué incluye</a>
     <a href="precios.html" class="text-nude text-lg py-3 nav-link">Precios</a>
     <a href="auth.html" id="nav-auth-link-mobile" class="text-nude text-lg py-3 nav-link">Entrar</a>
     <button type="button" id="nav-btn-logout-mobile" class="hidden text-nude text-lg py-3 bg-transparent border-none cursor-pointer font-inherit nav-link">Cerrar sesión</button>
@@ -57,11 +57,17 @@
     <p class="text-nude-muted text-base sm:text-lg mb-10 sm:mb-16">Probalo sin compromiso. Si os gusta, seguís por muy poco.</p>
 
     <!-- Prueba gratuita -->
-    <div class="mb-8 sm:mb-12 p-6 sm:p-8 rounded-2xl bg-white/[0.03] border border-white/5">
+    <div id="trial-elegir" class="mb-8 sm:mb-12 p-6 sm:p-8 rounded-2xl bg-white/[0.03] border border-white/5">
       <span class="text-wine text-sm uppercase tracking-wider">Prueba gratuita</span>
       <h2 class="font-display text-2xl text-nude mt-2 mb-2">Un primer ritual gratis</h2>
-      <p class="text-nude-muted text-sm mb-6">Accedé a una ronda limitada de una experiencia a elección. Sin tarjeta. Para que veas si encaja con vosotros.</p>
-      <button id="btn-prueba" class="touch-target rounded-full border border-nude-muted/40 px-6 py-3 min-h-[48px] text-nude hover:border-nude transition text-sm">Probar gratis</button>
+      <p class="text-nude-muted text-sm mb-4">Accedé a una ronda limitada de una experiencia a elección. Sin tarjeta. Para que veas si encaja con vosotros.</p>
+      <p class="text-nude-muted text-sm mb-3">Elegí una experiencia:</p>
+      <p class="flex flex-wrap gap-3">
+        <a href="juego-conexion.html" class="text-wine-light hover:text-wine transition text-sm underline">Conexión profunda</a>
+        <a href="juego-picante.html" class="text-wine-light hover:text-wine transition text-sm underline">Picante progresivo</a>
+        <a href="juego-eleccion.html" class="text-wine-light hover:text-wine transition text-sm underline">Elección mutua</a>
+      </p>
+      <button id="btn-prueba" class="touch-target rounded-full border border-nude-muted/40 px-6 py-3 min-h-[48px] text-nude hover:border-nude transition text-sm mt-6">Probar gratis</button>
     </div>
 
     <!-- Suscripción -->
@@ -84,7 +90,7 @@
     <!-- Mensaje post-pago o error -->
     <div id="paywall-msg" class="hidden mt-12 p-6 rounded-xl bg-wine-dark/30 border border-wine/30 text-center">
       <p class="text-nude mb-4">Al hacer clic en Suscribirme serás redirigido a Mercado Pago para pagar de forma segura.</p>
-      <p class="text-nude-muted text-sm">Tras el pago, tendrás acceso a las tres experiencias desde la <a href="index.html#que-incluye" class="text-wine-light underline">landing</a>.</p>
+      <p class="text-nude-muted text-sm">Tras el pago, los enlaces a las tres experiencias aparecerán aquí.</p>
     </div>
   </main>
 
