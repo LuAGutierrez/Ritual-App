@@ -79,3 +79,18 @@ Ejecutá en Supabase → SQL Editor el contenido de:
 ## Moneda y montos
 
 Mercado Pago no soporta EUR. Usá una de las monedas soportadas (ARS, BRL, MXN, etc.) y configurá `MP_AMOUNT` y `MP_CURRENCY_ID` en los secrets según tu precio (ej. ARS 500, MXN 59, etc.).
+
+---
+
+## Checklist — ¿Qué falta? (sitio en rituales.vercel.app)
+
+Cuando ya tenés la página en **rituales.vercel.app** y el webhook de MP configurado, revisá esto:
+
+| Revisión | Dónde | Qué verificar |
+|----------|--------|----------------|
+| **MP_BACK_URL** | Supabase → Project Settings → Edge Functions → Secrets | Debe ser exactamente `https://rituales.vercel.app/precios.html` para que, al volver de Mercado Pago, el usuario llegue a tu sitio. |
+| **MP_ACCESS_TOKEN** | Mismo lugar | Access Token de Mercado Pago (producción para cobrar de verdad). |
+| **Edge Functions desplegadas** | Supabase Dashboard o `npx supabase functions list` | Las tres: `check-game-access`, `create-mp-subscription`, `mp-webhook`. |
+| **Migración 003** | Supabase → SQL Editor | Ejecutaste `003_mercadopago_subscription.sql` (columna `mp_subscription_id` en `subscriptions`). |
+| **URL del webhook en MP** | Mercado Pago → Tus integraciones → Webhooks | Debe apuntar a **Supabase**, no a Vercel: `https://recuvrrkejnuftdfzbyr.supabase.co/functions/v1/mp-webhook`. Eventos: Planes y suscripciones. |
+| **Prueba de punta a punta** | rituales.vercel.app | Entrá a precios → Iniciar sesión → Suscribirme → deberías ir a MP; tras pagar (o en prueba), volvés a precios y el usuario debería tener acceso a los juegos. |

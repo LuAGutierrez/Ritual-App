@@ -27,8 +27,8 @@
     if (btnPrueba) {
       btnPrueba.addEventListener('click', function() {
         if (this.disabled) return;
-        if (confirm('¿Ir a probar una experiencia gratis? Te llevamos a elegir.')) {
-          window.location.href = 'index.html#que-incluye';
+        if (confirm('¿Ir a probar una experiencia gratis? Elegí una de las tres abajo.')) {
+          document.getElementById('trial-elegir').scrollIntoView({ behavior: 'smooth' });
         }
       });
       // Si está logueado y ya usó la prueba, mostrar botón apagado
