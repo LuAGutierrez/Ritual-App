@@ -88,7 +88,7 @@
     var urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('mp') === 'success' && paywallMsg) {
       paywallMsg.classList.remove('hidden');
-      paywallMsg.innerHTML = '<p class="text-nude mb-4">Gracias. Cuando el pago se acredite tendrás acceso a las tres experiencias.</p><p class="text-nude-muted text-sm">Si ya pagaste, podés entrar desde los enlaces de la <a href="index.html#que-incluye" class="text-wine-light underline">landing</a>.</p>';
+      paywallMsg.innerHTML = '<p class="text-nude mb-4">Gracias. Cuando el pago se acredite tendrás acceso a las tres experiencias.</p><p class="text-nude-muted text-sm mb-4">Si ya pagaste, entrá a:</p><p class="flex flex-wrap gap-3 justify-center"><a href="juego-conexion.html" class="text-wine-light underline text-sm">Conexión profunda</a><a href="juego-picante.html" class="text-wine-light underline text-sm">Picante progresivo</a><a href="juego-eleccion.html" class="text-wine-light underline text-sm">Elección mutua</a></p>';
       paywallMsg.scrollIntoView({ behavior: 'smooth' });
     }
   }
