@@ -90,6 +90,36 @@
       <button id="btn-regalo" class="touch-target rounded-full border border-nude-muted/40 px-6 py-3 min-h-[48px] text-nude hover:border-nude transition text-sm">Regalar Ritual</button>
     </div>
 
+    <!-- Modal regalo: email + ir a pagar -->
+    <div id="modal-regalo" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/90" aria-modal="true" aria-labelledby="modal-regalo-title">
+      <div class="w-full max-w-md rounded-2xl bg-ink border border-white/10 p-6 sm:p-8 shadow-xl">
+        <h3 id="modal-regalo-title" class="font-display text-xl text-nude mb-2">Regalar un mes de Ritual</h3>
+        <p class="text-nude-muted text-sm mb-4">Ingresá el email de quien lo va a recibir (solo para tu referencia). Serás redirigido a Mercado Pago para pagar.</p>
+        <form id="form-regalo" class="space-y-4">
+          <div>
+            <label for="regalo-email" class="block text-nude-muted text-sm mb-2">Email del destinatario</label>
+            <input type="email" id="regalo-email" required placeholder="ejemplo@email.com"
+              class="w-full rounded-xl bg-white/[0.06] border border-white/10 px-4 py-3 text-nude placeholder-nude-muted/60 focus:outline-none focus:border-wine/50" />
+          </div>
+          <div id="regalo-error" class="hidden text-wine text-sm"></div>
+          <div class="flex gap-3">
+            <button type="button" id="btn-regalo-cerrar" class="flex-1 py-3 rounded-xl border border-white/10 text-nude-muted hover:text-nude transition">Cancelar</button>
+            <button type="submit" id="btn-regalo-pagar" class="flex-1 py-3 rounded-xl bg-wine text-nude font-medium hover:bg-wine-light transition">Pagar y generar enlace</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Bloque: vuelta de MP por regalo (verificando / enlace listo) -->
+    <div id="gift-result" class="hidden mt-12 p-6 sm:p-8 rounded-2xl bg-white/[0.03] border border-white/10">
+      <p id="gift-result-msg" class="text-nude mb-4">Verificando pago…</p>
+      <p id="gift-result-link-wrap" class="hidden">
+        <span class="text-nude-muted text-sm block mb-2">Enviá este enlace a la persona que recibe el regalo:</span>
+        <a id="gift-result-link" href="#" class="text-wine-light underline break-all" target="_blank" rel="noopener"></a>
+        <button type="button" id="gift-result-copy" class="ml-2 text-nude-muted hover:text-nude text-sm">Copiar</button>
+      </p>
+    </div>
+
     <!-- Mensaje post-pago o error -->
     <div id="paywall-msg" class="hidden mt-12 p-6 rounded-xl bg-wine-dark/30 border border-wine/30 text-center">
       <p class="text-nude mb-4">Al hacer clic en Suscribirme serás redirigido a Mercado Pago para pagar de forma segura.</p>

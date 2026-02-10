@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="es" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Activar regalo — Ritual</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            wine: { DEFAULT: '#722F37', dark: '#4a1c23', light: '#8B3A42' },
+            nude: { DEFAULT: '#E8D5C4', dark: '#D4A574', muted: '#C9B8A8' },
+            ink: '#0f0a0b',
+          },
+          fontFamily: { display: ['Cormorant Garamond', 'serif'], body: ['Outfit', 'sans-serif'] },
+        },
+      },
+    };
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body class="dark bg-ink text-nude font-body antialiased min-h-screen">
+  <header class="fixed top-0 left-0 right-0 z-50 border-b border-white/5 bg-ink/80 backdrop-blur-sm pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]">
+    <nav class="max-w-5xl mx-auto px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
+      <a href="index.html" class="font-display text-2xl font-semibold text-nude">Ritual</a>
+      <a href="index.html" class="text-nude-muted hover:text-nude transition text-sm">Volver al inicio</a>
+    </nav>
+  </header>
+
+  <main class="pt-24 sm:pt-28 pb-16 sm:pb-24 px-4 sm:px-6 max-w-md mx-auto">
+    <h1 class="font-display text-3xl text-nude mb-6">Activá tu regalo</h1>
+
+    <div id="activar-sin-token" class="hidden">
+      <p class="text-nude-muted mb-6">No hay ningún regalo para activar en este enlace. Revisá que el link sea el correcto.</p>
+      <a href="index.html" class="inline-block rounded-full bg-wine py-3 px-6 text-nude font-medium hover:bg-wine-light transition">Ir al inicio</a>
+    </div>
+
+    <div id="activar-pide-login" class="hidden">
+      <p class="text-nude-muted mb-6">Entrá o creá una cuenta para activar tu mes de Ritual.</p>
+      <a id="activar-link-auth" href="auth.html" class="inline-block rounded-full bg-wine py-3 px-6 text-nude font-medium hover:bg-wine-light transition">Entrar o crear cuenta</a>
+    </div>
+
+    <div id="activar-con-sesion" class="hidden">
+      <p class="text-nude-muted mb-6">Tenés un mes de Ritual para activar. Cuando lo actives tendrás acceso a las tres experiencias.</p>
+      <div id="activar-error" class="hidden mb-4 p-4 rounded-xl bg-wine-dark/40 border border-wine/40 text-nude text-sm"></div>
+      <button type="button" id="btn-activar" class="touch-target rounded-full bg-wine py-3 px-8 text-nude font-medium hover:bg-wine-light transition">Activar mi mes</button>
+    </div>
+
+    <div id="activar-ok" class="hidden">
+      <p class="text-nude mb-6">Listo. Tu mes de Ritual está activo.</p>
+      <a href="index.html" class="inline-block rounded-full bg-wine py-3 px-6 text-nude font-medium hover:bg-wine-light transition">Ir a las experiencias</a>
+    </div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/supabase-config.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/activar.js"></script>
+</body>
+</html>
