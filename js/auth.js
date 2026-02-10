@@ -101,34 +101,33 @@
      */
     createMpSubscription: function() {
       var self = this;
-      var client = getClient();
-      if (!client) return Promise.resolve({ error: 'no_client' });
+      var config = window.RitualSupabase;
+      if (!config || !config.url || !config.anonKey) return Promise.resolve({ error: 'no_client' });
       return self.getSession().then(function(session) {
         if (!session || !session.access_token) {
           return { error: 'invalid_session' };
         }
-        var anonKey = (window.RitualSupabase && window.RitualSupabase.anonKey) || '';
+        var url = config.url + '/functions/v1/create-mp-subscription';
         var headers = {
+          'Content-Type': 'application/json',
           'Authorization': 'Bearer ' + session.access_token,
-          'apikey': anonKey
+          'apikey': config.anonKey
         };
-        return client.functions.invoke('create-mp-subscription', { method: 'POST', body: {}, headers: headers });
-      }).then(function(res) {
-        if (res && res.error && !res.data) {
-          var errMsg = res.error.message || res.error;
-          var is401 = (res.error.status === 401) || (typeof errMsg === 'string' && (errMsg.indexOf('401') >= 0 || errMsg.indexOf('Unauthorized') >= 0));
-          return { error: (res.error === 'invalid_session' || is401) ? 'invalid_session' : errMsg, details: res.details };
-        }
-        var data = (res && res.data) || {};
-        if (data.init_point) return { init_point: data.init_point };
-        var err = data.error || (res && res.error && res.error.message) || 'no_init_point';
-        return { error: err, details: data.details };
+        return fetch(url, { method: 'POST', headers: headers, body: '{}' });
+      }).then(function(response) {
+        return response.json().then(function(data) {
+          if (!response.ok) {
+            return { error: data && data.message ? data.message : 'request_failed', details: data };
+          }
+          if (data && data.init_point) return { init_point: data.init_point };
+          return { error: (data && data.error) || 'no_init_point', details: data && data.details };
+        }).catch(function() {
+          return { error: 'invalid_response', details: response.status };
+        });
       }).catch(function(e) {
-        if (typeof console !== 'undefined' && console.log) console.log('[Ritual] Invoke catch:', e);
+        if (typeof console !== 'undefined' && console.log) console.log('[Ritual] createMpSubscription catch:', e);
         var msg = e && e.message ? e.message : 'mp_error';
-        if (msg.indexOf('401') >= 0 || msg.indexOf('Unauthorized') >= 0) {
-          return { error: 'invalid_session' };
-        }
+        if (msg.indexOf('401') >= 0 || msg.indexOf('Unauthorized') >= 0) return { error: 'invalid_session' };
         return { error: msg };
       });
     },
