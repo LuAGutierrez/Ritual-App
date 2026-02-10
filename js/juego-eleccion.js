@@ -9,6 +9,7 @@
     var opciones = window.RitualDatos.eleccion.opcionesA;
     var premios = window.RitualDatos.eleccion.premios;
     var eleccion1 = null, eleccion2 = null;
+    var primeraRondaCompletada = false;
 
     var paso1 = document.getElementById('paso-1');
     var paso2 = document.getElementById('paso-2');
@@ -68,6 +69,7 @@
         alert('Las dos personas tienen que elegir una opción.');
         return;
       }
+      primeraRondaCompletada = true;
       if (paso2) paso2.classList.add('hidden');
       if (paso3) paso3.classList.remove('hidden');
       if (eleccion1Span) eleccion1Span.textContent = opciones[eleccion1];
@@ -82,15 +84,29 @@
       }
     });
 
+    function puedeNuevaRonda(cb) {
+      if (!primeraRondaCompletada) { cb(true); return; }
+      if (!window.RitualAuth) { cb(false); return; }
+      window.RitualAuth.checkGameAccess().then(function(r) {
+        cb(!!r && !!r.allowed);
+      }).catch(function() { cb(false); });
+    }
+
     if (btnOtra) btnOtra.addEventListener('click', function() {
-      if (paso3) paso3.classList.add('hidden');
-      if (paso1) paso1.classList.remove('hidden');
-      if (paso2) paso2.classList.add('hidden');
-      eleccion1 = null;
-      eleccion2 = null;
-      if (btnListo1) btnListo1.classList.add('hidden');
-      opciones1.querySelectorAll('button').forEach(function(b) { b.classList.remove('border-wine', 'bg-wine-dark/30'); });
-      opciones2.querySelectorAll('button').forEach(function(b) { b.classList.remove('border-wine', 'bg-wine-dark/30'); });
+      puedeNuevaRonda(function(ok) {
+        if (!ok && window.RitualShowPaywall) {
+          window.RitualShowPaywall();
+          return;
+        }
+        if (paso3) paso3.classList.add('hidden');
+        if (paso1) paso1.classList.remove('hidden');
+        if (paso2) paso2.classList.add('hidden');
+        eleccion1 = null;
+        eleccion2 = null;
+        if (btnListo1) btnListo1.classList.add('hidden');
+        opciones1.querySelectorAll('button').forEach(function(b) { b.classList.remove('border-wine', 'bg-wine-dark/30'); });
+        opciones2.querySelectorAll('button').forEach(function(b) { b.classList.remove('border-wine', 'bg-wine-dark/30'); });
+      });
     });
   }
   document.addEventListener('ritual-game-access-granted', init);

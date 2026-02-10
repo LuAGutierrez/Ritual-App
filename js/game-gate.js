@@ -36,6 +36,8 @@
       if (!result) return;
       if (result.allowed) {
         window.RitualGameAccess = true;
+        window.RitualUsedTrial = !!result.usedTrial;
+        window.RitualShowPaywall = showPaywall;
         showGame();
         if (result.usedTrial) showTrialNotice();
         document.dispatchEvent(new CustomEvent('ritual-game-access-granted'));
