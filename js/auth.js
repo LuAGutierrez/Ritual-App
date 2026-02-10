@@ -83,13 +83,16 @@
      */
     checkGameAccess: function() {
       var client = getClient();
-      if (!client) return Promise.resolve({ allowed: false });
+      if (!client) return Promise.resolve({ allowed: false, usedTrial: false });
       return client.functions.invoke('check-game-access', { body: {} }).then(function(res) {
-        if (res.error) return { allowed: false };
+        if (res.error) return { allowed: false, usedTrial: false };
         var data = res.data;
-        return { allowed: !!(data && data.allowed === true) };
+        return {
+          allowed: !!(data && data.allowed === true),
+          usedTrial: !!(data && data.usedTrial === true)
+        };
       }).catch(function() {
-        return { allowed: false };
+        return { allowed: false, usedTrial: false };
       });
     },
     /**
@@ -100,10 +103,10 @@
       var client = getClient();
       if (!client) return Promise.resolve({ error: 'no_client' });
       return client.functions.invoke('create-mp-subscription', { method: 'POST', body: {} }).then(function(res) {
-        if (res.error) return { error: res.error.message || 'mp_error' };
-        var data = res.data;
-        if (data && data.init_point) return { init_point: data.init_point };
-        return { error: data?.error || 'no_init_point' };
+        var data = res.data || {};
+        if (data.init_point) return { init_point: data.init_point };
+        var err = data.error || (res.error && res.error.message) || 'no_init_point';
+        return { error: err, details: data.details };
       }).catch(function(e) {
         return { error: e?.message || 'mp_error' };
       });
@@ -134,12 +137,18 @@
     updateNavAuth: function() {
       var linkEntrar = document.getElementById('nav-auth-link');
       var linkEntrarMobile = document.getElementById('nav-auth-link-mobile');
+      var userMenu = document.getElementById('nav-user-menu');
+      var userEmail = document.getElementById('nav-user-email');
+      var userEmailMobile = document.getElementById('nav-user-email-mobile');
       var btnLogout = document.getElementById('nav-btn-logout');
       var btnLogoutMobile = document.getElementById('nav-btn-logout-mobile');
+      var dropdown = document.getElementById('nav-user-dropdown');
+      var btnUser = document.getElementById('nav-btn-user');
       if (!linkEntrar && !linkEntrarMobile) return;
 
       this.getSession().then(function(session) {
         var isLoggedIn = !!session;
+        var email = session && session.user ? session.user.email : '';
         if (linkEntrar) {
           if (isLoggedIn) linkEntrar.classList.add('hidden');
           else linkEntrar.classList.remove('hidden');
@@ -147,6 +156,23 @@
         if (linkEntrarMobile) {
           if (isLoggedIn) linkEntrarMobile.classList.add('hidden');
           else linkEntrarMobile.classList.remove('hidden');
+        }
+        if (userMenu) {
+          if (isLoggedIn) userMenu.classList.remove('hidden');
+          else {
+            userMenu.classList.add('hidden');
+            if (dropdown) dropdown.classList.add('hidden');
+            if (btnUser) btnUser.setAttribute('aria-expanded', 'false');
+          }
+        }
+        if (userEmail) {
+          userEmail.textContent = email;
+          userEmail.title = email;
+        }
+        if (userEmailMobile) {
+          userEmailMobile.textContent = email;
+          if (isLoggedIn) userEmailMobile.classList.remove('hidden');
+          else userEmailMobile.classList.add('hidden');
         }
         if (btnLogout) {
           if (isLoggedIn) btnLogout.classList.remove('hidden');
@@ -160,10 +186,31 @@
     }
   };
 
+  function setupUserDropdown() {
+    var btnUser = document.getElementById('nav-btn-user');
+    var dropdown = document.getElementById('nav-user-dropdown');
+    var menu = document.getElementById('nav-user-menu');
+    if (!btnUser || !dropdown || !menu) return;
+    if (btnUser._dropdownSetup) return;
+    btnUser._dropdownSetup = true;
+    btnUser.addEventListener('click', function(e) {
+      e.stopPropagation();
+      var wasOpen = !dropdown.classList.contains('hidden');
+      dropdown.classList.toggle('hidden', wasOpen);
+      btnUser.setAttribute('aria-expanded', wasOpen ? 'false' : 'true');
+    });
+    document.addEventListener('click', function(e) {
+      if (!menu.contains(e.target)) {
+        dropdown.classList.add('hidden');
+        btnUser.setAttribute('aria-expanded', 'false');
+      }
+    });
+  }
+
   function tryInit() {
     if (!window.RitualSupabase || !window.RitualSupabase.enabled || typeof window.supabase === 'undefined') return;
+    setupUserDropdown();
     RitualAuth.init().then(function() {
-      // Vuelve a actualizar la nav tras un momento (por si la sesión se restaura de localStorage después)
       setTimeout(function() {
         if (window.RitualAuth) window.RitualAuth.updateNavAuth();
       }, 150);

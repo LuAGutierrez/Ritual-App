@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="es" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Elegir experiencia — Ritual</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            wine: { DEFAULT: '#722F37', dark: '#4a1c23', light: '#8B3A42' },
+            nude: { DEFAULT: '#E8D5C4', dark: '#D4A574', muted: '#C9B8A8' },
+            ink: '#0f0a0b',
+          },
+          fontFamily: { display: ['Cormorant Garamond', 'serif'], body: ['Outfit', 'sans-serif'] },
+        },
+      },
+    };
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body class="dark bg-ink text-nude font-body antialiased min-h-screen">
+  <header class="fixed top-0 left-0 right-0 z-50 border-b border-white/5 bg-ink/80 backdrop-blur-sm pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]">
+    <nav class="max-w-5xl mx-auto px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
+      <a href="index.html" class="font-display text-2xl font-semibold text-nude touch-target min-w-0">Ritual</a>
+      <button type="button" id="btn-volver" class="text-nude-muted hover:text-nude transition text-sm touch-target min-h-[44px] inline-flex items-center bg-transparent border-none cursor-pointer font-inherit">Volver</button>
+    </nav>
+  </header>
+
+  <main class="pt-24 sm:pt-28 pb-16 sm:pb-24 px-4 sm:px-6 max-w-4xl mx-auto">
+    <h1 class="font-display text-3xl sm:text-4xl text-nude mb-2">Elegí una experiencia</h1>
+    <p class="text-nude-muted text-sm sm:text-base mb-10">Tres formas de conectar. Al tocar una, entrás al juego.</p>
+
+    <div class="grid sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
+      <a href="juego-conexion.html" class="block p-6 sm:p-8 rounded-2xl bg-white/[0.03] border border-white/5 hover:border-wine/40 transition text-left no-underline">
+        <span class="text-wine text-sm uppercase tracking-wider">Experiencia 1</span>
+        <h2 class="font-display text-2xl text-nude mt-4 mb-3">Conexión profunda</h2>
+        <p class="text-nude-muted text-sm leading-relaxed">Preguntas íntimas y emocionales en tres niveles: suave, profundo y vulnerable. Para hablar con honestidad.</p>
+        <span class="inline-block mt-4 text-wine-light text-sm">Jugar →</span>
+      </a>
+      <a href="juego-picante.html" class="block p-6 sm:p-8 rounded-2xl bg-white/[0.03] border border-white/5 hover:border-wine/40 transition text-left no-underline">
+        <span class="text-wine text-sm uppercase tracking-wider">Experiencia 2</span>
+        <h2 class="font-display text-2xl text-nude mt-4 mb-3">Picante progresivo</h2>
+        <p class="text-nude-muted text-sm leading-relaxed">Retos sugerentes con consentimiento en el centro. Subís de nivel cuando ustedes lo decidan.</p>
+        <span class="inline-block mt-4 text-wine-light text-sm">Jugar →</span>
+      </a>
+      <a href="juego-eleccion.html" class="block p-6 sm:p-8 rounded-2xl bg-white/[0.03] border border-white/5 hover:border-wine/40 transition text-left no-underline">
+        <span class="text-wine text-sm uppercase tracking-wider">Experiencia 3</span>
+        <h2 class="font-display text-2xl text-nude mt-4 mb-3">Elección mutua</h2>
+        <p class="text-nude-muted text-sm leading-relaxed">Los dos elegís en secreto. Si coincidís, desbloquean una pregunta o reto especial. Complicidad pura.</p>
+        <span class="inline-block mt-4 text-wine-light text-sm">Jugar →</span>
+      </a>
+    </div>
+
+    <p class="mt-10 text-center">
+      <a href="precios.html" class="text-nude-muted hover:text-nude text-sm">Ver precios y suscripción</a>
+    </p>
+  </main>
+
+  <footer class="py-6 sm:py-8 px-4 sm:px-6 border-t border-white/5 text-center text-nude-muted text-sm">
+    <p>Ritual — Momentos que acercan.</p>
+  </footer>
+  <script>
+    (function() {
+      var btn = document.getElementById('btn-volver');
+      if (btn) btn.addEventListener('click', function() { history.back(); });
+    })();
+  </script>
+</body>
+</html>

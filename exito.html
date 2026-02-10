@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="es" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Listo — Ritual</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            wine: { DEFAULT: '#722F37', dark: '#4a1c23', light: '#8B3A42' },
+            nude: { DEFAULT: '#E8D5C4', dark: '#D4A574', muted: '#C9B8A8' },
+            ink: '#0f0a0b',
+          },
+          fontFamily: { display: ['Cormorant Garamond', 'serif'], body: ['Outfit', 'sans-serif'] },
+        },
+      },
+    };
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body class="dark bg-ink text-nude font-body antialiased min-h-screen">
+  <header class="fixed top-0 left-0 right-0 z-50 border-b border-white/5 bg-ink/80 backdrop-blur-sm pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]">
+    <nav class="max-w-5xl mx-auto px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
+      <a href="index.html" class="font-display text-2xl font-semibold text-nude">Ritual</a>
+    </nav>
+  </header>
+
+  <main class="min-h-screen flex flex-col justify-center px-4 sm:px-6 pt-20 pb-16 max-w-md mx-auto text-center">
+    <p class="text-wine text-sm uppercase tracking-wider mb-4" id="exito-etiqueta">Listo</p>
+    <h1 class="font-display text-3xl sm:text-4xl text-nude mb-6" id="exito-titulo">Registro exitoso</h1>
+    <p class="text-nude-muted text-sm sm:text-base mb-10">Elegí una experiencia y probala cuando quieras.</p>
+    <a href="elegir-juego.html" id="btn-continuar" class="touch-target inline-flex items-center justify-center rounded-full bg-wine px-10 py-4 text-nude font-medium hover:bg-wine-light transition min-h-[48px] no-underline">
+      Probar los juegos
+    </a>
+  </main>
+
+  <script>
+    (function() {
+      var params = new URLSearchParams(window.location.search);
+      var tipo = params.get('tipo');
+      var titulo = document.getElementById('exito-titulo');
+      var etiqueta = document.getElementById('exito-etiqueta');
+      if (tipo === 'login' && titulo) {
+        titulo.textContent = 'Sesión iniciada';
+        if (etiqueta) etiqueta.textContent = 'Bienvenido de nuevo';
+      } else if (titulo) {
+        titulo.textContent = 'Registro exitoso';
+        if (etiqueta) etiqueta.textContent = 'Cuenta creada';
+      }
+    })();
+  </script>
+</body>
+</html>

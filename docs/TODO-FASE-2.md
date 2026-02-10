@@ -18,7 +18,7 @@ Lista clara para la siguiente fase después del MVP.
 ## Autenticación y usuarios
 
 - [ ] Login simple: email + magic link (Supabase Auth) o email + contraseña.
-- [ ] No obligar registro para “probar gratis” si el flujo de marketing lo permite; sí para suscripción.
+- [ ] No obligar registro para "probar gratis" si el flujo de marketing lo permite; sí para suscripción.
 - [ ] Tabla `users` o uso de `auth.users` + perfil en `profiles` (nombre, preferencias opcionales).
 
 ---
@@ -36,7 +36,7 @@ Lista clara para la siguiente fase después del MVP.
 
 - [ ] Añadir más preguntas/retos por nivel (conexión, picante, elección) desde BD o JSON.
 - [ ] Panel interno (o script) para editar contenido sin tocar código.
-- [ ] “Regalar esta experiencia”: flujo de pago + envío de enlace por email (Supabase Edge Function o backend mínimo).
+- [ ] "Regalar esta experiencia": flujo de pago + envío de enlace por email (Supabase Edge Function o backend mínimo).
 
 ---
 
@@ -50,7 +50,7 @@ Lista clara para la siguiente fase después del MVP.
 
 ## UX y técnico
 
-- [ ] Página “Mis experiencias” o dashboard simple tras login (acceso a los 3 juegos).
+- [ ] Página "Mis experiencias" o dashboard simple tras login (acceso a los 3 juegos).
 - [ ] Recordar último nivel/juego para volver donde lo dejaron.
 - [ ] Favicon y meta OG para compartir.
 - [ ] Despliegue (Vercel, Netlify o similar) con dominio propio.

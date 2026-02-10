@@ -25,25 +25,24 @@
     }
 
     if (btnPrueba) {
-      btnPrueba.addEventListener('click', function() {
-        if (this.disabled) return;
-        if (confirm('¿Ir a probar una experiencia gratis? Elegí una de las tres abajo.')) {
-          document.getElementById('trial-elegir').scrollIntoView({ behavior: 'smooth' });
-        }
-      });
-      // Si está logueado y ya usó la prueba, mostrar botón apagado
       if (window.RitualAuth) {
         window.RitualAuth.init().then(function() {
           return window.RitualAuth.getSession();
         }).then(function(session) {
-          if (!session) return false;
-          return window.RitualAuth.getTrialUsed();
-        }).then(function(trialUsed) {
-          if (trialUsed && btnPrueba) {
-            btnPrueba.disabled = true;
+          if (!session) return { session: false };
+          return window.RitualAuth.getTrialUsed().then(function(trialUsed) {
+            return { session: true, trialUsed: trialUsed };
+          });
+        }).then(function(state) {
+          if (!state.session) return;
+          if (state.trialUsed && btnPrueba) {
+            btnPrueba.removeAttribute('href');
             btnPrueba.textContent = 'Ya usaste tu prueba';
             btnPrueba.classList.add('opacity-60', 'cursor-not-allowed');
             btnPrueba.classList.remove('hover:border-nude');
+            btnPrueba.style.pointerEvents = 'none';
+          } else {
+            if (btnPrueba) btnPrueba.href = 'elegir-juego.html';
           }
         }).catch(function() {});
       }
@@ -71,7 +70,18 @@
           if (result.init_point) {
             window.location.href = result.init_point;
           } else {
-            alert(result.error === 'mp_not_configured' ? 'Mercado Pago no está configurado aún.' : 'No se pudo abrir el pago. Intentá de nuevo.');
+            var msg = result.error === 'mp_not_configured'
+              ? 'Mercado Pago no está configurado aún.'
+              : result.error === 'no_init_point'
+                ? 'Mercado Pago no devolvió el enlace de pago. Revisá que la cuenta y el plan estén correctos para suscripciones.'
+                : result.error === 'invalid_session' || result.error === 'missing_auth'
+                  ? 'La sesión expiró. Volvé a entrar y probá de nuevo.'
+                  : (result.error && result.error.indexOf('Failed to send') >= 0)
+                    ? 'No se pudo conectar con el servidor de pago. Revisá: 1) Que la función create-mp-subscription esté desplegada en Supabase. 2) Que abras la web desde un servidor (no desde archivo local). 3) Que el proyecto Supabase no esté pausado.'
+                    : result.details
+                      ? 'No se pudo abrir el pago: ' + (typeof result.details === 'string' ? result.details : (result.details.message || result.details.error || result.error))
+                      : 'No se pudo abrir el pago. Intentá de nuevo. (' + (result.error || 'error') + ')';
+            alert(msg);
           }
         }).catch(function() {
           if (btnSuscripcion) {

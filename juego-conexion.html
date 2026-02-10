@@ -29,7 +29,7 @@
   <header class="fixed top-0 left-0 right-0 z-50 border-b border-white/5 bg-ink/80 backdrop-blur-sm pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]">
     <nav class="max-w-5xl mx-auto px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
       <a href="index.html" class="font-display text-2xl font-semibold text-nude touch-target min-w-0">Ritual</a>
-      <a href="index.html#que-incluye" class="text-nude-muted hover:text-nude transition text-sm touch-target min-h-[44px] inline-flex items-center">Volver</a>
+      <button type="button" id="btn-volver" class="text-nude-muted hover:text-nude transition text-sm touch-target min-h-[44px] inline-flex items-center bg-transparent border-none cursor-pointer font-inherit">Volver</button>
     </nav>
   </header>
 
@@ -43,6 +43,11 @@
 
     <!-- Contenido del juego (oculto hasta que gate confirme acceso) -->
     <div id="game-content">
+    <!-- Aviso: estás usando la prueba gratuita (solo se muestra cuando usedTrial) -->
+    <div id="trial-notice" class="hidden mb-6 p-4 rounded-xl bg-wine-dark/30 border border-wine/40 flex items-start gap-3">
+      <p class="text-nude text-sm flex-1">Estás usando tu <strong>prueba gratuita</strong>. Disfrutá esta ronda. Para seguir jugando después, <a href="precios.html#empezar" class="text-wine-light underline hover:no-underline">suscribite</a>.</p>
+      <button type="button" data-trial-notice-cerrar aria-label="Cerrar" class="flex-shrink-0 text-nude-muted hover:text-nude p-1">✕</button>
+    </div>
     <p class="text-wine text-xs sm:text-sm uppercase tracking-[0.2em] mb-2">Experiencia 1</p>
     <h1 class="font-display text-2xl sm:text-3xl md:text-4xl text-nude mb-4">Conexión profunda</h1>
     <p class="text-nude-muted text-sm sm:text-base mb-8 sm:mb-10">Preguntas para hablar con honestidad. Elegí el nivel y tomá turnos para responder.</p>
@@ -93,5 +98,6 @@
   <script src="js/datos-juegos.js"></script>
   <script src="js/game-gate.js"></script>
   <script src="js/juego-conexion.js"></script>
+  <script>(function(){ var b = document.getElementById('btn-volver'); if (b) b.addEventListener('click', function(){ history.back(); }); })();</script>
 </body>
 </html>
