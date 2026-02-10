@@ -6,9 +6,18 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
 
+const CORS_HEADERS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Authorization, Content-Type, apikey, x-client-info",
+};
+
 Deno.serve(async (req: Request) => {
+  if (req.method === "OPTIONS") {
+    return new Response(null, { status: 204, headers: CORS_HEADERS });
+  }
   const authHeader = req.headers.get("Authorization");
-  const CORS = { "Access-Control-Allow-Origin": "*" };
+  const CORS = { ...CORS_HEADERS };
   if (!authHeader?.startsWith("Bearer ")) {
     return new Response(
       JSON.stringify({ allowed: false, error: "missing_auth" }),
