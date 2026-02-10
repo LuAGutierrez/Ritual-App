@@ -36,10 +36,13 @@ Deno.serve(async (req: Request) => {
   const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
     global: { headers: { Authorization: authHeader } },
   });
-  const token = authHeader.replace(/^Bearer\s*/i, "").trim();
-  const { data: { user }, error: userError } = await supabase.auth.getUser(token);
+  const { data: { user }, error: userError } = await supabase.auth.getUser();
   if (userError || !user) {
-    return new Response(JSON.stringify({ error: "invalid_session" }), { status: 200, headers: { "Content-Type": "application/json", ...CORS_HEADERS } });
+    const errMsg = userError?.message || "invalid_session";
+    return new Response(
+      JSON.stringify({ error: "invalid_session", details: errMsg }),
+      { status: 200, headers: { "Content-Type": "application/json", ...CORS_HEADERS } }
+    );
   }
 
   const userId = user.id;
