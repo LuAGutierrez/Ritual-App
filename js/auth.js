@@ -107,7 +107,11 @@
         if (!session || !session.access_token) {
           return { error: 'invalid_session' };
         }
-        var headers = { Authorization: 'Bearer ' + session.access_token };
+        var anonKey = (window.RitualSupabase && window.RitualSupabase.anonKey) || '';
+        var headers = {
+          'Authorization': 'Bearer ' + session.access_token,
+          'apikey': anonKey
+        };
         return client.functions.invoke('create-mp-subscription', { method: 'POST', body: {}, headers: headers });
       }).then(function(res) {
         if (res && res.error && !res.data) {
