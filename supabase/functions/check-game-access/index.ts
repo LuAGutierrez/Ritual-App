@@ -8,10 +8,11 @@ const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
 
 Deno.serve(async (req: Request) => {
   const authHeader = req.headers.get("Authorization");
+  const CORS = { "Access-Control-Allow-Origin": "*" };
   if (!authHeader?.startsWith("Bearer ")) {
     return new Response(
       JSON.stringify({ allowed: false, error: "missing_auth" }),
-      { status: 401, headers: { "Content-Type": "application/json" } }
+      { status: 200, headers: { "Content-Type": "application/json", ...CORS } }
     );
   }
 
@@ -19,12 +20,11 @@ Deno.serve(async (req: Request) => {
     global: { headers: { Authorization: authHeader } },
   });
 
-  const token = authHeader.replace(/^Bearer\s*/i, "").trim();
-  const { data: { user }, error: userError } = await supabase.auth.getUser(token);
+  const { data: { user }, error: userError } = await supabase.auth.getUser();
   if (userError || !user) {
     return new Response(
       JSON.stringify({ allowed: false, error: "invalid_session" }),
-      { status: 401, headers: { "Content-Type": "application/json" } }
+      { status: 200, headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" } }
     );
   }
 
@@ -40,7 +40,7 @@ Deno.serve(async (req: Request) => {
   if (sub?.id) {
     return new Response(
       JSON.stringify({ allowed: true, usedTrial: false }),
-      { headers: { "Content-Type": "application/json" } }
+      { status: 200, headers: { "Content-Type": "application/json", ...CORS } }
     );
   }
 
@@ -53,14 +53,14 @@ Deno.serve(async (req: Request) => {
   if (profileError || !profile) {
     return new Response(
       JSON.stringify({ allowed: false }),
-      { status: 200, headers: { "Content-Type": "application/json" } }
+      { status: 200, headers: { "Content-Type": "application/json", ...CORS } }
     );
   }
 
   if (profile.trial_used === true) {
     return new Response(
       JSON.stringify({ allowed: false }),
-      { status: 200, headers: { "Content-Type": "application/json" } }
+      { status: 200, headers: { "Content-Type": "application/json", ...CORS } }
     );
   }
 
@@ -71,6 +71,6 @@ Deno.serve(async (req: Request) => {
 
   return new Response(
     JSON.stringify({ allowed: true, usedTrial: true }),
-    { headers: { "Content-Type": "application/json" } }
+    { status: 200, headers: { "Content-Type": "application/json", ...CORS } }
   );
 });
