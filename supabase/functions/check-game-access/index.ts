@@ -1,6 +1,8 @@
+/// <reference path="../deno.d.ts" />
 // Ritual — Decide en el servidor si el usuario puede jugar (suscripción activa o prueba gratuita).
 // El cliente solo confía en esta respuesta; no hay bypass posible en el front.
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+// @ts-ignore — Deno resuelve npm: en runtime; el IDE no
 import { createClient } from "npm:@supabase/supabase-js@2";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
