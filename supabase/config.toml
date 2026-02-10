@@ -354,8 +354,11 @@ authorization_url_path = "/oauth/consent"
 # Allow dynamic client registration
 allow_dynamic_registration = false
 
-# La pasarela no verifica JWT; la función valida el usuario con auth.getUser() y el header Authorization.
+# La pasarela no verifica JWT; cada función valida el usuario con auth.getUser() y el header Authorization.
 [functions.create-mp-subscription]
+verify_jwt = false
+
+[functions.check-game-access]
 verify_jwt = false
 
 [edge_runtime]
