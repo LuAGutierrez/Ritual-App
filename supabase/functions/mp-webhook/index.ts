@@ -1,6 +1,6 @@
-// Ritual — Webhook de Mercado Pago para suscripciones.
-// MP envía POST con type (ej. subscription_preapproval) y data.id = preapproval id.
-// Si la suscripción está authorized, actualizamos/creamos la fila en subscriptions (service_role).
+// Ritual — Webhook de Mercado Pago: suscripciones (preapproval) y regalos (payment).
+// Suscripción: type subscription_preapproval, data.id = preapproval id.
+// Regalo: type payment, data.id = payment id → external_reference = gift id.
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 
@@ -16,26 +16,47 @@ Deno.serve(async (req: Request) => {
     return new Response(JSON.stringify({ ok: false }), { status: 500, headers: { "Content-Type": "application/json" } });
   }
 
-  let preapprovalId: string | null = null;
+  let body: { type?: string; data?: { id?: string } };
   try {
-    const body = await req.json();
-    const type = body?.type || "";
-    if (type === "subscription_preapproval" || type === "subscription_authorized_payment") {
-      preapprovalId = body?.data?.id ?? null;
-    }
-    if (!preapprovalId && body?.data?.id) preapprovalId = body.data.id;
+    body = await req.json();
   } catch {
     return new Response(JSON.stringify({ ok: false }), { status: 400, headers: { "Content-Type": "application/json" } });
   }
+  const type = body?.type || "";
+  const dataId = body?.data?.id ?? new URL(req.url).searchParams.get("data.id");
 
-  const urlParams = new URL(req.url).searchParams;
-  const dataIdParam = urlParams.get("data.id");
-  if (!preapprovalId && dataIdParam) preapprovalId = dataIdParam;
-
-  if (!preapprovalId) {
+  if (!dataId) {
     return new Response(JSON.stringify({ ok: true }), { status: 200, headers: { "Content-Type": "application/json" } });
   }
 
+  const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+  const now = new Date().toISOString();
+
+  // Regalo: pago único aprobado → marcar gift como paid
+  if (type === "payment") {
+    const payRes = await fetch(`https://api.mercadopago.com/v1/payments/${dataId}`, {
+      headers: { "Authorization": `Bearer ${MP_ACCESS_TOKEN}` },
+    });
+    const payment = await payRes.json().catch(() => ({}));
+    if (payRes.ok && (payment.status === "approved" || payment.status === "authorized")) {
+      const giftId = payment.external_reference ?? null;
+      if (giftId) {
+        await supabase.from("gifts").update({
+          status: "paid",
+          mp_payment_id: dataId,
+          updated_at: now,
+        }).eq("id", giftId);
+      }
+    }
+    return new Response(JSON.stringify({ ok: true }), { status: 200, headers: { "Content-Type": "application/json" } });
+  }
+
+  // Suscripción recurrente
+  if (type !== "subscription_preapproval" && type !== "subscription_authorized_payment") {
+    return new Response(JSON.stringify({ ok: true }), { status: 200, headers: { "Content-Type": "application/json" } });
+  }
+
+  const preapprovalId = dataId;
   const mpRes = await fetch(`https://api.mercadopago.com/preapproval/${preapprovalId}`, {
     headers: { "Authorization": `Bearer ${MP_ACCESS_TOKEN}` },
   });
@@ -50,9 +71,6 @@ Deno.serve(async (req: Request) => {
   if (!userId) {
     return new Response(JSON.stringify({ ok: true }), { status: 200, headers: { "Content-Type": "application/json" } });
   }
-
-  const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-  const now = new Date().toISOString();
 
   if (status === "authorized") {
     const { error } = await supabase.from("subscriptions").upsert(
@@ -70,10 +88,8 @@ Deno.serve(async (req: Request) => {
     if (error) {
       console.error("mp-webhook upsert error", error);
     }
-  } else if (status === "cancelled" || status === "paused" || status === "pending") {
-    if (status === "cancelled" || status === "paused") {
-      await supabase.from("subscriptions").update({ status: "canceled", updated_at: now }).eq("mp_subscription_id", preapprovalId);
-    }
+  } else if (status === "cancelled" || status === "paused") {
+    await supabase.from("subscriptions").update({ status: "canceled", updated_at: now }).eq("mp_subscription_id", preapprovalId);
   }
 
   return new Response(JSON.stringify({ ok: true }), { status: 200, headers: { "Content-Type": "application/json" } });

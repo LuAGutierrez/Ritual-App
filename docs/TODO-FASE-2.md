@@ -36,7 +36,7 @@ Lista clara para la siguiente fase después del MVP.
 
 - [ ] Añadir más preguntas/retos por nivel (conexión, picante, elección) desde BD o JSON.
 - [ ] Panel interno (o script) para editar contenido sin tocar código.
-- [ ] "Regalar esta experiencia": flujo de pago + envío de enlace por email (Supabase Edge Function o backend mínimo).
+- [x] "Regalar esta experiencia": flujo de pago (MP Checkout Pro) + enlace para activar (tabla gifts, create-mp-gift, claim-gift, activar.html).
 
 ---
 
