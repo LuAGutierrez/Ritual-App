@@ -70,7 +70,7 @@
           btnSuscripcion.disabled = false;
           btnSuscripcion.textContent = 'Suscribirme';
           if (result.init_point) {
-            window.location.href = result.init_point;
+            window.open(result.init_point, '_blank');
           } else {
             var msg = result.error === 'mp_not_configured'
               ? 'Mercado Pago no está configurado aún.'
@@ -119,7 +119,7 @@
           window.RitualAuth.createMpGift(email).then(function(result) {
             if (btnRegaloPagar) { btnRegaloPagar.disabled = false; btnRegaloPagar.textContent = 'Pagar y generar enlace'; }
             if (result.init_point) {
-              window.location.href = result.init_point;
+              window.open(result.init_point, '_blank');
               return;
             }
             if (regaloError) {
