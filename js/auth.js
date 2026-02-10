@@ -33,9 +33,18 @@
     },
     getSession: function() {
       var client = getClient();
-      if (!client) return Promise.resolve(null);
-      return client.auth.getSession().then(function(_ref) {
-        return _ref.data.session;
+      if (client) {
+        return client.auth.getSession().then(function(_ref) {
+          return _ref.data.session;
+        });
+      }
+      // Si aún no hay cliente (p. ej. otra página recién cargó), inicializar y volver a intentar
+      var self = this;
+      return initClient().then(function(c) {
+        if (!c) return null;
+        return c.auth.getSession().then(function(_ref) {
+          return _ref.data.session;
+        });
       });
     },
     /** Devuelve Promise<boolean>: true si el usuario tiene suscripción active o trialing en la BD. */
