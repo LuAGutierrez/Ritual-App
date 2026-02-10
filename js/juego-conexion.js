@@ -21,6 +21,7 @@
     var nivelActual = 'suave';
     var listaBarajada = [];
     var indiceActual = 0;
+    var primeraRondaCompletada = false;
 
     var selectorNivel = document.getElementById('selector-nivel');
     var zonaPregunta = document.getElementById('zona-pregunta');
@@ -53,11 +54,20 @@
     }
 
     function mostrarRondaCompletada() {
+      primeraRondaCompletada = true;
       var n = listaBarajada.length;
       var nombreNivel = labels[nivelActual];
       zonaPregunta.classList.add('hidden');
       if (zonaRondaCompletada) zonaRondaCompletada.classList.remove('hidden');
       if (textoRondaCompletada) textoRondaCompletada.textContent = 'Completaste las ' + n + ' preguntas de ' + nombreNivel + '. ¿Otra ronda?';
+    }
+
+    function puedeNuevaRonda(cb) {
+      if (!primeraRondaCompletada) { cb(true); return; }
+      if (!window.RitualAuth) { cb(false); return; }
+      window.RitualAuth.checkGameAccess().then(function(r) {
+        cb(!!r && !!r.allowed);
+      }).catch(function() { cb(false); });
     }
 
     function siguiente() {
@@ -79,14 +89,22 @@
     selectorNivel.querySelectorAll('.nivel-btn').forEach(function(btn) {
       btn.addEventListener('click', function() {
         nivelActual = this.getAttribute('data-nivel');
-        iniciarRonda();
+        puedeNuevaRonda(function(ok) {
+          if (!ok && window.RitualShowPaywall) window.RitualShowPaywall();
+          else iniciarRonda();
+        });
       });
     });
 
     if (btnSiguiente) btnSiguiente.addEventListener('click', siguiente);
     if (btnAnterior) btnAnterior.addEventListener('click', anterior);
 
-    if (btnOtraRonda) btnOtraRonda.addEventListener('click', iniciarRonda);
+    if (btnOtraRonda) btnOtraRonda.addEventListener('click', function() {
+      puedeNuevaRonda(function(ok) {
+        if (!ok && window.RitualShowPaywall) window.RitualShowPaywall();
+        else iniciarRonda();
+      });
+    });
 
     if (btnCambiarNivel) btnCambiarNivel.addEventListener('click', function() {
       if (zonaRondaCompletada) zonaRondaCompletada.classList.add('hidden');
