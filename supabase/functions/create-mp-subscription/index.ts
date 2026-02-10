@@ -11,20 +11,26 @@ const backUrlWithParam = MP_BACK_URL.includes("?") ? MP_BACK_URL : `${MP_BACK_UR
 const MP_AMOUNT = parseFloat(Deno.env.get("MP_AMOUNT") || "2.99");
 const MP_CURRENCY_ID = Deno.env.get("MP_CURRENCY_ID") || "ARS";
 
+const CORS_HEADERS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Authorization, Content-Type",
+};
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Methods": "POST, OPTIONS", "Access-Control-Allow-Headers": "Authorization, Content-Type" } });
+    return new Response(null, { status: 204, headers: CORS_HEADERS });
   }
   if (req.method !== "POST") {
-    return new Response(JSON.stringify({ error: "method_not_allowed" }), { status: 405, headers: { "Content-Type": "application/json" } });
+    return new Response(JSON.stringify({ error: "method_not_allowed" }), { status: 405, headers: { "Content-Type": "application/json", ...CORS_HEADERS } });
   }
   if (!MP_ACCESS_TOKEN) {
-    return new Response(JSON.stringify({ error: "mp_not_configured" }), { status: 500, headers: { "Content-Type": "application/json" } });
+    return new Response(JSON.stringify({ error: "mp_not_configured" }), { status: 200, headers: { "Content-Type": "application/json", ...CORS_HEADERS } });
   }
 
   const authHeader = req.headers.get("Authorization");
   if (!authHeader?.startsWith("Bearer ")) {
-    return new Response(JSON.stringify({ error: "missing_auth" }), { status: 401, headers: { "Content-Type": "application/json" } });
+    return new Response(JSON.stringify({ error: "missing_auth" }), { status: 200, headers: { "Content-Type": "application/json", ...CORS_HEADERS } });
   }
 
   const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
@@ -33,13 +39,13 @@ Deno.serve(async (req: Request) => {
   const token = authHeader.replace(/^Bearer\s*/i, "").trim();
   const { data: { user }, error: userError } = await supabase.auth.getUser(token);
   if (userError || !user) {
-    return new Response(JSON.stringify({ error: "invalid_session" }), { status: 401, headers: { "Content-Type": "application/json" } });
+    return new Response(JSON.stringify({ error: "invalid_session" }), { status: 200, headers: { "Content-Type": "application/json", ...CORS_HEADERS } });
   }
 
   const userId = user.id;
   const payerEmail = user.email || "";
   if (!payerEmail) {
-    return new Response(JSON.stringify({ error: "user_email_required" }), { status: 400, headers: { "Content-Type": "application/json" } });
+    return new Response(JSON.stringify({ error: "user_email_required" }), { status: 200, headers: { "Content-Type": "application/json", ...CORS_HEADERS } });
   }
 
   const amount = Number.isFinite(MP_AMOUNT) && MP_AMOUNT > 0 ? MP_AMOUNT : 2.99;
@@ -68,22 +74,23 @@ Deno.serve(async (req: Request) => {
 
   const mpData = await mpRes.json().catch(() => ({}));
   if (!mpRes.ok) {
+    const details = mpData.message || mpData.error || mpRes.statusText || "unknown";
     return new Response(
-      JSON.stringify({ error: "mp_error", details: mpData.message || mpData.error || "unknown" }),
-      { status: 502, headers: { "Content-Type": "application/json" } }
+      JSON.stringify({ error: "mp_error", details: details }),
+      { status: 200, headers: { "Content-Type": "application/json", ...CORS_HEADERS } }
     );
   }
 
   const initPoint = mpData.init_point || mpData.sandbox_init_point;
   if (!initPoint) {
     return new Response(
-      JSON.stringify({ error: "no_init_point", details: mpData }),
-      { status: 502, headers: { "Content-Type": "application/json" } }
+      JSON.stringify({ error: "no_init_point", details: mpData.message || mpData.error || "MP no devolvió init_point" }),
+      { status: 200, headers: { "Content-Type": "application/json", ...CORS_HEADERS } }
     );
   }
 
   return new Response(
     JSON.stringify({ init_point: initPoint, subscription_id: mpData.id }),
-    { headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" } }
+    { status: 200, headers: { "Content-Type": "application/json", ...CORS_HEADERS } }
   );
 });

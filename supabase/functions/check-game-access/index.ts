@@ -39,7 +39,7 @@ Deno.serve(async (req: Request) => {
 
   if (sub?.id) {
     return new Response(
-      JSON.stringify({ allowed: true }),
+      JSON.stringify({ allowed: true, usedTrial: false }),
       { headers: { "Content-Type": "application/json" } }
     );
   }
@@ -70,7 +70,7 @@ Deno.serve(async (req: Request) => {
     .eq("id", userId);
 
   return new Response(
-    JSON.stringify({ allowed: true }),
+    JSON.stringify({ allowed: true, usedTrial: true }),
     { headers: { "Content-Type": "application/json" } }
   );
 });

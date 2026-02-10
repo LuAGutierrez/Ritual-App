@@ -37,6 +37,7 @@
       if (result.allowed) {
         window.RitualGameAccess = true;
         showGame();
+        if (result.usedTrial) showTrialNotice();
         document.dispatchEvent(new CustomEvent('ritual-game-access-granted'));
       } else {
         window.RitualGameAccess = false;
@@ -60,6 +61,18 @@
     var content = document.getElementById('game-content');
     if (block) block.classList.add('hidden');
     if (content) content.classList.remove('hidden');
+  }
+
+  function showTrialNotice() {
+    var notice = document.getElementById('trial-notice');
+    if (!notice) return;
+    notice.classList.remove('hidden');
+    var btnCerrar = notice.querySelector('[data-trial-notice-cerrar]');
+    if (btnCerrar) {
+      btnCerrar.addEventListener('click', function() {
+        notice.classList.add('hidden');
+      }, { once: true });
+    }
   }
 
   if (document.readyState === 'loading') {

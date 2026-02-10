@@ -25,3 +25,4 @@ El objetivo de la app es **ser simple**. No añadir código de más ni granulaci
 - Código que se lee de arriba a abajo sin saltar entre muchos archivos.
 - Cambios que resuelven el problema con el mínimo impacto.
 - Mantener el stack actual (HTML, JS vanilla, Tailwind, Supabase) sin introducir capas innecesarias.
+- Nunca hacer mas de lo que te pidan. Si hace falta algo para que termine de funcionar bien, lo dices y preguntas si queremos agregarlo tambien

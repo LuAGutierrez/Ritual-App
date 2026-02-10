@@ -59,7 +59,13 @@
       if (!email || !password) { showError('Completá email y contraseña.'); return; }
       window.RitualAuth.signIn(email, password).then(function() {
         var params = new URLSearchParams(window.location.search);
-        window.location.href = params.get('redirect') || 'index.html';
+        var base = params.get('redirect') || 'index.html';
+        var url = base;
+        if (base.indexOf('exito.html') >= 0) {
+          var sep = base.indexOf('?') >= 0 ? '&' : '?';
+          url = base + sep + 'tipo=login';
+        }
+        window.location.href = url;
       }).catch(function(err) {
         showError(err.message || 'Error al iniciar sesión.');
       });
@@ -74,9 +80,15 @@
       if (password.length < 6) { showError('La contraseña debe tener al menos 6 caracteres.'); return; }
       window.RitualAuth.signUp(email, password).then(function() {
         var params = new URLSearchParams(window.location.search);
-        var redirect = params.get('redirect') || 'index.html';
-        if (redirect === 'index.html' && !params.get('redirect')) {
+        var base = params.get('redirect') || 'index.html';
+        var redirect;
+        if (base === 'index.html' && !params.get('redirect')) {
           redirect = 'index.html?registrado=1';
+        } else if (base.indexOf('exito.html') >= 0) {
+          var sep = base.indexOf('?') >= 0 ? '&' : '?';
+          redirect = base + sep + 'tipo=registro';
+        } else {
+          redirect = base;
         }
         window.location.href = redirect;
       }).catch(function(err) {

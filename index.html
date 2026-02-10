@@ -44,7 +44,15 @@
         <a href="#que-incluye" class="text-nude-muted hover:text-nude transition text-sm py-2">Qué incluye</a>
         <a href="precios.html" class="text-nude-muted hover:text-nude transition text-sm py-2">Precios</a>
         <a href="auth.html" id="nav-auth-link" class="text-nude-muted hover:text-nude transition text-sm py-2">Entrar</a>
-        <button type="button" id="nav-btn-logout" class="hidden text-nude-muted hover:text-nude transition text-sm py-2 bg-transparent border-none cursor-pointer font-inherit">Cerrar sesión</button>
+        <div id="nav-user-menu" class="hidden relative">
+          <button type="button" id="nav-btn-user" aria-label="Mi cuenta" aria-expanded="false" aria-haspopup="true" class="touch-target rounded-full p-2 text-nude-muted hover:text-nude hover:bg-white/5 transition">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+          </button>
+          <div id="nav-user-dropdown" class="hidden absolute right-0 top-full mt-2 py-3 px-4 min-w-[220px] rounded-xl bg-ink border border-white/10 shadow-lg z-50">
+            <p class="text-nude-muted text-sm truncate mb-2" id="nav-user-email" title=""></p>
+            <button type="button" id="nav-btn-logout" class="text-nude-muted hover:text-nude transition text-sm bg-transparent border-none cursor-pointer font-inherit w-full text-left py-1">Cerrar sesión</button>
+          </div>
+        </div>
         <a href="precios.html#empezar" class="rounded-full bg-wine px-5 py-2.5 text-sm font-medium text-nude hover:bg-wine-light transition">Empieza hoy</a>
       </div>
       <button type="button" id="btn-menu" aria-label="Abrir menú" class="md:hidden touch-target rounded-full p-2 text-nude hover:bg-white/5">
@@ -59,6 +67,7 @@
     <a href="#que-incluye" class="text-nude text-lg py-3 nav-link">Qué incluye</a>
     <a href="precios.html" class="text-nude text-lg py-3 nav-link">Precios</a>
     <a href="auth.html" id="nav-auth-link-mobile" class="text-nude text-lg py-3 nav-link">Entrar</a>
+    <p id="nav-user-email-mobile" class="hidden text-nude-muted text-sm text-center nav-link"></p>
     <button type="button" id="nav-btn-logout-mobile" class="hidden text-nude text-lg py-3 bg-transparent border-none cursor-pointer font-inherit nav-link">Cerrar sesión</button>
     <a href="precios.html#empezar" class="rounded-full bg-wine px-8 py-4 text-nude font-medium nav-link">Empieza hoy</a>
   </div>
@@ -145,18 +154,21 @@
       <div class="grid sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-8">
         <div class="p-6 sm:p-8 rounded-2xl bg-white/[0.03] border border-white/5 min-h-[120px]">
           <span class="text-wine text-sm uppercase tracking-wider">Experiencia 1</span>
-          <h3 class="font-display text-2xl text-nude mt-4 mb-3">Conexión profunda</h3>
+          <h3 class="font-display text-2xl text-nude mt-4 mb-3"><a href="juego-conexion.html" class="text-nude hover:text-wine-light transition">Conexión profunda</a></h3>
           <p class="text-nude-muted text-sm leading-relaxed">Preguntas íntimas y emocionales en tres niveles: suave, profundo y vulnerable. Para hablar con honestidad.</p>
+          <a href="juego-conexion.html" class="inline-block mt-4 text-wine-light hover:text-wine transition text-sm font-medium">Jugar →</a>
         </div>
         <div class="p-6 sm:p-8 rounded-2xl bg-white/[0.03] border border-white/5 min-h-[120px]">
           <span class="text-wine text-sm uppercase tracking-wider">Experiencia 2</span>
-          <h3 class="font-display text-2xl text-nude mt-4 mb-3">Picante progresivo</h3>
+          <h3 class="font-display text-2xl text-nude mt-4 mb-3"><a href="juego-picante.html" class="text-nude hover:text-wine-light transition">Picante progresivo</a></h3>
           <p class="text-nude-muted text-sm leading-relaxed">Retos sugerentes con consentimiento en el centro. Subís de nivel cuando ustedes lo decidan.</p>
+          <a href="juego-picante.html" class="inline-block mt-4 text-wine-light hover:text-wine transition text-sm font-medium">Jugar →</a>
         </div>
         <div class="p-6 sm:p-8 rounded-2xl bg-white/[0.03] border border-white/5 min-h-[120px]">
           <span class="text-wine text-sm uppercase tracking-wider">Experiencia 3</span>
-          <h3 class="font-display text-2xl text-nude mt-4 mb-3">Elección mutua</h3>
+          <h3 class="font-display text-2xl text-nude mt-4 mb-3"><a href="juego-eleccion.html" class="text-nude hover:text-wine-light transition">Elección mutua</a></h3>
           <p class="text-nude-muted text-sm leading-relaxed">Los dos elegís en secreto. Si coincidís, desbloquean una pregunta o reto especial. Complicidad pura.</p>
+          <a href="juego-eleccion.html" class="inline-block mt-4 text-wine-light hover:text-wine transition text-sm font-medium">Jugar →</a>
         </div>
       </div>
     </div>

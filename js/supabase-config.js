@@ -8,7 +8,7 @@
  * 4. Copiar "Project URL" → SUPABASE_URL
  * 5. Copiar la clave "anon" "public" → SUPABASE_ANON_KEY
  *
- * Ver SUPABASE-SETUP.md en la raíz del proyecto para más detalle.
+ * Ver docs/SUPABASE-SETUP.md para más detalle.
  */
 (function() {
   var SUPABASE_URL = 'https://recuvrrkejnuftdfzbyr.supabase.co';   // Project URL, ej: https://xxxxxxxx.supabase.co

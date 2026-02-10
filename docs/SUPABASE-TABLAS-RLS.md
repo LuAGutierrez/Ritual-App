@@ -43,7 +43,7 @@ Si no hay errores, las tablas y políticas quedan creadas.
 
 ### Tabla `game_progress` (opcional)
 
-- **Uso:** Guardar último nivel o pregunta por juego (para “seguir donde lo dejaron”).
+- **Uso:** Guardar último nivel o pregunta por juego (para "seguir donde lo dejaron").
 - **Campos:**  
   - `user_id`, `game_slug` ('conexion', 'picante', 'eleccion'), `level_slug`, `last_question_index`, `updated_at`
 - **Constraint:** Una fila por usuario y juego (`unique(user_id, game_slug)`).
