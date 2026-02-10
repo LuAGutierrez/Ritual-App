@@ -14,7 +14,7 @@ const MP_CURRENCY_ID = Deno.env.get("MP_CURRENCY_ID") || "ARS";
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Authorization, Content-Type",
+  "Access-Control-Allow-Headers": "Authorization, Content-Type, x-client-info, apikey",
 };
 
 Deno.serve(async (req: Request) => {

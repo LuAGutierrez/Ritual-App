@@ -102,12 +102,18 @@
     createMpSubscription: function() {
       var client = getClient();
       if (!client) return Promise.resolve({ error: 'no_client' });
+      var url = (window.RitualSupabase && window.RitualSupabase.url)
+        ? window.RitualSupabase.url + '/functions/v1/create-mp-subscription'
+        : '(no url)';
+      if (typeof console !== 'undefined' && console.log) console.log('[Ritual] Invoke URL:', url);
       return client.functions.invoke('create-mp-subscription', { method: 'POST', body: {} }).then(function(res) {
+        if (typeof console !== 'undefined' && console.log) console.log('[Ritual] Invoke res:', { error: res.error, data: res.data });
         var data = res.data || {};
         if (data.init_point) return { init_point: data.init_point };
         var err = data.error || (res.error && res.error.message) || 'no_init_point';
         return { error: err, details: data.details };
       }).catch(function(e) {
+        if (typeof console !== 'undefined' && console.log) console.log('[Ritual] Invoke catch:', e);
         return { error: e?.message || 'mp_error' };
       });
     },

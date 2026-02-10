@@ -62,8 +62,10 @@
           }
           btnSuscripcion.disabled = true;
           btnSuscripcion.textContent = 'Un momento…';
+          if (typeof console !== 'undefined' && console.log) console.log('[Ritual] Llamando a create-mp-subscription...');
           return window.RitualAuth.createMpSubscription();
         }).then(function(result) {
+          if (typeof console !== 'undefined' && console.log) console.log('[Ritual] Respuesta pago:', result);
           if (!result) return;
           btnSuscripcion.disabled = false;
           btnSuscripcion.textContent = 'Suscribirme';
