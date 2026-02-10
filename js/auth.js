@@ -108,7 +108,9 @@
         // #region agent log
         var session = refreshRes.data && refreshRes.data.session;
         var token = session && session.access_token;
-        fetch('http://127.0.0.1:7243/ingest/ed4bcd9f-c2f7-4e1f-9105-58f428ae696a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'auth.js:createMpSubscription',message:'after refreshSession',data:{refreshError:refreshRes.error?String(refreshRes.error.message||refreshRes.error):null,hasSession:!!session,hasAccessToken:!!token,tokenLength:token?token.length:0,usedKey:'access_token',url:config.url+'/functions/v1/create-mp-subscription'},timestamp:Date.now(),hypothesisId:'H1-H5'})}).catch(function(){});
+        var logPayload = {location:'auth.js:createMpSubscription',message:'after refreshSession',data:{refreshError:refreshRes.error?String(refreshRes.error.message||refreshRes.error):null,hasSession:!!session,hasAccessToken:!!token,tokenLength:token?token.length:0,usedKey:'access_token',url:config.url+'/functions/v1/create-mp-subscription'},timestamp:Date.now(),hypothesisId:'H1-H5'};
+        fetch('http://127.0.0.1:7243/ingest/ed4bcd9f-c2f7-4e1f-9105-58f428ae696a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(logPayload)}).catch(function(){});
+        if (typeof console !== 'undefined' && console.log) console.log('[Ritual debug]', logPayload);
         // #endregion
         if (refreshRes.error || !session || !session.access_token) {
           return Promise.resolve({ error: 'invalid_session' });
@@ -124,11 +126,15 @@
         if (response && response.error) return response;
         // #region agent log
         var isResp = response && typeof response.ok === 'boolean';
-        fetch('http://127.0.0.1:7243/ingest/ed4bcd9f-c2f7-4e1f-9105-58f428ae696a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'auth.js:createMpSubscription',message:'fetch response',data:{responseOk:isResp?response.ok:null,responseStatus:isResp?response.status:null},timestamp:Date.now(),hypothesisId:'H-response'})}).catch(function(){});
+        var respPayload = {location:'auth.js:createMpSubscription',message:'fetch response',data:{responseOk:isResp?response.ok:null,responseStatus:isResp?response.status:null},timestamp:Date.now(),hypothesisId:'H-response'};
+        fetch('http://127.0.0.1:7243/ingest/ed4bcd9f-c2f7-4e1f-9105-58f428ae696a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(respPayload)}).catch(function(){});
+        if (typeof console !== 'undefined' && console.log) console.log('[Ritual debug]', respPayload);
         // #endregion
         return response.json().then(function(data) {
           // #region agent log
-          fetch('http://127.0.0.1:7243/ingest/ed4bcd9f-c2f7-4e1f-9105-58f428ae696a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'auth.js:createMpSubscription',message:'response body',data:{dataError:data&&data.error,dataDetails:data&&data.details},timestamp:Date.now(),hypothesisId:'H-response'})}).catch(function(){});
+          var bodyPayload = {location:'auth.js:createMpSubscription',message:'response body',data:{dataError:data&&data.error,dataDetails:data&&data.details},timestamp:Date.now(),hypothesisId:'H-response'};
+          fetch('http://127.0.0.1:7243/ingest/ed4bcd9f-c2f7-4e1f-9105-58f428ae696a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(bodyPayload)}).catch(function(){});
+          if (typeof console !== 'undefined' && console.log) console.log('[Ritual debug]', bodyPayload);
           // #endregion
           if (!response.ok) {
             return { error: data && data.message ? data.message : 'request_failed', details: data };
