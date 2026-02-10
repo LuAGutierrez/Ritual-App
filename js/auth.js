@@ -79,18 +79,34 @@
     },
     /**
      * Decide en el servidor si el usuario puede jugar (suscripción o prueba).
-     * Devuelve Promise<{ allowed: boolean }>. No se puede bypassear desde el cliente.
+     * Devuelve Promise<{ allowed: boolean, usedTrial?: boolean }>. No se puede bypassear desde el cliente.
      */
     checkGameAccess: function() {
       var client = getClient();
-      if (!client) return Promise.resolve({ allowed: false, usedTrial: false });
-      return client.functions.invoke('check-game-access', { body: {} }).then(function(res) {
-        if (res.error) return { allowed: false, usedTrial: false };
-        var data = res.data;
-        return {
-          allowed: !!(data && data.allowed === true),
-          usedTrial: !!(data && data.usedTrial === true)
+      var config = window.RitualSupabase;
+      if (!client || !config || !config.url || !config.anonKey) return Promise.resolve({ allowed: false, usedTrial: false });
+      return client.auth.refreshSession().then(function(refreshRes) {
+        var session = refreshRes.data && refreshRes.data.session;
+        if (refreshRes.error || !session || !session.access_token) {
+          return Promise.resolve({ allowed: false, usedTrial: false });
+        }
+        var url = config.url + '/functions/v1/check-game-access';
+        var headers = {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + session.access_token,
+          'apikey': config.anonKey
         };
+        return fetch(url, { method: 'POST', headers: headers, body: '{}' });
+      }).then(function(response) {
+        if (!response || typeof response.json !== 'function') return { allowed: false, usedTrial: false };
+        return response.json().then(function(data) {
+          return {
+            allowed: !!(data && data.allowed === true),
+            usedTrial: !!(data && data.usedTrial === true)
+          };
+        }).catch(function() {
+          return { allowed: false, usedTrial: false };
+        });
       }).catch(function() {
         return { allowed: false, usedTrial: false };
       });
