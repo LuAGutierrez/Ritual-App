@@ -101,11 +101,13 @@
      */
     createMpSubscription: function() {
       var self = this;
+      var client = getClient();
       var config = window.RitualSupabase;
-      if (!config || !config.url || !config.anonKey) return Promise.resolve({ error: 'no_client' });
-      return self.getSession().then(function(session) {
-        if (!session || !session.access_token) {
-          return { error: 'invalid_session' };
+      if (!client || !config || !config.url || !config.anonKey) return Promise.resolve({ error: 'no_client' });
+      return client.auth.refreshSession().then(function(refreshRes) {
+        var session = refreshRes.data && refreshRes.data.session;
+        if (refreshRes.error || !session || !session.access_token) {
+          return Promise.resolve({ error: 'invalid_session' });
         }
         var url = config.url + '/functions/v1/create-mp-subscription';
         var headers = {
@@ -115,6 +117,7 @@
         };
         return fetch(url, { method: 'POST', headers: headers, body: '{}' });
       }).then(function(response) {
+        if (response && response.error) return response;
         return response.json().then(function(data) {
           if (!response.ok) {
             return { error: data && data.message ? data.message : 'request_failed', details: data };
