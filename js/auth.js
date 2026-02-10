@@ -100,21 +100,32 @@
      * Requiere sesión. Devuelve Promise<{ init_point: string } | { error: string }>.
      */
     createMpSubscription: function() {
+      var self = this;
       var client = getClient();
       if (!client) return Promise.resolve({ error: 'no_client' });
-      var url = (window.RitualSupabase && window.RitualSupabase.url)
-        ? window.RitualSupabase.url + '/functions/v1/create-mp-subscription'
-        : '(no url)';
-      if (typeof console !== 'undefined' && console.log) console.log('[Ritual] Invoke URL:', url);
-      return client.functions.invoke('create-mp-subscription', { method: 'POST', body: {} }).then(function(res) {
-        if (typeof console !== 'undefined' && console.log) console.log('[Ritual] Invoke res:', { error: res.error, data: res.data });
-        var data = res.data || {};
+      return self.getSession().then(function(session) {
+        if (!session || !session.access_token) {
+          return { error: 'invalid_session' };
+        }
+        var headers = { Authorization: 'Bearer ' + session.access_token };
+        return client.functions.invoke('create-mp-subscription', { method: 'POST', body: {}, headers: headers });
+      }).then(function(res) {
+        if (res && res.error && !res.data) {
+          var errMsg = res.error.message || res.error;
+          var is401 = (res.error.status === 401) || (typeof errMsg === 'string' && (errMsg.indexOf('401') >= 0 || errMsg.indexOf('Unauthorized') >= 0));
+          return { error: (res.error === 'invalid_session' || is401) ? 'invalid_session' : errMsg, details: res.details };
+        }
+        var data = (res && res.data) || {};
         if (data.init_point) return { init_point: data.init_point };
-        var err = data.error || (res.error && res.error.message) || 'no_init_point';
+        var err = data.error || (res && res.error && res.error.message) || 'no_init_point';
         return { error: err, details: data.details };
       }).catch(function(e) {
         if (typeof console !== 'undefined' && console.log) console.log('[Ritual] Invoke catch:', e);
-        return { error: e?.message || 'mp_error' };
+        var msg = e && e.message ? e.message : 'mp_error';
+        if (msg.indexOf('401') >= 0 || msg.indexOf('Unauthorized') >= 0) {
+          return { error: 'invalid_session' };
+        }
+        return { error: msg };
       });
     },
     signIn: function(email, password) {
