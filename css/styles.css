@@ -41,10 +41,14 @@ section {
   }
 }
 
-/* Menú móvil: overlay a pantalla completa */
+/* Menú móvil: oculto por defecto, visible solo con .is-open (evita que Tailwind lo muestre por conflicto flex/hidden) */
 #nav-mobile {
+  display: none;
   padding-top: env(safe-area-inset-top);
   padding-bottom: env(safe-area-inset-bottom);
+}
+#nav-mobile.is-open {
+  display: flex;
 }
 body.nav-open {
   overflow: hidden;
