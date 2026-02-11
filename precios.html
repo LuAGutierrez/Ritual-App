@@ -4,22 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Precios — Ritual</title>
+  <script src="js/head-config.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          colors: {
-            wine: { DEFAULT: '#722F37', dark: '#4a1c23', light: '#8B3A42' },
-            nude: { DEFAULT: '#E8D5C4', dark: '#D4A574', muted: '#C9B8A8' },
-            ink: '#0f0a0b',
-          },
-          fontFamily: { display: ['Cormorant Garamond', 'serif'], body: ['Outfit', 'sans-serif'] },
-        },
-      },
-    };
-  </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet" />
@@ -63,13 +49,13 @@
 
   <main class="pt-24 sm:pt-28 pb-16 sm:pb-24 px-4 sm:px-6 max-w-4xl mx-auto">
     <h1 class="font-display text-3xl sm:text-4xl md:text-5xl text-nude mb-4">Elegí cómo vivirlo</h1>
-    <p class="text-nude-muted text-base sm:text-lg mb-10 sm:mb-16">Probalo sin compromiso. Si os gusta, seguís por muy poco.</p>
+    <p class="text-nude-muted text-base sm:text-lg mb-10 sm:mb-16">Probalo sin compromiso. Si le gusta, sigan por muy poco al mes.</p>
 
     <!-- Prueba gratuita -->
     <div class="mb-8 sm:mb-12 p-6 sm:p-8 rounded-2xl bg-white/[0.03] border border-white/5">
       <span class="text-wine text-sm uppercase tracking-wider">Prueba gratuita</span>
       <h2 class="font-display text-2xl text-nude mt-2 mb-2">Un primer ritual gratis</h2>
-      <p class="text-nude-muted text-sm mb-6">Accedé a una ronda limitada de una experiencia a elección. Sin tarjeta. Para que veas si encaja con vosotros.</p>
+      <p class="text-nude-muted text-sm mb-6">Accedé a una ronda limitada de una experiencia a elección. Sin tarjeta. Para que veas si encaja con ustedes.</p>
       <a href="auth.html?redirect=exito.html" id="btn-prueba" class="inline-block touch-target rounded-full border border-nude-muted/40 px-6 py-3 min-h-[48px] text-nude hover:border-nude transition text-sm text-center no-underline">Probar gratis</a>
     </div>
 
@@ -78,7 +64,7 @@
       <span class="text-wine text-sm uppercase tracking-wider">Recomendado</span>
       <h2 class="font-display text-2xl text-nude mt-2 mb-1">Suscripción mensual</h2>
       <p class="text-3xl font-display text-nude mb-1"><span id="precio-mensual">2,99</span> €<span class="text-nude-muted text-base font-body font-normal">/mes</span></p>
-      <p class="text-nude-muted text-sm mb-6">Las tres experiencias, sin límite. Cancelás cuando quieras.</p>
+      <p class="text-nude-muted text-sm mb-6">Las tres experiencias, sin límite. Cancelen cuando quieran.</p>
       <button id="btn-suscripcion" class="touch-target rounded-full bg-wine px-8 py-4 min-h-[48px] text-nude font-medium hover:bg-wine-light transition">Suscribirme</button>
     </div>
 

@@ -3,15 +3,6 @@
  */
 (function() {
   function init() {
-    var btnLogout = document.getElementById('nav-btn-logout');
-    var btnLogoutMobile = document.getElementById('nav-btn-logout-mobile');
-    if (btnLogout) btnLogout.addEventListener('click', function() {
-      if (window.RitualAuth) window.RitualAuth.signOut();
-    });
-    if (btnLogoutMobile) btnLogoutMobile.addEventListener('click', function() {
-      if (window.RitualAuth) window.RitualAuth.signOut();
-    });
-
     // Mensaje "Cuenta creada" o "Sesión iniciada" tras registrarse / login
     var params = new URLSearchParams(window.location.search);
     var msgRegistrado = document.getElementById('msg-registrado');

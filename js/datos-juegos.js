@@ -2,6 +2,16 @@
  * Ritual — Datos de preguntas y retos para los 3 juegos
  */
 
+function shuffle(arr) {
+  var a = arr.slice();
+  for (var i = a.length - 1; i > 0; i--) {
+    var j = Math.floor(Math.random() * (i + 1));
+    var t = a[i]; a[i] = a[j]; a[j] = t;
+  }
+  return a;
+}
+window.RitualShuffle = shuffle;
+
 window.RitualDatos = {
   conexion: {
     suave: [
