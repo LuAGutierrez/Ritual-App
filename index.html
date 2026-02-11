@@ -43,8 +43,8 @@
       </button>
     </nav>
   </header>
-  <!-- Menú móvil -->
-  <div id="nav-mobile" class="fixed inset-0 z-40 bg-ink flex flex-col justify-center items-center gap-8 hidden">
+  <!-- Menú móvil (sin flex/hidden aquí: lo controla styles.css con .is-open para evitar que Tailwind lo muestre) -->
+  <div id="nav-mobile" class="fixed inset-0 z-40 bg-ink">
     <button type="button" id="btn-cerrar" aria-label="Cerrar menú" class="absolute top-4 right-4 touch-target rounded-full p-2 text-nude-muted hover:text-nude">✕</button>
     <a href="#como-funciona" class="text-nude text-lg py-3 nav-link">Cómo funciona</a>
     <a href="#que-incluye" class="text-nude text-lg py-3 nav-link">Qué incluye</a>
