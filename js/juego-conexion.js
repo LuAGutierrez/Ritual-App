@@ -3,15 +3,6 @@
  * Una ronda = todas las preguntas del nivel, en orden barajado. Tras la última, pantalla de cierre.
  */
 (function() {
-  function shuffle(arr) {
-    var a = arr.slice();
-    for (var i = a.length - 1; i > 0; i--) {
-      var j = Math.floor(Math.random() * (i + 1));
-      var t = a[i]; a[i] = a[j]; a[j] = t;
-    }
-    return a;
-  }
-
   function init() {
     if (window.RitualGameAccess === false) return;
     if (!window.RitualDatos || !window.RitualDatos.conexion) return;
@@ -48,7 +39,7 @@
     function iniciarRonda() {
       var list = datos[nivelActual];
       if (!list || !list.length) return;
-      listaBarajada = shuffle(list.slice());
+      listaBarajada = window.RitualShuffle(list.slice());
       indiceActual = 0;
       mostrarPregunta();
     }

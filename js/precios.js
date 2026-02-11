@@ -2,20 +2,32 @@
  * Ritual — Página de precios
  */
 (function() {
+  function mensajeErrorPago(result) {
+    if (!result || !result.error) return 'No se pudo abrir el pago. Intentá de nuevo.';
+    if (result.error === 'mp_not_configured') return 'Mercado Pago no está configurado aún.';
+    if (result.error === 'no_init_point') return 'Mercado Pago no devolvió el enlace de pago. Revisá que la cuenta y el plan estén correctos para suscripciones.';
+    if (result.error === 'invalid_session' || result.error === 'missing_auth') return 'La sesión expiró. Volvé a entrar y probá de nuevo.';
+    if (result.error.indexOf && result.error.indexOf('Failed to send') >= 0) return 'No se pudo conectar con el servidor de pago. Revisá: 1) Que la función create-mp-subscription esté desplegada en Supabase. 2) Que abras la web desde un servidor (no desde archivo local). 3) Que el proyecto Supabase no esté pausado.';
+    if (result.details) {
+      var d = result.details;
+      return 'No se pudo abrir el pago: ' + (typeof d === 'string' ? d : (d.message || d.error || result.error) || '');
+    }
+    return 'No se pudo abrir el pago. Intentá de nuevo. (' + result.error + ')';
+  }
+
+  function mensajeErrorRegalo(result) {
+    if (!result || !result.error) return 'No se pudo crear el pago. Intentá de nuevo.';
+    if (result.error === 'invalid_recipient_email') return 'Email no válido.';
+    if (result.error === 'mp_not_configured') return 'Mercado Pago no está configurado.';
+    return 'No se pudo crear el pago. Intentá de nuevo.';
+  }
+
   function init() {
-    var btnLogout = document.getElementById('nav-btn-logout');
-    var btnLogoutMobile = document.getElementById('nav-btn-logout-mobile');
+    var urlParams = new URLSearchParams(window.location.search);
     var btnPrueba = document.getElementById('btn-prueba');
     var btnSuscripcion = document.getElementById('btn-suscripcion');
     var btnRegalo = document.getElementById('btn-regalo');
     var paywallMsg = document.getElementById('paywall-msg');
-
-    if (btnLogout) btnLogout.addEventListener('click', function() {
-      if (window.RitualAuth) window.RitualAuth.signOut();
-    });
-    if (btnLogoutMobile) btnLogoutMobile.addEventListener('click', function() {
-      if (window.RitualAuth) window.RitualAuth.signOut();
-    });
 
     function showPaywallMsg() {
       if (paywallMsg) {
@@ -72,18 +84,7 @@
           if (result.init_point) {
             window.open(result.init_point, '_blank');
           } else {
-            var msg = result.error === 'mp_not_configured'
-              ? 'Mercado Pago no está configurado aún.'
-              : result.error === 'no_init_point'
-                ? 'Mercado Pago no devolvió el enlace de pago. Revisá que la cuenta y el plan estén correctos para suscripciones.'
-                : result.error === 'invalid_session' || result.error === 'missing_auth'
-                  ? 'La sesión expiró. Volvé a entrar y probá de nuevo.'
-                  : (result.error && result.error.indexOf('Failed to send') >= 0)
-                    ? 'No se pudo conectar con el servidor de pago. Revisá: 1) Que la función create-mp-subscription esté desplegada en Supabase. 2) Que abras la web desde un servidor (no desde archivo local). 3) Que el proyecto Supabase no esté pausado.'
-                    : result.details
-                      ? 'No se pudo abrir el pago: ' + (typeof result.details === 'string' ? result.details : (result.details.message || result.details.error || result.error))
-                      : 'No se pudo abrir el pago. Intentá de nuevo. (' + (result.error || 'error') + ')';
-            alert(msg);
+            alert(mensajeErrorPago(result));
           }
         }).catch(function() {
           if (btnSuscripcion) {
@@ -123,7 +124,7 @@
               return;
             }
             if (regaloError) {
-              regaloError.textContent = result.error === 'invalid_recipient_email' ? 'Email no válido.' : result.error === 'mp_not_configured' ? 'Mercado Pago no está configurado.' : 'No se pudo crear el pago. Intentá de nuevo.';
+              regaloError.textContent = mensajeErrorRegalo(result);
               regaloError.classList.remove('hidden');
             }
           });
@@ -132,7 +133,6 @@
     }
 
     // Vuelta de MP tras pagar un regalo: ?mp=gift&token=XXX
-    var urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('mp') === 'gift' && urlParams.get('token')) {
       var giftToken = urlParams.get('token');
       var giftResult = document.getElementById('gift-result');
@@ -175,8 +175,7 @@
       }
     }
 
-    // Mensaje de vuelta de Mercado Pago
-    var urlParams = new URLSearchParams(window.location.search);
+    // Mensaje de vuelta de Mercado Pago (suscripción)
     if (urlParams.get('mp') === 'success' && paywallMsg) {
       paywallMsg.classList.remove('hidden');
       paywallMsg.innerHTML = '<p class="text-nude mb-4">Gracias. Cuando el pago se acredite tendrás acceso a las tres experiencias.</p><p class="text-nude-muted text-sm mb-4">Si ya pagaste, entrá a:</p><p class="flex flex-wrap gap-3 justify-center"><a href="juego-conexion.html" class="text-wine-light underline text-sm">Conexión profunda</a><a href="juego-picante.html" class="text-wine-light underline text-sm">Picante progresivo</a><a href="juego-eleccion.html" class="text-wine-light underline text-sm">Elección mutua</a></p>';
