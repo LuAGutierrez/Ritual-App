@@ -94,11 +94,7 @@
       var client = getClient();
       var config = window.RitualSupabase;
       if (!client || !config || !config.url || !config.anonKey) return Promise.resolve({ allowed: false, usedTrial: false });
-      return client.auth.refreshSession().then(function(refreshRes) {
-        var session = refreshRes.data && refreshRes.data.session;
-        if (refreshRes.error || !session || !session.access_token) {
-          return Promise.resolve({ allowed: false, usedTrial: false });
-        }
+      function doFetch(session) {
         var url = config.url + '/functions/v1/check-game-access';
         var headers = {
           'Content-Type': 'application/json',
@@ -106,6 +102,15 @@
           'apikey': config.anonKey
         };
         return fetch(url, { method: 'POST', headers: headers, body: '{}' });
+      }
+      return client.auth.getSession().then(function(_ref) {
+        var session = _ref.data && _ref.data.session;
+        if (session && session.access_token) return doFetch(session);
+        return client.auth.refreshSession().then(function(refreshRes) {
+          var s = refreshRes.data && refreshRes.data.session;
+          if (refreshRes.error || !s || !s.access_token) return null;
+          return doFetch(s);
+        });
       }).then(function(response) {
         if (!response || typeof response.json !== 'function') return { allowed: false, usedTrial: false };
         return response.json().then(function(data) {
