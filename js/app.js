@@ -14,11 +14,11 @@
     if (!navMobile) return;
 
     function openNav() {
-      navMobile.classList.add('is-open');
+      navMobile.classList.remove('hidden');
       document.body.classList.add('nav-open');
     }
     function closeNav() {
-      navMobile.classList.remove('is-open');
+      navMobile.classList.add('hidden');
       document.body.classList.remove('nav-open');
     }
 
