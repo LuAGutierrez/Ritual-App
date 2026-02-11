@@ -4,8 +4,22 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Precios — Ritual</title>
-  <script src="js/head-config.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            wine: { DEFAULT: '#722F37', dark: '#4a1c23', light: '#8B3A42' },
+            nude: { DEFAULT: '#E8D5C4', dark: '#D4A574', muted: '#C9B8A8' },
+            ink: '#0f0a0b',
+          },
+          fontFamily: { display: ['Cormorant Garamond', 'serif'], body: ['Outfit', 'sans-serif'] },
+        },
+      },
+    };
+  </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet" />
@@ -36,7 +50,7 @@
       </button>
     </nav>
   </header>
-  <div id="nav-mobile" class="fixed inset-0 z-40 bg-ink">
+  <div id="nav-mobile" class="fixed inset-0 z-40 bg-ink flex flex-col justify-center items-center gap-8 hidden">
     <button type="button" id="btn-cerrar" aria-label="Cerrar menú" class="absolute top-4 right-4 touch-target rounded-full p-2 text-nude-muted hover:text-nude">✕</button>
     <a href="index.html#como-funciona" class="text-nude text-lg py-3 nav-link">Cómo funciona</a>
     <a href="precios.html#empezar" class="text-nude text-lg py-3 nav-link">Empezar</a>
@@ -64,7 +78,7 @@
       <span class="text-wine text-sm uppercase tracking-wider">Recomendado</span>
       <h2 class="font-display text-2xl text-nude mt-2 mb-1">Suscripción mensual</h2>
       <p class="text-3xl font-display text-nude mb-1"><span id="precio-mensual">2,99</span> €<span class="text-nude-muted text-base font-body font-normal">/mes</span></p>
-      <p class="text-nude-muted text-sm mb-6">Las tres experiencias, sin límite. Cancelen cuando quieran.</p>
+      <p class="text-nude-muted text-sm mb-6">Las tres experiencias, sin límite. Cancelás cuando quieras.</p>
       <button id="btn-suscripcion" class="touch-target rounded-full bg-wine px-8 py-4 min-h-[48px] text-nude font-medium hover:bg-wine-light transition">Suscribirme</button>
     </div>
 

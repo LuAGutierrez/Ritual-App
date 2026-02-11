@@ -41,18 +41,10 @@ section {
   }
 }
 
-/* Menú móvil: oculto por defecto. Sin clase .flex en el HTML para que Tailwind no inyecte display:flex. Abierto = .is-open */
+/* Menú móvil: overlay a pantalla completa */
 #nav-mobile {
-  display: none;
   padding-top: env(safe-area-inset-top);
   padding-bottom: env(safe-area-inset-bottom);
-}
-#nav-mobile.is-open {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  gap: 2rem;
 }
 body.nav-open {
   overflow: hidden;

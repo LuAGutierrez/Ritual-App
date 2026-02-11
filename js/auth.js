@@ -310,23 +310,6 @@
     }
   };
 
-  function setupLogoutButtons() {
-    var btnLogout = document.getElementById('nav-btn-logout');
-    var btnLogoutMobile = document.getElementById('nav-btn-logout-mobile');
-    if (btnLogout && !btnLogout._logoutSetup) {
-      btnLogout._logoutSetup = true;
-      btnLogout.addEventListener('click', function() {
-        if (window.RitualAuth) window.RitualAuth.signOut();
-      });
-    }
-    if (btnLogoutMobile && !btnLogoutMobile._logoutSetup) {
-      btnLogoutMobile._logoutSetup = true;
-      btnLogoutMobile.addEventListener('click', function() {
-        if (window.RitualAuth) window.RitualAuth.signOut();
-      });
-    }
-  }
-
   function setupUserDropdown() {
     var btnUser = document.getElementById('nav-btn-user');
     var dropdown = document.getElementById('nav-user-dropdown');
@@ -350,7 +333,6 @@
 
   function tryInit() {
     if (!window.RitualSupabase || !window.RitualSupabase.enabled || typeof window.supabase === 'undefined') return;
-    setupLogoutButtons();
     setupUserDropdown();
     RitualAuth.init().then(function() {
       setTimeout(function() {
