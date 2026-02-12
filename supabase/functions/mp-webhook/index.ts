@@ -1,6 +1,5 @@
-// Ritual — Webhook de Mercado Pago: suscripciones (preapproval) y regalos (payment).
+// Ritual — Webhook de Mercado Pago: suscripciones (preapproval).
 // Suscripción: type subscription_preapproval, data.id = preapproval id.
-// Regalo: type payment, data.id = payment id → external_reference = gift id.
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 
@@ -31,25 +30,6 @@ Deno.serve(async (req: Request) => {
 
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
   const now = new Date().toISOString();
-
-  // Regalo: pago único aprobado → marcar gift como paid
-  if (type === "payment") {
-    const payRes = await fetch(`https://api.mercadopago.com/v1/payments/${dataId}`, {
-      headers: { "Authorization": `Bearer ${MP_ACCESS_TOKEN}` },
-    });
-    const payment = await payRes.json().catch(() => ({}));
-    if (payRes.ok && (payment.status === "approved" || payment.status === "authorized")) {
-      const giftId = payment.external_reference ?? null;
-      if (giftId) {
-        await supabase.from("gifts").update({
-          status: "paid",
-          mp_payment_id: dataId,
-          updated_at: now,
-        }).eq("id", giftId);
-      }
-    }
-    return new Response(JSON.stringify({ ok: true }), { status: 200, headers: { "Content-Type": "application/json" } });
-  }
 
   // Suscripción recurrente
   if (type !== "subscription_preapproval" && type !== "subscription_authorized_payment") {

@@ -8,7 +8,7 @@ Web de experiencias en pareja para conectar (preguntas, retos, elección mutua).
 Parejas Juego/
 ├── index.html          # Landing: hero, beneficios, cómo funciona, qué incluye, CTA
 ├── auth.html           # Login / registro (email + contraseña)
-├── precios.html        # Precios: prueba gratis, suscripción, regalo (Mercado Pago)
+├── precios.html        # Precios: prueba gratis, suscripción (Mercado Pago)
 ├── juego-conexion.html # Experiencia 1: preguntas íntimas (suave / profundo / vulnerable)
 ├── juego-picante.html  # Experiencia 2: retos sugerentes por niveles
 ├── juego-eleccion.html # Experiencia 3: elección mutua → premio si coinciden

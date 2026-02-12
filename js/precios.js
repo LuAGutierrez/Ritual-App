@@ -15,20 +15,12 @@
     return 'No se pudo abrir el pago. Intentá de nuevo. (' + result.error + ')';
   }
 
-  function mensajeErrorRegalo(result) {
-    if (!result || !result.error) return 'No se pudo crear el pago. Intentá de nuevo.';
-    if (result.error === 'invalid_recipient_email') return 'Email no válido.';
-    if (result.error === 'mp_not_configured') return 'Mercado Pago no está configurado.';
-    return 'No se pudo crear el pago. Intentá de nuevo.';
-  }
-
   function init() {
     var urlParams = new URLSearchParams(window.location.search);
     var btnLogout = document.getElementById('nav-btn-logout');
     var btnLogoutMobile = document.getElementById('nav-btn-logout-mobile');
     var btnPrueba = document.getElementById('btn-prueba');
     var btnSuscripcion = document.getElementById('btn-suscripcion');
-    var btnRegalo = document.getElementById('btn-regalo');
     var paywallMsg = document.getElementById('paywall-msg');
 
     if (btnLogout) btnLogout.addEventListener('click', function() {
@@ -103,85 +95,6 @@
           showPaywallMsg();
         });
       });
-    }
-    if (btnRegalo) {
-      var modalRegalo = document.getElementById('modal-regalo');
-      var formRegalo = document.getElementById('form-regalo');
-      var regaloEmail = document.getElementById('regalo-email');
-      var regaloError = document.getElementById('regalo-error');
-      var btnRegaloCerrar = document.getElementById('btn-regalo-cerrar');
-      var btnRegaloPagar = document.getElementById('btn-regalo-pagar');
-      btnRegalo.addEventListener('click', function() {
-        if (modalRegalo) {
-          modalRegalo.classList.remove('hidden');
-          if (regaloEmail) regaloEmail.value = '';
-          if (regaloError) { regaloError.classList.add('hidden'); regaloError.textContent = ''; }
-        }
-      });
-      if (btnRegaloCerrar && modalRegalo) btnRegaloCerrar.addEventListener('click', function() { modalRegalo.classList.add('hidden'); });
-      if (formRegalo && window.RitualAuth) {
-        formRegalo.addEventListener('submit', function(e) {
-          e.preventDefault();
-          var email = regaloEmail ? regaloEmail.value.trim() : '';
-          if (!email) return;
-          if (regaloError) { regaloError.classList.add('hidden'); regaloError.textContent = ''; }
-          if (btnRegaloPagar) { btnRegaloPagar.disabled = true; btnRegaloPagar.textContent = 'Un momento…'; }
-          window.RitualAuth.createMpGift(email).then(function(result) {
-            if (btnRegaloPagar) { btnRegaloPagar.disabled = false; btnRegaloPagar.textContent = 'Pagar y generar enlace'; }
-            if (result.init_point) {
-              window.open(result.init_point, '_blank');
-              return;
-            }
-            if (regaloError) {
-              regaloError.textContent = mensajeErrorRegalo(result);
-              regaloError.classList.remove('hidden');
-            }
-          });
-        });
-      }
-    }
-
-    // Vuelta de MP tras pagar un regalo: ?mp=gift&token=XXX
-    if (urlParams.get('mp') === 'gift' && urlParams.get('token')) {
-      var giftToken = urlParams.get('token');
-      var giftResult = document.getElementById('gift-result');
-      var giftResultMsg = document.getElementById('gift-result-msg');
-      var giftResultLinkWrap = document.getElementById('gift-result-link-wrap');
-      var giftResultLink = document.getElementById('gift-result-link');
-      var giftResultCopy = document.getElementById('gift-result-copy');
-      if (giftResult && giftResultMsg) {
-        giftResult.classList.remove('hidden');
-        giftResult.scrollIntoView({ behavior: 'smooth' });
-        if (urlParams.get('failed') === '1') {
-          giftResultMsg.textContent = 'El pago no se completó. Podés intentar de nuevo desde "Regalar Ritual".';
-        } else {
-          function pollGift() {
-            if (!window.RitualAuth) return;
-            window.RitualAuth.getGiftStatus(giftToken).then(function(data) {
-              if (data.status === 'paid' && data.activar_link) {
-                giftResultMsg.textContent = 'Listo. Enviá este enlace a quien recibe el regalo:';
-                if (giftResultLinkWrap) giftResultLinkWrap.classList.remove('hidden');
-                if (giftResultLink) { giftResultLink.href = data.activar_link; giftResultLink.textContent = data.activar_link; }
-                if (giftResultCopy) {
-                  giftResultCopy.onclick = function() {
-                    if (navigator.clipboard && navigator.clipboard.writeText) {
-                      navigator.clipboard.writeText(data.activar_link);
-                      giftResultCopy.textContent = 'Copiado';
-                    }
-                  };
-                }
-                return;
-              }
-              if (data.status === 'claimed') {
-                giftResultMsg.textContent = 'Este regalo ya fue activado.';
-                return;
-              }
-              setTimeout(pollGift, 2500);
-            });
-          }
-          pollGift();
-        }
-      }
     }
 
     // Mensaje de vuelta de Mercado Pago (suscripción)
