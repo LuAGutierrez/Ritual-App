@@ -164,77 +164,7 @@
         return { error: msg };
       });
     },
-    /**
-     * Crea un regalo (pago único en MP). Body: { recipient_email }. Devuelve { init_point, token } o { error }.
-     * No requiere sesión (opcional para guardar quien compró).
-     */
-    createMpGift: function(recipientEmail) {
-      var client = getClient();
-      var config = window.RitualSupabase;
-      if (!client || !config || !config.url || !config.anonKey) return Promise.resolve({ error: 'no_client' });
-      var headers = { 'Content-Type': 'application/json', 'apikey': config.anonKey };
-      function doFetch(h) {
-        return fetch(config.url + '/functions/v1/create-mp-gift', {
-          method: 'POST',
-          headers: h,
-          body: JSON.stringify({ recipient_email: recipientEmail })
-        }).then(function(response) {
-          return response.json().then(function(data) {
-            if (!response.ok) return { error: (data && data.error) || 'request_failed' };
-            if (data && data.init_point) return { init_point: data.init_point, token: data.token };
-            return { error: (data && data.error) || 'no_init_point' };
-          }).catch(function() { return { error: 'invalid_response' }; });
-        }).catch(function(e) { return { error: e && e.message ? e.message : 'mp_error' }; });
-      }
-      return client.auth.getSession().then(function(_ref) {
-        var session = _ref.data && _ref.data.session;
-        if (session && session.access_token) headers['Authorization'] = 'Bearer ' + session.access_token;
-        return doFetch(headers);
-      });
-    },
-    /**
-     * Estado de un regalo por token. Devuelve Promise<{ status, activar_link? }>.
-     */
-    getGiftStatus: function(token) {
-      var config = window.RitualSupabase;
-      if (!config || !config.url || !config.anonKey) return Promise.resolve({ status: 'pending' });
-      return fetch(config.url + '/functions/v1/get-gift-status', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'apikey': config.anonKey },
-        body: JSON.stringify({ token: token })
-      }).then(function(response) {
-        return response.json().then(function(data) {
-          return { status: (data && data.status) || 'pending', activar_link: data && data.activar_link };
-        }).catch(function() { return { status: 'pending' }; });
-      }).catch(function() { return { status: 'pending' }; });
-    },
-    /**
-     * Reclama un regalo (usuario logueado). Devuelve Promise<{ success: true } | { error }>.
-     */
-    claimGift: function(token) {
-      var client = getClient();
-      var config = window.RitualSupabase;
-      if (!client || !config || !config.url || !config.anonKey) return Promise.resolve({ error: 'no_client' });
-      return client.auth.getSession().then(function(_ref) {
-        var session = _ref.data && _ref.data.session;
-        if (!session || !session.access_token) return Promise.resolve({ error: 'invalid_session' });
-        return fetch(config.url + '/functions/v1/claim-gift', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer ' + session.access_token,
-            'apikey': config.anonKey
-          },
-          body: JSON.stringify({ token: token })
-        });
-      }).then(function(response) {
-        if (typeof response === 'object' && response.error) return response;
-        return response.json().then(function(data) {
-          if (data && data.success) return { success: true };
-          return { error: (data && data.error) || 'claim_failed' };
-        }).catch(function() { return { error: 'invalid_response' }; });
-      }).catch(function() { return { error: 'mp_error' }; });
-    },
+
     signIn: function(email, password) {
       var client = getClient();
       if (!client) return Promise.reject(new Error('Supabase no está configurado.'));

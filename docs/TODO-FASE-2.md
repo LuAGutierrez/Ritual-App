@@ -9,7 +9,6 @@ Lista clara para la siguiente fase después del MVP.
 - [ ] Integrar **Stripe** (Checkout o Payment Element) para:
   - Prueba gratuita (si aplica)
   - Suscripción mensual recurrente
-  - Regalo (pago único + enlace de activación)
 - [ ] Poner `Ritual.bypassPaywall = false` y conectar el paywall a suscripción activa en BD.
 - [ ] Guardar en Supabase: `subscriptions` (user_id, plan, stripe_subscription_id, status, ends_at).
 
@@ -36,7 +35,6 @@ Lista clara para la siguiente fase después del MVP.
 
 - [ ] Añadir más preguntas/retos por nivel (conexión, picante, elección) desde BD o JSON.
 - [ ] Panel interno (o script) para editar contenido sin tocar código.
-- [x] "Regalar esta experiencia": flujo de pago (MP Checkout Pro) + enlace para activar (tabla gifts, create-mp-gift, claim-gift, activar.html).
 
 ---
 

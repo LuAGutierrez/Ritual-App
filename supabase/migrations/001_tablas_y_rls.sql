@@ -44,7 +44,7 @@ create policy "Usuarios actualizan su propio perfil"
 create table if not exists public.subscriptions (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users(id) on delete cascade,
-  plan text not null default 'monthly',  -- 'monthly', 'gift', 'trial'
+  plan text not null default 'monthly',  -- 'monthly', 'trial'
   stripe_customer_id text,
   stripe_subscription_id text,
   status text not null default 'active', -- 'active', 'canceled', 'past_due', 'trialing'
