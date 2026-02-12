@@ -6,9 +6,9 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
 const MP_ACCESS_TOKEN = Deno.env.get("MP_ACCESS_TOKEN");
-const MP_BACK_URL = Deno.env.get("MP_BACK_URL") || "https://tudominio.com/precios.html";
+const MP_BACK_URL = Deno.env.get("MP_BACK_URL") || "https://rituales.vercel.app/precios.html";
 const backUrlWithParam = MP_BACK_URL.includes("?") ? MP_BACK_URL : `${MP_BACK_URL}?mp=success`;
-const MP_AMOUNT = parseFloat(Deno.env.get("MP_AMOUNT") || "2.99");
+const MP_AMOUNT = parseFloat(Deno.env.get("MP_AMOUNT") || "5000");
 const MP_CURRENCY_ID = Deno.env.get("MP_CURRENCY_ID") || "ARS";
 
 const CORS_HEADERS = {
