@@ -51,6 +51,51 @@
     if (tabLogin) tabLogin.addEventListener('click', function() { hideError(); showLogin(); });
     if (tabSignup) tabSignup.addEventListener('click', function() { hideError(); showSignup(); });
 
+    function mostrarMensajeConfirmarEmail(emailParaReenviar) {
+      var successMsg = document.getElementById('signup-success-msg');
+      if (!successMsg) return;
+      successMsg.classList.remove('hidden');
+      if (formSignup) formSignup.classList.add('hidden');
+      if (formLogin) formLogin.classList.add('hidden');
+      if (tabLogin) tabLogin.style.display = 'none';
+      if (tabSignup) tabSignup.style.display = 'none';
+      var inputEmail = document.getElementById('reenviar-email');
+      if (inputEmail && emailParaReenviar) inputEmail.value = emailParaReenviar;
+    }
+
+    // Al cargar: si vienen con pendingConfirm=1 (ej. desde index sin email confirmado), mostrar el mismo mensaje
+    var params = new URLSearchParams(window.location.search);
+    if (params.get('pendingConfirm') === '1') {
+      window.RitualAuth.getSession().then(function(session) {
+        var email = session && session.user && session.user.email ? session.user.email : '';
+        mostrarMensajeConfirmarEmail(email || undefined);
+      }).catch(function() {
+        mostrarMensajeConfirmarEmail();
+      });
+    }
+
+    // Reenviar correo de confirmación
+    var btnReenviar = document.getElementById('btn-reenviar-correo');
+    var reenviarOk = document.getElementById('reenviar-ok');
+    var reenviarError = document.getElementById('reenviar-error');
+    if (btnReenviar) {
+      btnReenviar.addEventListener('click', function() {
+        var inputEmail = document.getElementById('reenviar-email');
+        var email = inputEmail ? inputEmail.value.trim() : '';
+        if (!email) { if (reenviarError) { reenviarError.textContent = 'Ingresá tu email.'; reenviarError.classList.remove('hidden'); } return; }
+        if (reenviarOk) reenviarOk.classList.add('hidden');
+        if (reenviarError) reenviarError.classList.add('hidden');
+        btnReenviar.disabled = true;
+        window.RitualAuth.resendConfirmationEmail(email).then(function() {
+          if (reenviarOk) { reenviarOk.classList.remove('hidden'); reenviarOk.textContent = 'Correo reenviado. Revisá tu bandeja (y spam).'; }
+          btnReenviar.disabled = false;
+        }).catch(function(err) {
+          if (reenviarError) { reenviarError.textContent = err.message || 'No se pudo reenviar.'; reenviarError.classList.remove('hidden'); }
+          btnReenviar.disabled = false;
+        });
+      });
+    }
+
     formLogin.addEventListener('submit', function(e) {
       e.preventDefault();
       hideError();
@@ -96,14 +141,7 @@
         var session = data && data.session;
         var emailConfirmed = !!(user && user.email_confirmed_at);
         if (!session || !emailConfirmed) {
-          var successMsg = document.getElementById('signup-success-msg');
-          if (successMsg) {
-            successMsg.classList.remove('hidden');
-            if (formSignup) formSignup.classList.add('hidden');
-            if (formLogin) formLogin.classList.add('hidden');
-            if (tabLogin) tabLogin.style.display = 'none';
-            if (tabSignup) tabSignup.style.display = 'none';
-          }
+          mostrarMensajeConfirmarEmail(email);
           if (btn) { btn.disabled = false; btn.textContent = 'Crear cuenta'; }
           if (session && window.RitualAuth.signOutSilent) {
             window.RitualAuth.signOutSilent();
