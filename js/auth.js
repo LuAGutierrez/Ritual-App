@@ -38,12 +38,33 @@
           return _ref.data.session;
         });
       }
-      // Si aún no hay cliente (p. ej. otra página recién cargó), inicializar y volver a intentar
       var self = this;
       return initClient().then(function(c) {
         if (!c) return null;
         return c.auth.getSession().then(function(_ref) {
           return _ref.data.session;
+        });
+      });
+    },
+    /**
+     * Sesión validada con el servidor (refresh). Si el usuario fue borrado en Supabase, devuelve null y hace signOut.
+     * Usar esto antes de confiar en la sesión para contenido protegido.
+     */
+    getSessionValidated: function() {
+      var self = this;
+      return initClient().then(function(client) {
+        if (!client) return null;
+        return client.auth.getSession().then(function(_ref) {
+          var session = _ref.data && _ref.data.session;
+          if (!session) return null;
+          return client.auth.refreshSession().then(function(refresh) {
+            if (refresh.error || !refresh.data.session) {
+              return client.auth.signOut().then(function() { return null; });
+            }
+            return refresh.data.session;
+          }).catch(function() {
+            return client.auth.signOut().then(function() { return null; });
+          });
         });
       });
     },
@@ -116,7 +137,8 @@
         return response.json().then(function(data) {
           return {
             allowed: !!(data && data.allowed === true),
-            usedTrial: !!(data && data.usedTrial === true)
+            usedTrial: !!(data && data.usedTrial === true),
+            needsEmailConfirmation: !!(data && data.needsEmailConfirmation === true)
           };
         }).catch(function() {
           return { allowed: false, usedTrial: false };
