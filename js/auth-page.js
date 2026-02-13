@@ -95,7 +95,18 @@
         return window.RitualAuth.init().then(function() {
           return window.RitualAuth.getSession();
         }).then(function(session) {
-          if (!session) return Promise.reject(new Error('Cuenta creada pero no se pudo iniciar sesión. Revisá tu correo si pedimos confirmación.'));
+          if (!session) {
+            var successMsg = document.getElementById('signup-success-msg');
+            if (successMsg) {
+              successMsg.classList.remove('hidden');
+              if (formSignup) formSignup.classList.add('hidden');
+              if (formLogin) formLogin.classList.add('hidden');
+              if (tabLogin) tabLogin.style.display = 'none';
+              if (tabSignup) tabSignup.style.display = 'none';
+            }
+            if (btn) { btn.disabled = false; btn.textContent = 'Crear cuenta'; }
+            return;
+          }
           var params = new URLSearchParams(window.location.search);
           var base = params.get('redirect') || 'index.html';
           var redirect;

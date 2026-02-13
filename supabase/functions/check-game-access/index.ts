@@ -39,6 +39,13 @@ Deno.serve(async (req: Request) => {
     );
   }
 
+  if (!user.email_confirmed_at) {
+    return new Response(
+      JSON.stringify({ allowed: false, needsEmailConfirmation: true }),
+      { status: 200, headers: { "Content-Type": "application/json", ...CORS } }
+    );
+  }
+
   const userId = user.id;
 
   const { data: sub } = await supabase
