@@ -12,29 +12,31 @@
       if (window.RitualAuth) window.RitualAuth.signOut();
     });
 
-    // Mensaje "Cuenta creada" o "Sesión iniciada" tras registrarse / login
+    // Bienvenida marketinera tras registrarse
     var params = new URLSearchParams(window.location.search);
-    var msgRegistrado = document.getElementById('msg-registrado');
-    var msgSpan = msgRegistrado ? msgRegistrado.querySelector('span') : null;
-    var btnCerrarMsg = document.getElementById('msg-registrado-cerrar');
-    var showMsg = false;
-    if (params.get('registrado') === '1' && msgRegistrado) {
-      if (msgSpan) msgSpan.textContent = 'Cuenta creada. Bienvenido a Ritual.';
-      showMsg = true;
-    } else if (params.get('login') === '1' && msgRegistrado) {
-      if (msgSpan) msgSpan.textContent = 'Sesión iniciada.';
-      showMsg = true;
+    var welcomeRegistrado = document.getElementById('welcome-registrado');
+    var btnCerrarWelcome = document.getElementById('welcome-registrado-cerrar');
+    if (params.get('registrado') === '1' && welcomeRegistrado) {
+      welcomeRegistrado.classList.remove('hidden');
+      if (history.replaceState) history.replaceState({}, '', window.location.pathname || 'index.html');
+      function cerrarWelcome() {
+        welcomeRegistrado.classList.add('hidden');
+      }
+      if (btnCerrarWelcome) btnCerrarWelcome.addEventListener('click', cerrarWelcome);
+      welcomeRegistrado.addEventListener('click', function(e) {
+        if (e.target === welcomeRegistrado) cerrarWelcome();
+      });
     }
-    if (showMsg && msgRegistrado) {
-      msgRegistrado.classList.remove('hidden');
-      if (history.replaceState) {
-        history.replaceState({}, '', window.location.pathname || 'index.html');
-      }
-      function cerrarMsg() {
-        msgRegistrado.classList.add('hidden');
-      }
-      if (btnCerrarMsg) btnCerrarMsg.addEventListener('click', cerrarMsg);
-      setTimeout(cerrarMsg, 5000);
+
+    // Toast breve solo para "sesión iniciada" (login)
+    var msgLogin = document.getElementById('msg-login');
+    var btnCerrarLogin = document.getElementById('msg-login-cerrar');
+    if (params.get('login') === '1' && msgLogin) {
+      msgLogin.classList.remove('hidden');
+      if (history.replaceState) history.replaceState({}, '', window.location.pathname || 'index.html');
+      function cerrarLogin() { msgLogin.classList.add('hidden'); }
+      if (btnCerrarLogin) btnCerrarLogin.addEventListener('click', cerrarLogin);
+      setTimeout(cerrarLogin, 4000);
     }
   }
   if (document.readyState === 'loading') {
