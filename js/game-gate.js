@@ -23,7 +23,7 @@
       return;
     }
     window.RitualAuth.init().then(function() {
-      return window.RitualAuth.getSession();
+      return window.RitualAuth.getSessionValidated();
     }).then(function(session) {
       if (!session) {
         var page = window.location.pathname.split('/').pop();
