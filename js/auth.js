@@ -200,6 +200,7 @@
       if (!client) return Promise.reject(new Error('Supabase no está configurado.'));
       return client.auth.signUp({ email: email, password: password }).then(function(res) {
         if (res.error) return Promise.reject(new Error(res.error.message || 'Error al crear la cuenta.'));
+        console.log('res.data', res.data);
         return res.data;
       });
     },
