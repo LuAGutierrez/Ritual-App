@@ -91,35 +91,37 @@
       if (password.length < 6) { showError('La contraseña debe tener al menos 6 caracteres.'); return; }
       var btn = document.getElementById('btn-signup');
       if (btn) { btn.disabled = true; btn.textContent = 'Creando cuenta…'; }
-      window.RitualAuth.signUp(email, password).then(function() {
-        return window.RitualAuth.init().then(function() {
-          return window.RitualAuth.getSession();
-        }).then(function(session) {
-          if (!session) {
-            var successMsg = document.getElementById('signup-success-msg');
-            if (successMsg) {
-              successMsg.classList.remove('hidden');
-              if (formSignup) formSignup.classList.add('hidden');
-              if (formLogin) formLogin.classList.add('hidden');
-              if (tabLogin) tabLogin.style.display = 'none';
-              if (tabSignup) tabSignup.style.display = 'none';
-            }
-            if (btn) { btn.disabled = false; btn.textContent = 'Crear cuenta'; }
-            return;
+      window.RitualAuth.signUp(email, password).then(function(data) {
+        var user = data && data.user;
+        var session = data && data.session;
+        var emailConfirmed = !!(user && user.email_confirmed_at);
+        if (!session || !emailConfirmed) {
+          var successMsg = document.getElementById('signup-success-msg');
+          if (successMsg) {
+            successMsg.classList.remove('hidden');
+            if (formSignup) formSignup.classList.add('hidden');
+            if (formLogin) formLogin.classList.add('hidden');
+            if (tabLogin) tabLogin.style.display = 'none';
+            if (tabSignup) tabSignup.style.display = 'none';
           }
-          var params = new URLSearchParams(window.location.search);
-          var base = params.get('redirect') || 'index.html';
-          var redirect;
-          if (base === 'index.html' && !params.get('redirect')) {
-            redirect = 'index.html?registrado=1';
-          } else if (base.indexOf('exito.html') >= 0) {
-            var sep = base.indexOf('?') >= 0 ? '&' : '?';
-            redirect = base + sep + 'tipo=registro';
-          } else {
-            redirect = base;
+          if (btn) { btn.disabled = false; btn.textContent = 'Crear cuenta'; }
+          if (session && window.RitualAuth.signOutSilent) {
+            window.RitualAuth.signOutSilent();
           }
-          window.location.href = redirect;
-        });
+          return;
+        }
+        var params = new URLSearchParams(window.location.search);
+        var base = params.get('redirect') || 'index.html';
+        var redirect;
+        if (base === 'index.html' && !params.get('redirect')) {
+          redirect = 'index.html?registrado=1';
+        } else if (base.indexOf('exito.html') >= 0) {
+          var sep = base.indexOf('?') >= 0 ? '&' : '?';
+          redirect = base + sep + 'tipo=registro';
+        } else {
+          redirect = base;
+        }
+        window.location.href = redirect;
       }).catch(function(err) {
         showError(err.message || 'Error al crear la cuenta.');
         if (btn) { btn.disabled = false; btn.textContent = 'Crear cuenta'; }
