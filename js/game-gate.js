@@ -31,20 +31,24 @@
         window.location.href = 'auth.html?redirect=' + encodeURIComponent(page);
         return;
       }
-      return window.RitualAuth.checkGameAccess();
-    }).then(function(result) {
-      if (!result) return;
-      if (result.allowed) {
-        window.RitualGameAccess = true;
-        window.RitualUsedTrial = !!result.usedTrial;
-        window.RitualShowPaywall = showPaywall;
-        showGame();
-        if (result.usedTrial) showTrialNotice();
-        document.dispatchEvent(new CustomEvent('ritual-game-access-granted'));
-      } else {
+      // Mostrar juego en cuanto hay sesión; el cartel de prueba llega cuando responde el servidor.
+      window.RitualGameAccess = true;
+      window.RitualShowPaywall = showPaywall;
+      showGame();
+      document.dispatchEvent(new CustomEvent('ritual-game-access-granted'));
+      window.RitualAuth.checkGameAccess().then(function(result) {
+        if (!result) return;
+        if (result.allowed) {
+          window.RitualUsedTrial = !!result.usedTrial;
+          if (result.usedTrial) showTrialNotice();
+        } else {
+          window.RitualGameAccess = false;
+          showPaywall(result);
+        }
+      }).catch(function() {
         window.RitualGameAccess = false;
-        showPaywall(result);
-      }
+        showPaywall();
+      });
     }).catch(function() {
       window.RitualGameAccess = false;
       showPaywall();
