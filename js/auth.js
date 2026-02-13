@@ -216,6 +216,15 @@
       if (!client) return Promise.resolve();
       return client.auth.signOut();
     },
+    /** Reenvía el correo de confirmación al email indicado. */
+    resendConfirmationEmail: function(email) {
+      var client = getClient();
+      if (!client) return Promise.reject(new Error('Supabase no está configurado.'));
+      return client.auth.resend({ type: 'signup', email: email }).then(function(res) {
+        if (res.error) return Promise.reject(new Error(res.error.message || 'No se pudo reenviar.'));
+        return res.data;
+      });
+    },
     updateNavAuth: function() {
       var linkEntrar = document.getElementById('nav-auth-link');
       var linkEntrarMobile = document.getElementById('nav-auth-link-mobile');

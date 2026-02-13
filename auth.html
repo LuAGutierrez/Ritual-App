@@ -43,8 +43,15 @@
     </div>
 
     <div id="auth-error" class="hidden mb-6 p-4 rounded-xl bg-wine-dark/40 border border-wine/40 text-nude text-sm"></div>
-    <div id="signup-success-msg" class="hidden mb-6 p-4 rounded-xl border border-white/10 bg-white/[0.03] text-nude text-sm">
-      Revisá tu correo para activar la cuenta. Cuando hagas clic en el enlace que te enviamos, podrás iniciar sesión.
+    <div id="signup-success-msg" class="hidden mb-6 p-4 rounded-xl border border-wine/40 bg-wine-dark/20 text-nude text-sm">
+      <p class="mb-2">Revisá tu correo para activar la cuenta. Cuando hagas clic en el enlace que te enviamos, podrás iniciar sesión.</p>
+      <p class="text-nude-muted text-xs mb-2">Si no te llegó, revisá la carpeta de spam.</p>
+      <div class="flex flex-wrap items-center gap-2 mb-2">
+        <input type="email" id="reenviar-email" placeholder="tu@email.com" class="flex-1 min-w-[160px] rounded-lg bg-white/[0.06] border border-white/10 px-3 py-2 text-nude text-sm placeholder-nude-muted/60 focus:outline-none focus:border-wine/50" />
+        <button type="button" id="btn-reenviar-correo" class="rounded-full bg-wine/80 px-4 py-2 text-nude text-xs font-medium hover:bg-wine transition">Reenviar correo</button>
+      </div>
+      <p id="reenviar-ok" class="hidden text-green-400 text-xs">Correo reenviado. Revisá tu bandeja.</p>
+      <p id="reenviar-error" class="hidden text-red-300 text-xs"></p>
     </div>
 
     <!-- Form Iniciar sesión -->

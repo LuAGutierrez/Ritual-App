@@ -12,20 +12,31 @@
       if (window.RitualAuth) window.RitualAuth.signOut();
     });
 
-    // Bienvenida marketinera tras registrarse
+    // Bienvenida marketinera tras registrarse (solo si el email ya está confirmado)
     var params = new URLSearchParams(window.location.search);
     var welcomeRegistrado = document.getElementById('welcome-registrado');
     var btnCerrarWelcome = document.getElementById('welcome-registrado-cerrar');
     if (params.get('registrado') === '1' && welcomeRegistrado) {
-      welcomeRegistrado.classList.remove('hidden');
-      if (history.replaceState) history.replaceState({}, '', window.location.pathname || 'index.html');
-      function cerrarWelcome() {
-        welcomeRegistrado.classList.add('hidden');
+      function mostrarBienvenida() {
+        welcomeRegistrado.classList.remove('hidden');
+        if (history.replaceState) history.replaceState({}, '', window.location.pathname || 'index.html');
+        function cerrarWelcome() { welcomeRegistrado.classList.add('hidden'); }
+        if (btnCerrarWelcome) btnCerrarWelcome.addEventListener('click', cerrarWelcome);
+        welcomeRegistrado.addEventListener('click', function(e) {
+          if (e.target === welcomeRegistrado) cerrarWelcome();
+        });
       }
-      if (btnCerrarWelcome) btnCerrarWelcome.addEventListener('click', cerrarWelcome);
-      welcomeRegistrado.addEventListener('click', function(e) {
-        if (e.target === welcomeRegistrado) cerrarWelcome();
-      });
+      if (window.RitualAuth) {
+        window.RitualAuth.getSession().then(function(session) {
+          if (!session || !session.user || !session.user.email_confirmed_at) {
+            window.location.href = 'auth.html?pendingConfirm=1';
+            return;
+          }
+          mostrarBienvenida();
+        }).catch(function() { mostrarBienvenida(); });
+      } else {
+        mostrarBienvenida();
+      }
     }
 
     // Toast breve solo para "sesión iniciada" (login)
