@@ -43,7 +43,7 @@
         document.dispatchEvent(new CustomEvent('ritual-game-access-granted'));
       } else {
         window.RitualGameAccess = false;
-        showPaywall();
+        showPaywall(result);
       }
     }).catch(function() {
       window.RitualGameAccess = false;
@@ -51,11 +51,17 @@
     });
   }
 
-  function showPaywall() {
+  function showPaywall(result) {
     var block = document.getElementById('paywall-block');
     var content = document.getElementById('game-content');
+    var desc = document.getElementById('paywall-block-desc');
     if (block) block.classList.remove('hidden');
     if (content) content.classList.add('hidden');
+    if (desc) {
+      desc.textContent = result && result.needsEmailConfirmation
+        ? 'Confirmá tu correo para acceder. Revisá el email que te enviamos al registrarte.'
+        : 'Para jugar necesitás una suscripción activa. Suscribite y accedé a las tres experiencias.';
+    }
   }
 
   function showGame() {

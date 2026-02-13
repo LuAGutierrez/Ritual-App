@@ -78,7 +78,9 @@
       if (resultadoNoCoinciden) resultadoNoCoinciden.classList.add('hidden');
       if (eleccion1 === eleccion2) {
         if (resultadoCoinciden) resultadoCoinciden.classList.remove('hidden');
-        if (textoPremio) textoPremio.textContent = premios[eleccion1];
+        var variantes = premios[eleccion1];
+        var premio = Array.isArray(variantes) ? variantes[Math.floor(Math.random() * variantes.length)] : variantes;
+        if (textoPremio) textoPremio.textContent = premio;
       } else {
         if (resultadoNoCoinciden) resultadoNoCoinciden.classList.remove('hidden');
       }
