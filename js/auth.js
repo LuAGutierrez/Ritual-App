@@ -210,6 +210,12 @@
         window.location.href = 'index.html';
       });
     },
+    /** Cierra sesión sin redirigir (para limpiar sesión parcial tras registro con confirmación de email). */
+    signOutSilent: function() {
+      var client = getClient();
+      if (!client) return Promise.resolve();
+      return client.auth.signOut();
+    },
     updateNavAuth: function() {
       var linkEntrar = document.getElementById('nav-auth-link');
       var linkEntrarMobile = document.getElementById('nav-auth-link-mobile');
