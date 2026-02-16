@@ -2,16 +2,23 @@
  * Ritual — Página de login/registro (auth.html)
  */
 (function() {
+  console.warn('auth-page.js cargado');
   function init() {
-    if (!window.RitualAuth) return;
-
+    console.warn('auth-page init');
+    if (!window.RitualAuth) {
+      console.warn('auth-page: RitualAuth no existe, saliendo');
+      return;
+    }
     var tabLogin = document.getElementById('tab-login');
     var tabSignup = document.getElementById('tab-signup');
     var formLogin = document.getElementById('form-login');
     var formSignup = document.getElementById('form-signup');
     var authError = document.getElementById('auth-error');
-
-    if (!formLogin || !formSignup) return;
+    if (!formLogin || !formSignup) {
+      console.warn('auth-page: formLogin o formSignup no encontrado, saliendo');
+      return;
+    }
+    console.warn('auth-page: forms ok, registrando listener de Crear cuenta');
 
     function showError(msg) {
       if (authError) {
@@ -129,23 +136,25 @@
 
     formSignup.addEventListener('submit', function(e) {
       e.preventDefault();
+      console.warn('formSignup submit (Crear cuenta)');
       hideError();
       var email = document.getElementById('signup-email').value.trim();
       var password = document.getElementById('signup-password').value;
-      if (!email || !password) { showError('Completá email y contraseña.'); return; }
-      if (password.length < 6) { showError('La contraseña debe tener al menos 6 caracteres.'); return; }
+      if (!email || !password) {
+        console.warn('formSignup: faltan email o contraseña');
+        showError('Completá email y contraseña.'); return;
+      }
+      if (password.length < 6) {
+        console.warn('formSignup: contraseña menor a 6');
+        showError('La contraseña debe tener al menos 6 caracteres.'); return;
+      }
       var btn = document.getElementById('btn-signup');
       if (btn) { btn.disabled = true; btn.textContent = 'Creando cuenta…'; }
       window.RitualAuth.signUp(email, password).then(function(data) {
-        var user = data && data.user;
         var session = data && data.session;
-        var emailConfirmed = !!(user && user.email_confirmed_at);
-        if (!session || !emailConfirmed) {
+        if (!session) {
           mostrarMensajeConfirmarEmail(email);
           if (btn) { btn.disabled = false; btn.textContent = 'Crear cuenta'; }
-          if (session && window.RitualAuth.signOutSilent) {
-            window.RitualAuth.signOutSilent();
-          }
           return;
         }
         var params = new URLSearchParams(window.location.search);
