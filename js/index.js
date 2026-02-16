@@ -12,7 +12,7 @@
       if (window.RitualAuth) window.RitualAuth.signOut();
     });
 
-    // Bienvenida marketinera tras registrarse (solo si el email ya está confirmado)
+    // Bienvenida marketinera tras registrarse (si hay sesión; sin confirmar = sin sesión en Supabase)
     var params = new URLSearchParams(window.location.search);
     var welcomeRegistrado = document.getElementById('welcome-registrado');
     var btnCerrarWelcome = document.getElementById('welcome-registrado-cerrar');
@@ -28,7 +28,7 @@
       }
       if (window.RitualAuth) {
         window.RitualAuth.getSession().then(function(session) {
-          if (!session || !session.user || !session.user.email_confirmed_at) {
+          if (!session) {
             window.location.href = 'auth.html?pendingConfirm=1';
             return;
           }

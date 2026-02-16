@@ -3,9 +3,11 @@
  * Crea el cliente, signIn, signUp, signOut y actualiza la nav según sesión.
  */
 (function() {
+  console.warn('auth.js cargado');
   var supabase = null;
 
   function getClient() {
+    console.warn('getClient()', supabase);
     return supabase || null;
   }
 
@@ -15,6 +17,7 @@
     if (typeof window.supabase === 'undefined' || !window.supabase.createClient) return Promise.resolve(null);
     var lib = window.supabase;
     supabase = lib.createClient(window.RitualSupabase.url, window.RitualSupabase.anonKey);
+    console.warn('initClient Supabase key (first 10):', window.RitualSupabase.anonKey?.slice(0,10));
     return Promise.resolve(supabase);
   }
 
@@ -200,7 +203,6 @@
       if (!client) return Promise.reject(new Error('Supabase no está configurado.'));
       return client.auth.signUp({ email: email, password: password }).then(function(res) {
         if (res.error) return Promise.reject(new Error(res.error.message || 'Error al crear la cuenta.'));
-        console.log('res.data', res.data);
         return res.data;
       });
     },
