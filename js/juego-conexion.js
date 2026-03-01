@@ -53,14 +53,6 @@
       if (textoRondaCompletada) textoRondaCompletada.textContent = 'Completaste las ' + n + ' preguntas de ' + nombreNivel + '. ¿Otra ronda?';
     }
 
-    function puedeNuevaRonda(cb) {
-      if (!primeraRondaCompletada) { cb(true); return; }
-      if (!window.RitualAuth) { cb(false); return; }
-      window.RitualAuth.checkGameAccess().then(function(r) {
-        cb(!!r && !!r.allowed);
-      }).catch(function() { cb(false); });
-    }
-
     function siguiente() {
       if (indiceActual + 1 >= listaBarajada.length) {
         mostrarRondaCompletada();
@@ -80,7 +72,7 @@
     selectorNivel.querySelectorAll('.nivel-btn').forEach(function(btn) {
       btn.addEventListener('click', function() {
         nivelActual = this.getAttribute('data-nivel');
-        puedeNuevaRonda(function(ok) {
+        window.Ritual.canPlayAnotherRound(primeraRondaCompletada, function(ok) {
           if (!ok && window.RitualShowPaywall) window.RitualShowPaywall();
           else iniciarRonda();
         });
@@ -91,7 +83,7 @@
     if (btnAnterior) btnAnterior.addEventListener('click', anterior);
 
     if (btnOtraRonda) btnOtraRonda.addEventListener('click', function() {
-      puedeNuevaRonda(function(ok) {
+      window.Ritual.canPlayAnotherRound(primeraRondaCompletada, function(ok) {
         if (!ok && window.RitualShowPaywall) window.RitualShowPaywall();
         else iniciarRonda();
       });
