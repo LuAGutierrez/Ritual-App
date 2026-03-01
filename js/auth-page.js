@@ -4,9 +4,17 @@
 (function() {
   console.warn('auth-page.js cargado');
   function init() {
-    console.warn('auth-page init');
-    if (!window.RitualAuth) {
-      console.warn('auth-page: RitualAuth no existe, saliendo');
+    if (!window.RitualAuth) return;
+    var noConfig = document.getElementById('auth-no-config');
+    if (noConfig && (!window.RitualSupabase || !window.RitualSupabase.enabled)) {
+      noConfig.classList.remove('hidden');
+      var tabLogin = document.getElementById('tab-login');
+      var tabSignup = document.getElementById('tab-signup');
+      var formLogin = document.getElementById('form-login');
+      var formSignup = document.getElementById('form-signup');
+      if (tabLogin && tabLogin.parentElement) tabLogin.parentElement.classList.add('hidden');
+      if (formLogin) formLogin.classList.add('hidden');
+      if (formSignup) formSignup.classList.add('hidden');
       return;
     }
     var tabLogin = document.getElementById('tab-login');
@@ -14,11 +22,7 @@
     var formLogin = document.getElementById('form-login');
     var formSignup = document.getElementById('form-signup');
     var authError = document.getElementById('auth-error');
-    if (!formLogin || !formSignup) {
-      console.warn('auth-page: formLogin o formSignup no encontrado, saliendo');
-      return;
-    }
-    console.warn('auth-page: forms ok, registrando listener de Crear cuenta');
+    if (!formLogin || !formSignup) return;
 
     function showError(msg) {
       if (authError) {

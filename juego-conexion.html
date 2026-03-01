@@ -48,6 +48,7 @@
       <p class="text-nude text-sm flex-1">Estás usando tu <strong>prueba gratuita</strong>. Disfrutá esta ronda. Para seguir jugando después, <a href="precios.html#empezar" class="text-wine-light underline hover:no-underline">suscribite</a>.</p>
       <button type="button" data-trial-notice-cerrar aria-label="Cerrar" class="flex-shrink-0 text-nude-muted hover:text-nude p-1">✕</button>
     </div>
+    <div id="sin-datos" class="hidden p-6 rounded-xl bg-wine-dark/30 border border-wine/40 text-center text-nude text-sm mb-6">No hay contenido disponible. <a href="elegir-juego.html" class="text-wine-light underline">Volver a experiencias</a></div>
     <p class="text-wine text-xs sm:text-sm uppercase tracking-[0.2em] mb-2">Experiencia 1</p>
     <h1 class="font-display text-2xl sm:text-3xl md:text-4xl text-nude mb-4">Conexión profunda</h1>
     <p class="text-nude-muted text-sm sm:text-base mb-8 sm:mb-10">Preguntas para hablar con honestidad. Elegí el nivel y tomá turnos para responder.</p>
@@ -98,6 +99,6 @@
   <script src="js/datos-juegos.js"></script>
   <script src="js/game-gate.js"></script>
   <script src="js/juego-conexion.js"></script>
-  <script>(function(){ var b = document.getElementById('btn-volver'); if (b) b.addEventListener('click', function(){ history.back(); }); })();</script>
+  <script>(function(){ var b = document.getElementById('btn-volver'); if (b) b.addEventListener('click', function(){ try { var r = document.referrer; if (!r || new URL(r).origin !== location.origin) { location.href = 'elegir-juego.html'; return; } } catch (e) {} history.back(); }); })();</script>
 </body>
 </html>

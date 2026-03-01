@@ -22,6 +22,19 @@
     var btnPrueba = document.getElementById('btn-prueba');
     var btnSuscripcion = document.getElementById('btn-suscripcion');
     var paywallMsg = document.getElementById('paywall-msg');
+    var noConfig = document.getElementById('precios-no-config');
+    if (noConfig && (!window.RitualSupabase || !window.RitualSupabase.enabled)) {
+      noConfig.classList.remove('hidden');
+      if (btnPrueba) {
+        btnPrueba.removeAttribute('href');
+        btnPrueba.style.pointerEvents = 'none';
+        btnPrueba.classList.add('opacity-60', 'cursor-not-allowed');
+      }
+      if (btnSuscripcion) btnSuscripcion.disabled = true;
+      if (btnLogout) btnLogout.addEventListener('click', function() { if (window.RitualAuth) window.RitualAuth.signOut(); });
+      if (btnLogoutMobile) btnLogoutMobile.addEventListener('click', function() { if (window.RitualAuth) window.RitualAuth.signOut(); });
+      return;
+    }
 
     if (btnLogout) btnLogout.addEventListener('click', function() {
       if (window.RitualAuth) window.RitualAuth.signOut();
@@ -66,19 +79,19 @@
           showPaywallMsg();
           return;
         }
+        btnSuscripcion.disabled = true;
+        btnSuscripcion.textContent = 'Un momento…';
         window.RitualAuth.init().then(function() {
           return window.RitualAuth.getSession();
         }).then(function(session) {
           if (!session) {
+            btnSuscripcion.disabled = false;
+            btnSuscripcion.textContent = 'Suscribirme';
             window.location.href = 'auth.html?redirect=' + encodeURIComponent('precios.html#empezar');
             return;
           }
-          btnSuscripcion.disabled = true;
-          btnSuscripcion.textContent = 'Un momento…';
-          if (typeof console !== 'undefined' && console.log) console.log('[Ritual] Llamando a create-mp-subscription...');
           return window.RitualAuth.createMpSubscription();
         }).then(function(result) {
-          if (typeof console !== 'undefined' && console.log) console.log('[Ritual] Respuesta pago:', result);
           if (!result) return;
           btnSuscripcion.disabled = false;
           btnSuscripcion.textContent = 'Suscribirme';

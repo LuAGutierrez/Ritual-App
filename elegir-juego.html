@@ -69,7 +69,13 @@
   <script>
     (function() {
       var btn = document.getElementById('btn-volver');
-      if (btn) btn.addEventListener('click', function() { history.back(); });
+      if (btn) btn.addEventListener('click', function() {
+        try {
+          var r = document.referrer;
+          if (!r || new URL(r).origin !== location.origin) { location.href = 'index.html'; return; }
+        } catch (e) {}
+        history.back();
+      });
     })();
   </script>
 </body>

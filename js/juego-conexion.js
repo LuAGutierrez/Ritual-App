@@ -5,7 +5,13 @@
 (function() {
   function init() {
     if (window.RitualGameAccess === false) return;
-    if (!window.RitualDatos || !window.RitualDatos.conexion) return;
+    if (!window.RitualDatos || !window.RitualDatos.conexion) {
+      var fallback = document.getElementById('sin-datos');
+      if (fallback) fallback.classList.remove('hidden');
+      var sel = document.getElementById('selector-nivel');
+      if (sel) sel.classList.add('hidden');
+      return;
+    }
 
     var datos = window.RitualDatos.conexion;
     var labels = { suave: 'Suave', profundo: 'Profundo', vulnerable: 'Vulnerable' };
