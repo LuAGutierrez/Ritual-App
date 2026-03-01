@@ -1,12 +1,13 @@
 /**
  * Ritual — Juego por niveles (preguntas o retos barajados por ronda).
  * Usado por Conexión profunda y Picante progresivo.
- * Opciones: dataKey, labels, nivelDefault, zonaContenidoId, textoContenidoId, itemLabel ('preguntas'|'retos').
+ * Opciones: dataKey, labels, nivelDefault, zonaContenidoId, textoContenidoId, itemLabel ('preguntas'|'retos'), maxPorRonda (opcional; si se pasa, se baraja la lista y se usan solo N por ronda).
  */
 (function() {
   function init(opts) {
     if (window.RitualGameAccess === false) return;
     var dataKey = opts.dataKey;
+    var maxPorRonda = opts.maxPorRonda;
     if (!window.RitualDatos || !window.RitualDatos[dataKey]) {
       var fallback = document.getElementById('sin-datos');
       if (fallback) fallback.classList.remove('hidden');
@@ -50,7 +51,9 @@
     function iniciarRonda() {
       var list = datos[nivelActual];
       if (!list || !list.length) return;
-      listaBarajada = window.RitualShuffle(list.slice());
+      var barajada = window.RitualShuffle(list.slice());
+      var tope = (maxPorRonda != null && maxPorRonda > 0) ? Math.min(maxPorRonda, barajada.length) : barajada.length;
+      listaBarajada = barajada.slice(0, tope);
       indiceActual = 0;
       mostrarItem();
     }
