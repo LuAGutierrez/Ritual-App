@@ -1,0 +1,25 @@
+<!-- Copiar desde aquí hasta el cierre de sin-datos en juego-conexion.html, juego-picante.html, juego-eleccion.html -->
+  <header class="fixed top-0 left-0 right-0 z-50 border-b border-white/5 bg-ink/80 backdrop-blur-sm pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]">
+    <nav class="max-w-5xl mx-auto px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
+      <a href="index.html" class="font-display text-2xl font-semibold text-nude touch-target min-w-0">Ritual</a>
+      <button type="button" id="btn-volver" class="text-nude-muted hover:text-nude transition text-sm touch-target min-h-[44px] inline-flex items-center bg-transparent border-none cursor-pointer font-inherit">Volver</button>
+    </nav>
+  </header>
+
+  <main class="pt-24 sm:pt-28 pb-16 sm:pb-24 px-4 sm:px-6 max-w-2xl mx-auto">
+    <!-- Paywall: sin suscripción activa -->
+    <div id="paywall-block" class="hidden p-6 sm:p-8 rounded-2xl bg-white/[0.03] border border-wine/40 text-center">
+      <p class="font-display text-xl text-nude mb-3">Acceso a las experiencias</p>
+      <p id="paywall-block-desc" class="text-nude-muted text-sm mb-6">Para jugar necesitás una suscripción activa. Suscribite y accedé a las tres experiencias.</p>
+      <a href="precios.html#empezar" class="inline-block rounded-full bg-wine px-6 py-3 text-nude font-medium hover:bg-wine-light transition">Ver precios</a>
+    </div>
+
+    <!-- Contenido del juego (oculto hasta que gate confirme acceso) -->
+    <div id="game-content">
+    <!-- Aviso: estás usando la prueba gratuita (solo se muestra cuando usedTrial) -->
+    <div id="trial-notice" class="hidden mb-6 p-4 rounded-xl bg-wine-dark/30 border border-wine/40 flex items-start gap-3">
+      <p class="text-nude text-sm flex-1">Estás usando tu <strong>prueba gratuita</strong>. Disfrutá esta ronda. Para seguir jugando después, <a href="precios.html#empezar" class="text-wine-light underline hover:no-underline">suscribite</a>.</p>
+      <button type="button" data-trial-notice-cerrar aria-label="Cerrar" class="flex-shrink-0 text-nude-muted hover:text-nude p-1">✕</button>
+    </div>
+    <div id="sin-datos" class="hidden p-6 rounded-xl bg-wine-dark/30 border border-wine/40 text-center text-nude text-sm mb-6">No hay contenido disponible. <a href="elegir-juego.html" class="text-wine-light underline">Volver a experiencias</a></div>
+<!-- Fin del bloque común. Debajo va el título y contenido específico de cada juego (Experiencia 1/2/3, selector o pasos). -->
