@@ -86,16 +86,8 @@
       }
     });
 
-    function puedeNuevaRonda(cb) {
-      if (!primeraRondaCompletada) { cb(true); return; }
-      if (!window.RitualAuth) { cb(false); return; }
-      window.RitualAuth.checkGameAccess().then(function(r) {
-        cb(!!r && !!r.allowed);
-      }).catch(function() { cb(false); });
-    }
-
     if (btnOtra) btnOtra.addEventListener('click', function() {
-      puedeNuevaRonda(function(ok) {
+      window.Ritual.canPlayAnotherRound(primeraRondaCompletada, function(ok) {
         if (!ok && window.RitualShowPaywall) {
           window.RitualShowPaywall();
           return;
