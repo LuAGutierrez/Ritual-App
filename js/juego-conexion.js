@@ -10,6 +10,7 @@
       zonaContenidoId: 'zona-pregunta',
       textoContenidoId: 'texto-pregunta',
       itemLabel: 'preguntas',
+      maxPorRonda: 10,
     });
   }
   document.addEventListener('ritual-game-access-granted', init);

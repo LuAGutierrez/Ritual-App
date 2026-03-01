@@ -10,6 +10,7 @@
       zonaContenidoId: 'zona-reto',
       textoContenidoId: 'texto-reto',
       itemLabel: 'retos',
+      maxPorRonda: 10,
     });
   }
   document.addEventListener('ritual-game-access-granted', init);
