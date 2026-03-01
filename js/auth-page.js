@@ -164,8 +164,12 @@
           window.location.href = url;
         });
       }).catch(function(err) {
-        showError(err.message || 'Error al iniciar sesión.');
         if (btn) { btn.disabled = false; btn.textContent = 'Entrar'; }
+        if (err && err.message && err.message.indexOf('Email not confirmed') !== -1) {
+          mostrarMensajeConfirmarEmail(email);
+          return;
+        }
+        showError(err.message || 'Error al iniciar sesión.');
       });
     });
 
