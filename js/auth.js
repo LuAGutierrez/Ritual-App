@@ -18,6 +18,24 @@
     return Promise.resolve(supabase);
   }
 
+  var mensajesAuth = {
+    'Invalid login credentials': 'Email o contraseña incorrectos.',
+    'Email not confirmed': 'Confirmá tu email con el enlace que te enviamos.',
+    'User already registered': 'Ese email ya está registrado.',
+    'Password should be at least 6 characters': 'La contraseña debe tener al menos 6 caracteres.',
+    'Unable to validate email address: invalid format': 'El email no tiene un formato válido.',
+    'Email rate limit exceeded': 'Demasiados intentos. Esperá un rato y probá de nuevo.',
+    'Signup requires a valid password': 'La contraseña no es válida.'
+  };
+  function mensajeAuthEnEspanol(resError) {
+    if (!resError || !resError.message) return null;
+    var msg = resError.message;
+    if (mensajesAuth[msg]) return mensajesAuth[msg];
+    if (msg.indexOf('Invalid login credentials') !== -1) return mensajesAuth['Invalid login credentials'];
+    if (msg.indexOf('Email not confirmed') !== -1) return mensajesAuth['Email not confirmed'];
+    return null;
+  }
+
   window.RitualAuth = {
     init: function() {
       var self = this;
@@ -190,7 +208,10 @@
       var client = getClient();
       if (!client) return Promise.reject(new Error('Supabase no está configurado.'));
       return client.auth.signInWithPassword({ email: email, password: password }).then(function(res) {
-        if (res.error) return Promise.reject(new Error(res.error.message || 'Error al iniciar sesión.'));
+        if (res.error) {
+          var texto = mensajeAuthEnEspanol(res.error) || 'Error al iniciar sesión.';
+          return Promise.reject(new Error(texto));
+        }
         return res.data;
       });
     },
@@ -203,7 +224,10 @@
         password: password,
         options: { emailRedirectTo: emailRedirectTo },
       }).then(function(res) {
-        if (res.error) return Promise.reject(new Error(res.error.message || 'Error al crear la cuenta.'));
+        if (res.error) {
+          var texto = mensajeAuthEnEspanol(res.error) || 'Error al crear la cuenta.';
+          return Promise.reject(new Error(texto));
+        }
         return res.data;
       });
     },
@@ -225,7 +249,10 @@
       var client = getClient();
       if (!client) return Promise.reject(new Error('Supabase no está configurado.'));
       return client.auth.resend({ type: 'signup', email: email }).then(function(res) {
-        if (res.error) return Promise.reject(new Error(res.error.message || 'No se pudo reenviar.'));
+        if (res.error) {
+          var texto = mensajeAuthEnEspanol(res.error) || 'No se pudo reenviar.';
+          return Promise.reject(new Error(texto));
+        }
         return res.data;
       });
     },
