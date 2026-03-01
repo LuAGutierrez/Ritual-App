@@ -3,11 +3,9 @@
  * Crea el cliente, signIn, signUp, signOut y actualiza la nav según sesión.
  */
 (function() {
-  console.warn('auth.js cargado');
   var supabase = null;
 
   function getClient() {
-    console.warn('getClient()', supabase);
     return supabase || null;
   }
 
@@ -17,7 +15,6 @@
     if (typeof window.supabase === 'undefined' || !window.supabase.createClient) return Promise.resolve(null);
     var lib = window.supabase;
     supabase = lib.createClient(window.RitualSupabase.url, window.RitualSupabase.anonKey);
-    console.warn('initClient Supabase key (first 10):', window.RitualSupabase.anonKey?.slice(0,10));
     return Promise.resolve(supabase);
   }
 
@@ -183,7 +180,6 @@
           return { error: 'invalid_response', details: response.status };
         });
       }).catch(function(e) {
-        if (typeof console !== 'undefined' && console.log) console.log('[Ritual] createMpSubscription catch:', e);
         var msg = e && e.message ? e.message : 'mp_error';
         if (msg.indexOf('401') >= 0 || msg.indexOf('Unauthorized') >= 0) return { error: 'invalid_session' };
         return { error: msg };
