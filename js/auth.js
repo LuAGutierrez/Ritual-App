@@ -197,7 +197,12 @@
     signUp: function(email, password) {
       var client = getClient();
       if (!client) return Promise.reject(new Error('Supabase no está configurado.'));
-      return client.auth.signUp({ email: email, password: password }).then(function(res) {
+      var emailRedirectTo = window.location.origin + window.location.pathname;
+      return client.auth.signUp({
+        email: email,
+        password: password,
+        options: { emailRedirectTo: emailRedirectTo },
+      }).then(function(res) {
         if (res.error) return Promise.reject(new Error(res.error.message || 'Error al crear la cuenta.'));
         return res.data;
       });

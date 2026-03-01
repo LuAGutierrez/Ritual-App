@@ -2,9 +2,40 @@
  * Ritual — Página de login/registro (auth.html)
  */
 (function() {
-  console.warn('auth-page.js cargado');
   function init() {
     if (!window.RitualAuth) return;
+
+    var hash = window.location.hash || '';
+    if (hash.indexOf('error') >= 0) {
+      try {
+        var hashParams = new URLSearchParams(hash.slice(1));
+        var errDesc = hashParams.get('error_description') || hashParams.get('error') || 'El enlace de confirmación falló o ya fue usado.';
+        window.RitualAuth.init().then(function() {
+          var authError = document.getElementById('auth-error');
+          if (authError) {
+            authError.textContent = errDesc;
+            authError.classList.remove('hidden');
+          }
+          window.history.replaceState(null, '', window.location.pathname + window.location.search);
+        });
+      } catch (e) {}
+      return;
+    }
+    if (hash.indexOf('access_token') >= 0 || hash.indexOf('type=signup') >= 0) {
+      window.RitualAuth.init().then(function() {
+        return window.RitualAuth.getSession();
+      }).then(function(session) {
+        if (session) {
+          window.location.replace('exito.html?tipo=registro');
+        } else {
+          window.history.replaceState(null, '', window.location.pathname + window.location.search);
+        }
+      }).catch(function() {
+        window.history.replaceState(null, '', window.location.pathname + window.location.search);
+      });
+      return;
+    }
+
     var noConfig = document.getElementById('auth-no-config');
     if (noConfig && (!window.RitualSupabase || !window.RitualSupabase.enabled)) {
       noConfig.classList.remove('hidden');
@@ -140,16 +171,13 @@
 
     formSignup.addEventListener('submit', function(e) {
       e.preventDefault();
-      console.warn('formSignup submit (Crear cuenta)');
       hideError();
       var email = document.getElementById('signup-email').value.trim();
       var password = document.getElementById('signup-password').value;
       if (!email || !password) {
-        console.warn('formSignup: faltan email o contraseña');
         showError('Completá email y contraseña.'); return;
       }
       if (password.length < 6) {
-        console.warn('formSignup: contraseña menor a 6');
         showError('La contraseña debe tener al menos 6 caracteres.'); return;
       }
       var btn = document.getElementById('btn-signup');
