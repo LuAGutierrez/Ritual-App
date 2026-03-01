@@ -4,7 +4,17 @@
 (function() {
   function init() {
     if (window.RitualGameAccess === false) return;
-    if (!window.RitualDatos || !window.RitualDatos.eleccion) return;
+    if (!window.RitualDatos || !window.RitualDatos.eleccion) {
+      var fallback = document.getElementById('sin-datos');
+      if (fallback) fallback.classList.remove('hidden');
+      var p1 = document.getElementById('paso-1');
+      if (p1) p1.classList.add('hidden');
+      var p2 = document.getElementById('paso-2');
+      if (p2) p2.classList.add('hidden');
+      var p3 = document.getElementById('paso-3');
+      if (p3) p3.classList.add('hidden');
+      return;
+    }
 
     var opciones = window.RitualDatos.eleccion.opcionesA;
     var premios = window.RitualDatos.eleccion.premios;

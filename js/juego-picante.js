@@ -5,7 +5,13 @@
 (function() {
   function init() {
     if (window.RitualGameAccess === false) return;
-    if (!window.RitualDatos || !window.RitualDatos.picante) return;
+    if (!window.RitualDatos || !window.RitualDatos.picante) {
+      var fallback = document.getElementById('sin-datos');
+      if (fallback) fallback.classList.remove('hidden');
+      var sel = document.getElementById('selector-nivel');
+      if (sel) sel.classList.add('hidden');
+      return;
+    }
 
     var datos = window.RitualDatos.picante;
     var labels = { nivel1: 'Nivel 1', nivel2: 'Nivel 2', nivel3: 'Nivel 3' };
