@@ -78,6 +78,23 @@ La app usa **email + contraseña** (no magic link). Para que funcione:
 
 ---
 
+## URL de confirmación de email (evitar error al hacer clic en el correo)
+
+Si **Confirm email** está activado, el link que llega al usuario debe redirigir a una URL permitida por Supabase. Si no está configurado, al hacer clic puede dar error o 404.
+
+1. En el dashboard: **Authentication** → **URL Configuration**.
+2. **Site URL:** poné la URL pública de tu app (ej. `https://rituales.vercel.app` o `https://tudominio.com`). Es la que Supabase usa por defecto cuando no se indica otra.
+3. **Redirect URLs:** añadí las URLs a las que puede volver el usuario tras confirmar el correo. Deben incluir la página de login/registro donde la app recibe el token:
+   - Producción: `https://rituales.vercel.app/auth.html` (o tu dominio).
+   - Si probás en local: `http://localhost:3000/auth.html` o la URL que uses (puerto, carpeta, etc.).
+   - Para aceptar cualquier ruta del mismo origen podés usar patrones con `**`, ej. `https://rituales.vercel.app/**`.
+
+La app ya envía en el registro la URL actual como `emailRedirectTo` (la misma página de auth donde se registró). Esa URL tiene que estar en **Redirect URLs**; si no, Supabase rechaza el redirect y el usuario ve error al confirmar.
+
+**Si el reenvío de correo de confirmación no llega:** Supabase puede limitar envíos (p. ej. por tiempo). Revisá en **Authentication** → **Users** si el usuario aparece como confirmado; si ya está confirmado, puede iniciar sesión con su contraseña. Si no, probá más tarde el “Reenviar correo” o revisá la carpeta de spam.
+
+---
+
 ## Edge Function: acceso a juegos (no bypasseable)
 
 La decisión de si un usuario puede jugar (suscripción activa o prueba gratuita) se toma **solo en el servidor** con la Edge Function `check-game-access`. Así no se puede saltar el paywall desde el cliente.
