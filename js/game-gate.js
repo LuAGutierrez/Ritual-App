@@ -66,7 +66,7 @@
     if (desc) {
       desc.textContent = result && result.needsEmailConfirmation
         ? 'Confirmá tu correo para acceder. Revisá el email que te enviamos al registrarte.'
-        : 'Para jugar necesitás una suscripción activa. Suscribite y accedé a las tres experiencias.';
+        : 'Para jugar necesitás una suscripción activa. Suscribite y accedé a todas las experiencias.';
     }
   }
 
