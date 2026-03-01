@@ -165,7 +165,7 @@
         });
       }).catch(function(err) {
         if (btn) { btn.disabled = false; btn.textContent = 'Entrar'; }
-        if (err && err.message && err.message.indexOf('Email not confirmed') !== -1) {
+        if (err && err.message && (err.message.indexOf('Email not confirmed') !== -1 || err.message.indexOf('Confirmá tu email') !== -1)) {
           mostrarMensajeConfirmarEmail(email);
           return;
         }
