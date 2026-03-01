@@ -16,13 +16,18 @@
     function openNav() {
       navMobile.classList.remove('hidden');
       document.body.classList.add('nav-open');
+      if (btnMenu) btnMenu.setAttribute('aria-label', 'Cerrar menú');
     }
     function closeNav() {
       navMobile.classList.add('hidden');
       document.body.classList.remove('nav-open');
+      if (btnMenu) btnMenu.setAttribute('aria-label', 'Abrir menú');
+    }
+    function toggleNav() {
+      if (navMobile.classList.contains('hidden')) openNav(); else closeNav();
     }
 
-    if (btnMenu) btnMenu.addEventListener('click', openNav);
+    if (btnMenu) btnMenu.addEventListener('click', toggleNav);
     if (btnCerrar) btnCerrar.addEventListener('click', closeNav);
     navMobile.querySelectorAll('.nav-link').forEach(function(link) {
       link.addEventListener('click', closeNav);
