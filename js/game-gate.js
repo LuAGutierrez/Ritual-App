@@ -4,6 +4,8 @@
  * En localhost/127.0.0.1 se bypasea para desarrollo (sin login ni servidor).
  */
 (function() {
+  window.Ritual = window.Ritual || {};
+
   function isLocalhost() {
     var h = window.location.hostname;
     return h === 'localhost' || h === '127.0.0.1';
@@ -86,6 +88,23 @@
       }, { once: true });
     }
   }
+
+  function canPlayAnotherRound(hasCompletedFirstRound, cb) {
+    if (!hasCompletedFirstRound) {
+      cb(true);
+      return;
+    }
+    if (!window.RitualAuth) {
+      cb(false);
+      return;
+    }
+    window.RitualAuth.checkGameAccess().then(function(r) {
+      cb(!!r && !!r.allowed);
+    }).catch(function() {
+      cb(false);
+    });
+  }
+  window.Ritual.canPlayAnotherRound = canPlayAnotherRound;
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', runGate);
