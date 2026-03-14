@@ -102,37 +102,14 @@
         return !!(res && res.data && res.data.id);
       });
     },
-    /** Devuelve Promise<boolean>: true si el usuario ya usó su prueba gratuita (según profiles.trial_used). */
-    getTrialUsed: function() {
-      var self = this;
-      return self.getSession().then(function(session) {
-        if (!session) return true;
-        var client = getClient();
-        if (!client) return true;
-        return client.from('profiles').select('trial_used').eq('id', session.user.id).maybeSingle();
-      }).then(function(res) {
-        if (res && res.data && res.data.trial_used === true) return true;
-        return false;
-      });
-    },
-    /** Marca en BD que el usuario usó la prueba gratuita. */
-    useTrial: function() {
-      var self = this;
-      return self.getSession().then(function(session) {
-        if (!session) return Promise.reject(new Error('No hay sesión'));
-        var client = getClient();
-        if (!client) return Promise.reject(new Error('Sin cliente'));
-        return client.from('profiles').update({ trial_used: true, updated_at: new Date().toISOString() }).eq('id', session.user.id);
-      });
-    },
     /**
-     * Decide en el servidor si el usuario puede jugar (suscripción o prueba).
-     * Devuelve Promise<{ allowed: boolean, usedTrial?: boolean }>. No se puede bypassear desde el cliente.
+     * Decide en el servidor si el usuario puede jugar (por juego + modo).
+     * payload opcional: { gameSlug, modeSlug }.
      */
-    checkGameAccess: function() {
+    checkGameAccess: function(payload) {
       var client = getClient();
       var config = window.RitualSupabase;
-      if (!client || !config || !config.url || !config.anonKey) return Promise.resolve({ allowed: false, usedTrial: false });
+      if (!client || !config || !config.url || !config.anonKey) return Promise.resolve({ allowed: false });
       function doFetch(session) {
         var url = config.url + '/functions/v1/check-game-access';
         var headers = {
@@ -140,7 +117,8 @@
           'Authorization': 'Bearer ' + session.access_token,
           'apikey': config.anonKey
         };
-        return fetch(url, { method: 'POST', headers: headers, body: '{}' });
+        var body = JSON.stringify(payload || {});
+        return fetch(url, { method: 'POST', headers: headers, body: body });
       }
       return client.auth.getSession().then(function(_ref) {
         var session = _ref.data && _ref.data.session;
@@ -151,18 +129,17 @@
           return doFetch(s);
         });
       }).then(function(response) {
-        if (!response || typeof response.json !== 'function') return { allowed: false, usedTrial: false };
+        if (!response || typeof response.json !== 'function') return { allowed: false };
         return response.json().then(function(data) {
           return {
             allowed: !!(data && data.allowed === true),
-            usedTrial: !!(data && data.usedTrial === true),
             needsEmailConfirmation: !!(data && data.needsEmailConfirmation === true)
           };
         }).catch(function() {
-          return { allowed: false, usedTrial: false };
+          return { allowed: false };
         });
       }).catch(function() {
-        return { allowed: false, usedTrial: false };
+        return { allowed: false };
       });
     },
     /**

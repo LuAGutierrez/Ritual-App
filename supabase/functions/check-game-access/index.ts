@@ -1,6 +1,6 @@
 /// <reference path="../deno.d.ts" />
-// Ritual — Decide en el servidor si el usuario puede jugar (suscripción activa o prueba gratuita).
-// El cliente solo confía en esta respuesta; no hay bypass posible en el front.
+// Ritual — Decide en el servidor si el usuario puede jugar por juego+modo.
+// Regla: modo 1 de cada juego es gratis; modos 2/3 requieren suscripción activa.
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 // @ts-ignore — Deno resuelve npm: en runtime; el IDE no
 import { createClient } from "npm:@supabase/supabase-js@2";
@@ -14,6 +14,13 @@ const CORS_HEADERS = {
   "Access-Control-Allow-Headers": "Authorization, Content-Type, apikey, x-client-info",
 };
 
+const FREE_MODE_BY_GAME: Record<string, string> = {
+  conexion: "suave",
+  picante: "nivel1",
+  eleccion: "modo1",
+  memoria: "modo1",
+};
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { status: 204, headers: CORS_HEADERS });
@@ -25,6 +32,13 @@ Deno.serve(async (req: Request) => {
       JSON.stringify({ allowed: false, error: "missing_auth" }),
       { status: 200, headers: { "Content-Type": "application/json", ...CORS } }
     );
+  }
+
+  let payload: { gameSlug?: string; modeSlug?: string } = {};
+  try {
+    payload = await req.json();
+  } catch {
+    payload = {};
   }
 
   const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
@@ -46,49 +60,40 @@ Deno.serve(async (req: Request) => {
     );
   }
 
-  const userId = user.id;
+  const gameSlug = typeof payload?.gameSlug === "string" ? payload.gameSlug.trim() : "";
+  const modeSlug = typeof payload?.modeSlug === "string" ? payload.modeSlug.trim() : "";
+
+  if (gameSlug && modeSlug && FREE_MODE_BY_GAME[gameSlug] === modeSlug) {
+    return new Response(
+      JSON.stringify({ allowed: true }),
+      { status: 200, headers: { "Content-Type": "application/json", ...CORS } }
+    );
+  }
+
+  // Si no viene juego+modo, solo validamos sesión/email (para gate inicial).
+  if (!gameSlug || !modeSlug) {
+    return new Response(
+      JSON.stringify({ allowed: true }),
+      { status: 200, headers: { "Content-Type": "application/json", ...CORS } }
+    );
+  }
 
   const { data: sub } = await supabase
     .from("subscriptions")
     .select("id")
-    .eq("user_id", userId)
+    .eq("user_id", user.id)
     .in("status", ["active", "trialing"])
     .maybeSingle();
 
   if (sub?.id) {
     return new Response(
-      JSON.stringify({ allowed: true, usedTrial: false }),
+      JSON.stringify({ allowed: true }),
       { status: 200, headers: { "Content-Type": "application/json", ...CORS } }
     );
   }
-
-  const { data: profile, error: profileError } = await supabase
-    .from("profiles")
-    .select("trial_used")
-    .eq("id", userId)
-    .maybeSingle();
-
-  if (profileError || !profile) {
-    return new Response(
-      JSON.stringify({ allowed: false }),
-      { status: 200, headers: { "Content-Type": "application/json", ...CORS } }
-    );
-  }
-
-  if (profile.trial_used === true) {
-    return new Response(
-      JSON.stringify({ allowed: false }),
-      { status: 200, headers: { "Content-Type": "application/json", ...CORS } }
-    );
-  }
-
-  await supabase
-    .from("profiles")
-    .update({ trial_used: true, updated_at: new Date().toISOString() })
-    .eq("id", userId);
 
   return new Response(
-    JSON.stringify({ allowed: true, usedTrial: true }),
+    JSON.stringify({ allowed: false }),
     { status: 200, headers: { "Content-Type": "application/json", ...CORS } }
   );
 });

@@ -21,7 +21,6 @@
     var nivelActual = opts.nivelDefault;
     var listaBarajada = [];
     var indiceActual = 0;
-    var primeraRondaCompletada = false;
     var zonaContenidoId = opts.zonaContenidoId;
     var textoContenidoId = opts.textoContenidoId;
     var itemLabel = opts.itemLabel || 'preguntas';
@@ -59,7 +58,6 @@
     }
 
     function mostrarRondaCompletada() {
-      primeraRondaCompletada = true;
       var n = listaBarajada.length;
       var nombreNivel = labels[nivelActual];
       zonaContenido.classList.add('hidden');
@@ -88,13 +86,23 @@
       }
     }
 
+    function iniciarNivelConAcceso(nivel) {
+      if (!window.Ritual || typeof window.Ritual.canAccessMode !== 'function') {
+        nivelActual = nivel;
+        iniciarRonda();
+        return;
+      }
+      window.Ritual.canAccessMode(dataKey, nivel, function(ok) {
+        if (!ok) return;
+        nivelActual = nivel;
+        iniciarRonda();
+      });
+    }
+
     selectorNivel.querySelectorAll('.nivel-btn').forEach(function(btn) {
       btn.addEventListener('click', function() {
-        nivelActual = this.getAttribute('data-nivel');
-        window.Ritual.canPlayAnotherRound(primeraRondaCompletada, function(ok) {
-          if (!ok && window.RitualShowPaywall) window.RitualShowPaywall();
-          else iniciarRonda();
-        });
+        var nivel = this.getAttribute('data-nivel');
+        iniciarNivelConAcceso(nivel);
       });
     });
 
@@ -102,10 +110,7 @@
     if (btnAnterior) btnAnterior.addEventListener('click', anterior);
 
     if (btnOtraRonda) btnOtraRonda.addEventListener('click', function() {
-      window.Ritual.canPlayAnotherRound(primeraRondaCompletada, function(ok) {
-        if (!ok && window.RitualShowPaywall) window.RitualShowPaywall();
-        else iniciarRonda();
-      });
+      iniciarRonda();
     });
 
     if (btnCambiarNivel) btnCambiarNivel.addEventListener('click', function() {

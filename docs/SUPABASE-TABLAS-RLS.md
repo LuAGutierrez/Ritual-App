@@ -21,10 +21,10 @@ Si no hay errores, las tablas y políticas quedan creadas.
 ### Tabla `profiles`
 
 - **Uso:** Datos extra del usuario (nombre, etc.) ligados a `auth.users`.
-- **Campos:** `id` ( = `auth.users.id`), `email`, `display_name`, `created_at`, `updated_at`, `trial_used` (boolean, default false; ver migración `002_trial_en_profiles.sql`).
+- **Campos:** `id` ( = `auth.users.id`), `email`, `display_name`, `created_at`, `updated_at`.
 - **Trigger:** Cuando se registra un usuario en Auth, se crea una fila en `profiles` con su `id` y `email`.
 - **RLS:** Cada usuario solo puede **ver** y **actualizar** su propia fila (`auth.uid() = id`).
-- **Nota:** La prueba gratuita de una vez se guarda en `profiles.trial_used`. Alternativa posible: una fila en `subscriptions` con `plan='trial'` y `status='trial_used'` (todo lo de acceso en una tabla).
+- **Nota:** Actualmente el acceso no depende de `profiles`: el modo 1 de cada juego es gratis y los modos 2/3 se habilitan por estado de `subscriptions`.
 
 ### Tabla `subscriptions`
 
@@ -45,7 +45,7 @@ Si no hay errores, las tablas y políticas quedan creadas.
 
 - **Uso:** Guardar último nivel o pregunta por juego (para "seguir donde lo dejaron").
 - **Campos:**  
-  - `user_id`, `game_slug` ('conexion', 'picante', 'eleccion'), `level_slug`, `last_question_index`, `updated_at`
+  - `user_id`, `game_slug` ('conexion', 'picante', 'eleccion', 'memoria'), `level_slug`, `last_question_index`, `updated_at`
 - **Constraint:** Una fila por usuario y juego (`unique(user_id, game_slug)`).
 - **RLS:** Cada usuario solo puede **select**, **insert**, **update** y **delete** sus propias filas (`auth.uid() = user_id`).
 
@@ -109,15 +109,19 @@ Si ya creaste alguna tabla antes, podés comentar esa parte o usar `create table
 
 ## Migraciones posteriores
 
-- **`002_trial_en_profiles.sql`**: Añade en `profiles` la columna `trial_used` (boolean, default false) para registrar si el usuario ya usó la prueba gratuita. Ejecutala en SQL Editor después de `001_tablas_y_rls.sql`.
+- **`003_mercadopago_subscription.sql`**: Añade en `subscriptions` la columna `mp_subscription_id` para mapear la suscripción de Mercado Pago.
 
 ---
 
-## Probar acceso a los juegos (sin Stripe)
+## Probar acceso a los juegos (sin Stripe/MP)
 
-Para que un usuario pueda entrar a los juegos, tiene que tener una fila en `subscriptions` con `status` = `'active'` o `'trialing'`. Para probar sin Stripe:
+Con la regla actual:
+- El usuario logueado puede entrar a **modo 1** de cada juego sin suscripción.
+- Para **modo 2 y modo 3**, necesita una fila en `subscriptions` con `status` = `'active'` o `'trialing'`.
+
+Para probar acceso premium sin pasarela:
 
 1. Registrate en la app y anotá tu **user id** (en Supabase → Authentication → Users → copiá el UUID del usuario).
 2. En Table Editor → `subscriptions` → Insert row.
 3. Completá: `user_id` = ese UUID, `plan` = `monthly`, `status` = `active`. Guardá.
-4. Recargá un juego: deberías ver el contenido. Sin esa fila (o con otro status) verás el paywall "Suscribite para jugar".
+4. Recargá un juego y elegí modo 2 o 3: con esa fila debería dejarte entrar. Sin esa fila (o con otro status), verás el paywall.
