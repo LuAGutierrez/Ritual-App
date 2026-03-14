@@ -5,7 +5,7 @@
   function init() {
     if (window.RitualGameAccess === false) return;
     var datos = window.RitualDatos;
-    if (!datos || !datos.memoria || !datos.memoria.length) {
+    if (!datos || !datos.memoria || !datos.memoria.modo1 || !datos.memoria.modo2 || !datos.memoria.modo3) {
       var fallback = document.getElementById('sin-datos');
       if (fallback) fallback.classList.remove('hidden');
       ['paso-1', 'paso-2', 'paso-3', 'paso-4'].forEach(function(id) {
@@ -15,7 +15,9 @@
       return;
     }
 
-    var preguntas = window.RitualShuffle ? window.RitualShuffle(datos.memoria.slice()) : datos.memoria.slice();
+    var selectorModo = document.getElementById('selector-modo');
+    var modoActual = null;
+    var preguntas = [];
     var index = 0;
 
     var paso1 = document.getElementById('paso-1');
@@ -32,12 +34,18 @@
     var btnListo1 = document.getElementById('btn-listo-1');
     var btnRevelar = document.getElementById('btn-revelar');
     var btnSiguiente = document.getElementById('btn-siguiente');
+    var respuesta1 = '';
+
+    function hideAllSteps() {
+      if (paso1) paso1.classList.add('hidden');
+      if (paso2) paso2.classList.add('hidden');
+      if (paso3) paso3.classList.add('hidden');
+      if (paso4) paso4.classList.add('hidden');
+    }
 
     function mostrarPregunta() {
       if (index >= preguntas.length) {
-        if (paso1) paso1.classList.add('hidden');
-        if (paso2) paso2.classList.add('hidden');
-        if (paso3) paso3.classList.add('hidden');
+        hideAllSteps();
         if (paso4) paso4.classList.remove('hidden');
         return;
       }
@@ -46,13 +54,42 @@
       if (preguntaTexto2) preguntaTexto2.textContent = pregunta;
       if (textarea1) textarea1.value = '';
       if (textarea2) textarea2.value = '';
+      respuesta1 = '';
       if (paso1) paso1.classList.remove('hidden');
       if (paso2) paso2.classList.add('hidden');
       if (paso3) paso3.classList.add('hidden');
       if (paso4) paso4.classList.add('hidden');
     }
 
-    var respuesta1 = '';
+    function empezarModo(modeSlug) {
+      var lista = datos.memoria[modeSlug];
+      if (!Array.isArray(lista) || !lista.length) return;
+      modoActual = modeSlug;
+      index = 0;
+      preguntas = window.RitualShuffle ? window.RitualShuffle(lista.slice()) : lista.slice();
+      if (selectorModo) selectorModo.classList.add('hidden');
+      mostrarPregunta();
+      if (textarea1) setTimeout(function() { textarea1.focus(); }, 60);
+    }
+
+    function tryStartMode(modeSlug) {
+      if (!window.Ritual || typeof window.Ritual.canAccessMode !== 'function') {
+        empezarModo(modeSlug);
+        return;
+      }
+      window.Ritual.canAccessMode('memoria', modeSlug, function(ok) {
+        if (!ok) return;
+        empezarModo(modeSlug);
+      });
+    }
+
+    if (selectorModo) {
+      selectorModo.querySelectorAll('.mode-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          tryStartMode(this.getAttribute('data-mode'));
+        });
+      });
+    }
 
     if (btnListo1) {
       btnListo1.addEventListener('click', function() {
@@ -79,12 +116,11 @@
 
     if (btnSiguiente) {
       btnSiguiente.addEventListener('click', function() {
+        if (!modoActual) return;
         index++;
         mostrarPregunta();
       });
     }
-
-    mostrarPregunta();
   }
 
   function run() {

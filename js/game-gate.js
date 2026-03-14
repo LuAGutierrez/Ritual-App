@@ -33,17 +33,14 @@
         window.location.href = 'auth.html?redirect=' + encodeURIComponent(page);
         return;
       }
-      // Mostrar juego en cuanto hay sesión; el cartel de prueba llega cuando responde el servidor.
+      // Mostrar juego en cuanto hay sesión; el servidor valida email/sesión en paralelo.
       window.RitualGameAccess = true;
       window.RitualShowPaywall = showPaywall;
       showGame();
       document.dispatchEvent(new CustomEvent('ritual-game-access-granted'));
       window.RitualAuth.checkGameAccess().then(function(result) {
         if (!result) return;
-        if (result.allowed) {
-          window.RitualUsedTrial = !!result.usedTrial;
-          if (result.usedTrial) showTrialNotice();
-        } else {
+        if (!result.allowed) {
           window.RitualGameAccess = false;
           showPaywall(result);
         }
@@ -66,7 +63,7 @@
     if (desc) {
       desc.textContent = result && result.needsEmailConfirmation
         ? 'Confirmá tu correo para acceder. Revisá el email que te enviamos al registrarte.'
-        : 'Para jugar necesitás una suscripción activa. Suscribite y accedé a todas las experiencias.';
+        : 'Para desbloquear modos avanzados necesitás una suscripción activa. Suscribite y accedé a todas las experiencias.';
     }
   }
 
@@ -77,20 +74,8 @@
     if (content) content.classList.remove('hidden');
   }
 
-  function showTrialNotice() {
-    var notice = document.getElementById('trial-notice');
-    if (!notice) return;
-    notice.classList.remove('hidden');
-    var btnCerrar = notice.querySelector('[data-trial-notice-cerrar]');
-    if (btnCerrar) {
-      btnCerrar.addEventListener('click', function() {
-        notice.classList.add('hidden');
-      }, { once: true });
-    }
-  }
-
-  function canPlayAnotherRound(hasCompletedFirstRound, cb) {
-    if (!hasCompletedFirstRound) {
+  function canAccessMode(gameSlug, modeSlug, cb) {
+    if (isLocalhost()) {
       cb(true);
       return;
     }
@@ -98,13 +83,22 @@
       cb(false);
       return;
     }
-    window.RitualAuth.checkGameAccess().then(function(r) {
+    window.RitualAuth.checkGameAccess({ gameSlug: gameSlug, modeSlug: modeSlug }).then(function(r) {
+      if (r && r.allowed) {
+        window.RitualGameAccess = true;
+        showGame();
+      } else {
+        window.RitualGameAccess = false;
+        showPaywall(r);
+      }
       cb(!!r && !!r.allowed);
     }).catch(function() {
+      window.RitualGameAccess = false;
+      showPaywall();
       cb(false);
     });
   }
-  window.Ritual.canPlayAnotherRound = canPlayAnotherRound;
+  window.Ritual.canAccessMode = canAccessMode;
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', runGate);

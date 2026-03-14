@@ -16,10 +16,18 @@
       return;
     }
 
-    var opciones = window.RitualDatos.eleccion.opcionesA;
-    var premios = window.RitualDatos.eleccion.premios;
+    var modos = window.RitualDatos.eleccion;
+    if (!modos.modo1 || !modos.modo2 || !modos.modo3) {
+      var fallback2 = document.getElementById('sin-datos');
+      if (fallback2) fallback2.classList.remove('hidden');
+      return;
+    }
+
+    var selectorModo = document.getElementById('selector-modo');
+    var modoActual = null;
+    var opciones = [];
+    var premios = [];
     var eleccion1 = null, eleccion2 = null;
-    var primeraRondaCompletada = false;
 
     var paso1 = document.getElementById('paso-1');
     var paso2 = document.getElementById('paso-2');
@@ -37,6 +45,20 @@
 
     if (!opciones1 || !opciones2) return;
 
+    function resetRound() {
+      eleccion1 = null;
+      eleccion2 = null;
+      if (btnListo1) btnListo1.classList.add('hidden');
+      opciones1.querySelectorAll('button').forEach(function(b) { b.classList.remove('border-wine', 'bg-wine-dark/30'); });
+      opciones2.querySelectorAll('button').forEach(function(b) { b.classList.remove('border-wine', 'bg-wine-dark/30'); });
+    }
+
+    function showStep1() {
+      if (paso3) paso3.classList.add('hidden');
+      if (paso2) paso2.classList.add('hidden');
+      if (paso1) paso1.classList.remove('hidden');
+    }
+
     function renderOpciones(container) {
       container.innerHTML = '';
       opciones.forEach(function(texto, i) {
@@ -49,25 +71,57 @@
       });
     }
 
-    renderOpciones(opciones1);
-    renderOpciones(opciones2);
+    function cargarModo(modeSlug) {
+      var data = modos[modeSlug];
+      if (!data || !Array.isArray(data.opciones) || !Array.isArray(data.premios)) return;
+      modoActual = modeSlug;
+      opciones = data.opciones.slice();
+      premios = data.premios.slice();
+      renderOpciones(opciones1);
+      renderOpciones(opciones2);
+      bindOptionEvents();
+      resetRound();
+      showStep1();
+    }
 
-    opciones1.querySelectorAll('button').forEach(function(btn) {
-      btn.addEventListener('click', function() {
-        opciones1.querySelectorAll('button').forEach(function(b) { b.classList.remove('border-wine', 'bg-wine-dark/30'); });
-        this.classList.add('border-wine', 'bg-wine-dark/30');
-        eleccion1 = parseInt(this.dataset.index, 10);
-        if (btnListo1) btnListo1.classList.remove('hidden');
+    function bindOptionEvents() {
+      opciones1.querySelectorAll('button').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          opciones1.querySelectorAll('button').forEach(function(b) { b.classList.remove('border-wine', 'bg-wine-dark/30'); });
+          this.classList.add('border-wine', 'bg-wine-dark/30');
+          eleccion1 = parseInt(this.dataset.index, 10);
+          if (btnListo1) btnListo1.classList.remove('hidden');
+        });
       });
-    });
 
-    opciones2.querySelectorAll('button').forEach(function(btn) {
-      btn.addEventListener('click', function() {
-        opciones2.querySelectorAll('button').forEach(function(b) { b.classList.remove('border-wine', 'bg-wine-dark/30'); });
-        this.classList.add('border-wine', 'bg-wine-dark/30');
-        eleccion2 = parseInt(this.dataset.index, 10);
+      opciones2.querySelectorAll('button').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          opciones2.querySelectorAll('button').forEach(function(b) { b.classList.remove('border-wine', 'bg-wine-dark/30'); });
+          this.classList.add('border-wine', 'bg-wine-dark/30');
+          eleccion2 = parseInt(this.dataset.index, 10);
+        });
       });
-    });
+    }
+
+    function tryStartMode(modeSlug) {
+      if (!window.Ritual || typeof window.Ritual.canAccessMode !== 'function') {
+        cargarModo(modeSlug);
+        return;
+      }
+      window.Ritual.canAccessMode('eleccion', modeSlug, function(ok) {
+        if (!ok) return;
+        if (selectorModo) selectorModo.classList.add('hidden');
+        cargarModo(modeSlug);
+      });
+    }
+
+    if (selectorModo) {
+      selectorModo.querySelectorAll('.mode-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          tryStartMode(this.getAttribute('data-mode'));
+        });
+      });
+    }
 
     if (btnListo1) btnListo1.addEventListener('click', function() {
       if (paso1) paso1.classList.add('hidden');
@@ -79,7 +133,6 @@
         alert('Las dos personas tienen que elegir una opción.');
         return;
       }
-      primeraRondaCompletada = true;
       if (paso2) paso2.classList.add('hidden');
       if (paso3) paso3.classList.remove('hidden');
       if (eleccion1Span) eleccion1Span.textContent = opciones[eleccion1];
@@ -97,20 +150,9 @@
     });
 
     if (btnOtra) btnOtra.addEventListener('click', function() {
-      window.Ritual.canPlayAnotherRound(primeraRondaCompletada, function(ok) {
-        if (!ok && window.RitualShowPaywall) {
-          window.RitualShowPaywall();
-          return;
-        }
-        if (paso3) paso3.classList.add('hidden');
-        if (paso1) paso1.classList.remove('hidden');
-        if (paso2) paso2.classList.add('hidden');
-        eleccion1 = null;
-        eleccion2 = null;
-        if (btnListo1) btnListo1.classList.add('hidden');
-        opciones1.querySelectorAll('button').forEach(function(b) { b.classList.remove('border-wine', 'bg-wine-dark/30'); });
-        opciones2.querySelectorAll('button').forEach(function(b) { b.classList.remove('border-wine', 'bg-wine-dark/30'); });
-      });
+      if (!modoActual) return;
+      resetRound();
+      showStep1();
     });
   }
   document.addEventListener('ritual-game-access-granted', init);

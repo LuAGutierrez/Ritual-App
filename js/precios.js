@@ -55,21 +55,8 @@
         window.RitualAuth.init().then(function() {
           return window.RitualAuth.getSession();
         }).then(function(session) {
-          if (!session) return { session: false };
-          return window.RitualAuth.getTrialUsed().then(function(trialUsed) {
-            return { session: true, trialUsed: trialUsed };
-          });
-        }).then(function(state) {
-          if (!state.session) return;
-          if (state.trialUsed && btnPrueba) {
-            btnPrueba.removeAttribute('href');
-            btnPrueba.textContent = 'Ya usaste tu prueba';
-            btnPrueba.classList.add('opacity-60', 'cursor-not-allowed');
-            btnPrueba.classList.remove('hover:border-nude');
-            btnPrueba.style.pointerEvents = 'none';
-          } else {
-            if (btnPrueba) btnPrueba.href = 'elegir-juego.html';
-          }
+          if (!session) return;
+          if (btnPrueba) btnPrueba.href = 'elegir-juego.html';
         }).catch(function() {});
       }
     }
@@ -113,7 +100,7 @@
     // Mensaje de vuelta de Mercado Pago (suscripción)
     if (urlParams.get('mp') === 'success' && paywallMsg) {
       paywallMsg.classList.remove('hidden');
-      paywallMsg.innerHTML = '<p class="text-nude mb-4">Gracias. Cuando el pago se acredite tendrás acceso a las tres experiencias.</p><p class="text-nude-muted text-sm mb-4">Si ya pagaste, entrá a:</p><p class="flex flex-wrap gap-3 justify-center"><a href="juego-conexion.html" class="text-wine-light underline text-sm">Conexión profunda</a><a href="juego-picante.html" class="text-wine-light underline text-sm">Picante progresivo</a><a href="juego-eleccion.html" class="text-wine-light underline text-sm">Elección mutua</a></p>';
+      paywallMsg.innerHTML = '<p class="text-nude mb-4">Gracias. Cuando el pago se acredite tendrás acceso a todos los modos de las cuatro experiencias.</p><p class="text-nude-muted text-sm mb-4">Si ya pagaste, entrá a:</p><p class="flex flex-wrap gap-3 justify-center"><a href="juego-conexion.html" class="text-wine-light underline text-sm">Conexión profunda</a><a href="juego-picante.html" class="text-wine-light underline text-sm">Picante progresivo</a><a href="juego-eleccion.html" class="text-wine-light underline text-sm">Elección mutua</a><a href="juego-memoria.html" class="text-wine-light underline text-sm">Memoria nuestra</a></p>';
       paywallMsg.scrollIntoView({ behavior: 'smooth' });
     }
   }

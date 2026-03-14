@@ -97,9 +97,13 @@ La app ya envía en el registro la URL actual como `emailRedirectTo` (la misma p
 
 ---
 
-## Edge Function: acceso a juegos (no bypasseable)
+## Edge Function: acceso a juegos por modo (no bypasseable)
 
-La decisión de si un usuario puede jugar (suscripción activa o prueba gratuita) se toma **solo en el servidor** con la Edge Function `check-game-access`. Así no se puede saltar el paywall desde el cliente.
+La decisión de si un usuario puede jugar un modo se toma **solo en el servidor** con la Edge Function `check-game-access`. Así no se puede saltar el paywall desde el cliente.
+
+Regla actual:
+- **Modo 1** de cada juego (`conexion/suave`, `picante/nivel1`, `eleccion/modo1`, `memoria/modo1`) = gratis.
+- **Modos 2 y 3** = requieren suscripción con `status` `active` o `trialing`.
 
 **Desplegar la función:**
 
@@ -110,6 +114,18 @@ La decisión de si un usuario puede jugar (suscripción activa o prueba gratuita
 5. La función usa las variables de entorno que Supabase inyecta (`SUPABASE_URL`, `SUPABASE_ANON_KEY`); no hace falta configurar nada más.
 
 Si la función no está desplegada, las páginas de juego mostrarán el paywall. **Desarrollo local:** en `http://localhost:...` o `http://127.0.0.1:...` el gate se bypasea (entrás sin login ni Edge Function); en producción no aplica.
+
+### Checklist manual rápido
+
+1. Usuario logueado sin suscripción:
+   - Puede abrir modo 1 de Conexión, Picante, Elección y Memoria.
+   - Ve paywall al intentar modo 2 o 3.
+2. Usuario logueado con suscripción `active`:
+   - Puede abrir modo 1, 2 y 3 en los cuatro juegos.
+3. Usuario sin sesión:
+   - Se redirige a `auth.html` al entrar a un juego.
+4. Usuario con email no confirmado:
+   - Queda bloqueado con mensaje de confirmación de correo.
 
 ---
 
