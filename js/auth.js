@@ -25,7 +25,8 @@
     'Password should be at least 6 characters': 'La contraseña debe tener al menos 6 caracteres.',
     'Unable to validate email address: invalid format': 'El email no tiene un formato válido.',
     'Email rate limit exceeded': 'Demasiados intentos. Esperá un rato y probá de nuevo.',
-    'Signup requires a valid password': 'La contraseña no es válida.'
+    'Signup requires a valid password': 'La contraseña no es válida.',
+    'Email not found': 'No hay ninguna cuenta con ese email. Revisá que esté bien escrito.'
   };
   function mensajeAuthEnEspanol(resError) {
     if (!resError || !resError.message) return null;
@@ -33,6 +34,10 @@
     if (mensajesAuth[msg]) return mensajesAuth[msg];
     if (msg.indexOf('Invalid login credentials') !== -1) return mensajesAuth['Invalid login credentials'];
     if (msg.indexOf('Email not confirmed') !== -1) return mensajesAuth['Email not confirmed'];
+    if (msg.indexOf('rate limit') !== -1 || msg.indexOf('once every') !== -1 || msg.indexOf('60 seconds') !== -1) {
+      return 'Podés reenviar solo una vez cada cierto tiempo. Esperá un minuto y probá de nuevo.';
+    }
+    if (msg.indexOf('email') !== -1 && msg.indexOf('provided') !== -1) return 'Ingresá el mismo email con el que te registraste.';
     return null;
   }
 
@@ -223,14 +228,18 @@
     },
     /** Reenvía el correo de confirmación al email indicado. */
     resendConfirmationEmail: function(email) {
-      var client = getClient();
-      if (!client) return Promise.reject(new Error('Supabase no está configurado.'));
-      return client.auth.resend({ type: 'signup', email: email }).then(function(res) {
-        if (res.error) {
-          var texto = mensajeAuthEnEspanol(res.error) || 'No se pudo reenviar.';
+      var trimEmail = (email && typeof email === 'string') ? email.trim() : '';
+      if (!trimEmail) return Promise.reject(new Error('Ingresá tu email.'));
+      return initClient().then(function(client) {
+        if (!client) return Promise.reject(new Error('Supabase no está configurado.'));
+        var emailRedirectTo = window.location.origin + window.location.pathname;
+        return client.auth.resend({ type: 'signup', email: trimEmail, options: { emailRedirectTo: emailRedirectTo } });
+      }).then(function(res) {
+        if (res && res.error) {
+          var texto = mensajeAuthEnEspanol(res.error) || (res.error.message || 'No se pudo reenviar.');
           return Promise.reject(new Error(texto));
         }
-        return res.data;
+        return (res && res.data) || null;
       });
     },
     updateNavAuth: function() {
