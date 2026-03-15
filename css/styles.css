@@ -49,3 +49,39 @@ section {
 body.nav-open {
   overflow: hidden;
 }
+
+/* ========== Juegos — cards, texto y botones ========== */
+
+/* Carta de pregunta/reto: profundidad y borde suave */
+.ritual-game-card {
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(255, 255, 255, 0.03);
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+.ritual-game-card:focus-within {
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(114, 47, 55, 0.2);
+}
+
+/* Texto principal de la pregunta/reto: legibilidad */
+.ritual-game-text {
+  line-height: 1.55;
+  letter-spacing: 0.01em;
+  max-width: 65ch;
+}
+
+/* Etiqueta de nivel/modo sobre la carta */
+.ritual-game-label {
+  letter-spacing: 0.15em;
+}
+
+/* Botones de acción en juegos: foco accesible */
+#game-content .touch-target:focus-visible,
+#game-content button:focus-visible,
+#game-content a:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px #0f0a0b, 0 0 0 4px rgba(114, 47, 55, 0.5);
+}
+
+/* Paywall: ligera profundidad */
+#paywall-block {
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+}
