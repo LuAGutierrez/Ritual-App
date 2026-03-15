@@ -140,11 +140,11 @@ window.RitualDatos = {
   },
   picante: {
     nivel1: [
-      "Miremosnos a los ojos sin hablar durante un minuto. Quien sonría primero elige el siguiente reto.",
+      "Mirémonos a los ojos sin hablar durante un minuto. Quien sonría primero elige el siguiente reto.",
       "Un masaje de un minuto en los hombros. El que recibe dice en voz alta qué le gusta de la mano del otro.",
-      "Decirle al otro una cosa que os guste de su cuerpo (que no sea obvia).",
+      "Decile al otro una cosa que te guste de su cuerpo (que no sea obvia).",
       "Besar al otro en un lugar que no sea la boca. El otro elige el lugar.",
-      "Contar un recuerdo en que os hayáis sentido atraídos el uno por el otro.",
+      "Contar un recuerdo en que se hayan sentido atraídos el uno por el otro.",
       "Acercate lentamente hasta quedar a pocos centímetros. Quédense ahí 10 segundos sin tocarse.",
       "Describí en voz baja algo que te guste del cuerpo del otro sin usar la palabra «lindo/a».",
       "Pasá tus dedos por su brazo lentamente y preguntá: ¿más lento o más rápido?",
@@ -152,10 +152,10 @@ window.RitualDatos = {
       "Apoyá tu frente en la suya y respiren juntos.",
     ],
     nivel2: [
-      "Un beso lento de treinta segundos. Sin prisas.",
-      "Susurrar al oído algo que os gustaría hacer juntos esta noche (sin obligación de hacerlo).",
+      "Un beso lento de treinta segundos. Sin apuro.",
+      "Susurrá al oído algo que te gustaría hacer juntos esta noche (sin obligación de hacerlo).",
       "El que recibe elige: un beso en el cuello o en la mano. El otro lo hace y mantiene el contacto 10 segundos.",
-      "Decir en una frase qué os pone de el/la otro/a hoy, en este momento.",
+      "Decí en una frase qué te pone del otro hoy, en este momento.",
       "Abrazar fuerte y quedarse así hasta que uno diga «gracias».",
       "Susurrá una fantasía suave que nunca hayan probado (no obligación).",
       "Rozá su cuello sin besar y quedate ahí 5 segundos.",
