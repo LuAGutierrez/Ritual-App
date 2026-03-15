@@ -93,6 +93,9 @@
     if (tabLogin) tabLogin.addEventListener('click', function() { hideError(); showLogin(); });
     if (tabSignup) tabSignup.addEventListener('click', function() { hideError(); showSignup(); });
 
+    var btnIrALogin = document.getElementById('btn-ir-a-login');
+    if (btnIrALogin) btnIrALogin.addEventListener('click', volverALogin);
+
     function mostrarMensajeConfirmarEmail(emailParaReenviar) {
       var successMsg = document.getElementById('signup-success-msg');
       if (!successMsg) return;
@@ -103,6 +106,19 @@
       if (tabSignup) tabSignup.style.display = 'none';
       var inputEmail = document.getElementById('reenviar-email');
       if (inputEmail && emailParaReenviar) inputEmail.value = emailParaReenviar;
+      successMsg._emailRecienRegistrado = emailParaReenviar || '';
+    }
+
+    function volverALogin() {
+      var successMsg = document.getElementById('signup-success-msg');
+      if (successMsg) successMsg.classList.add('hidden');
+      if (tabLogin) tabLogin.style.display = '';
+      if (tabSignup) tabSignup.style.display = '';
+      showLogin();
+      hideError();
+      var email = successMsg && successMsg._emailRecienRegistrado ? successMsg._emailRecienRegistrado : '';
+      var loginEmail = document.getElementById('login-email');
+      if (loginEmail && email) loginEmail.value = email;
     }
 
     // Al cargar: si vienen con pendingConfirm=1 (ej. desde index sin email confirmado), mostrar el mismo mensaje
