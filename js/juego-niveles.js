@@ -38,6 +38,16 @@
 
     if (!selectorNivel || !zonaContenido) return;
 
+    function actualizarBotonAnterior() {
+      if (btnAnterior) {
+        if (indiceActual === 0) {
+          btnAnterior.classList.add('hidden');
+        } else {
+          btnAnterior.classList.remove('hidden');
+        }
+      }
+    }
+
     function mostrarItem() {
       if (!listaBarajada.length) return;
       if (etiquetaNivel) etiquetaNivel.textContent = labels[nivelActual];
@@ -45,6 +55,7 @@
       selectorNivel.classList.add('hidden');
       zonaContenido.classList.remove('hidden');
       if (zonaRondaCompletada) zonaRondaCompletada.classList.add('hidden');
+      actualizarBotonAnterior();
     }
 
     function iniciarRonda() {
