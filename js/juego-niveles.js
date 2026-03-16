@@ -7,6 +7,7 @@
   function init(opts) {
     if (window.RitualGameAccess === false) return;
     var dataKey = opts.dataKey;
+    var progressGameSlug = opts.progressGameSlug || dataKey;
     var maxPorRonda = opts.maxPorRonda;
     if (!window.RitualDatos || !window.RitualDatos[dataKey]) {
       var fallback = document.getElementById('sin-datos');
@@ -56,15 +57,25 @@
       zonaContenido.classList.remove('hidden');
       if (zonaRondaCompletada) zonaRondaCompletada.classList.add('hidden');
       actualizarBotonAnterior();
+      if (window.RitualProgress) {
+        window.RitualProgress.setLast({
+          gameSlug: progressGameSlug,
+          page: window.location.pathname.split('/').pop() || '',
+          modeSlug: nivelActual,
+          index: indiceActual,
+        });
+      }
     }
 
-    function iniciarRonda() {
+    function iniciarRonda(startIndex) {
       var list = datos[nivelActual];
       if (!list || !list.length) return;
       var barajada = window.RitualShuffle(list.slice());
       var tope = (maxPorRonda != null && maxPorRonda > 0) ? Math.min(maxPorRonda, barajada.length) : barajada.length;
       listaBarajada = barajada.slice(0, tope);
-      indiceActual = 0;
+      indiceActual = (typeof startIndex === 'number' && startIndex >= 0)
+        ? Math.min(startIndex, Math.max(listaBarajada.length - 1, 0))
+        : 0;
       mostrarItem();
     }
 
@@ -97,16 +108,16 @@
       }
     }
 
-    function iniciarNivelConAcceso(nivel) {
+    function iniciarNivelConAcceso(nivel, startIndex) {
       if (!window.Ritual || typeof window.Ritual.canAccessMode !== 'function') {
         nivelActual = nivel;
-        iniciarRonda();
+        iniciarRonda(startIndex);
         return;
       }
       window.Ritual.canAccessMode(dataKey, nivel, function(ok) {
         if (!ok) return;
         nivelActual = nivel;
-        iniciarRonda();
+        iniciarRonda(startIndex);
       });
     }
 
@@ -116,6 +127,12 @@
         iniciarNivelConAcceso(nivel);
       });
     });
+
+    var last = window.RitualProgress ? window.RitualProgress.getLast() : null;
+    var currentPage = window.location.pathname.split('/').pop() || '';
+    if (last && last.page === currentPage && last.gameSlug === progressGameSlug && last.modeSlug && datos[last.modeSlug]) {
+      iniciarNivelConAcceso(last.modeSlug, last.index || 0);
+    }
 
     if (btnSiguiente) btnSiguiente.addEventListener('click', siguiente);
     if (btnAnterior) btnAnterior.addEventListener('click', anterior);

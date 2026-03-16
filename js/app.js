@@ -5,6 +5,44 @@
 
 (function() {
   window.Ritual = {};
+  var PROGRESO_KEY = 'ritual_last_progress_v1';
+
+  function saveProgress(data) {
+    try {
+      localStorage.setItem(PROGRESO_KEY, JSON.stringify(data));
+    } catch (e) {}
+  }
+
+  function readProgress() {
+    try {
+      var raw = localStorage.getItem(PROGRESO_KEY);
+      if (!raw) return null;
+      var parsed = JSON.parse(raw);
+      if (!parsed || !parsed.gameSlug || !parsed.page) return null;
+      return parsed;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  window.RitualProgress = {
+    setLast: function(data) {
+      if (!data || !data.gameSlug || !data.page) return;
+      saveProgress({
+        gameSlug: data.gameSlug,
+        page: data.page,
+        modeSlug: data.modeSlug || '',
+        index: typeof data.index === 'number' ? data.index : 0,
+        updatedAt: Date.now(),
+      });
+    },
+    getLast: function() {
+      return readProgress();
+    },
+    clear: function() {
+      try { localStorage.removeItem(PROGRESO_KEY); } catch (e) {}
+    },
+  };
 
   // Menú móvil: abrir/cerrar
   function initNavMobile() {

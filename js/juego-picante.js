@@ -5,6 +5,7 @@
   function init() {
     window.Ritual.initJuegoNiveles({
       dataKey: 'picante',
+      progressGameSlug: 'picante',
       labels: { nivel1: 'Nivel 1', nivel2: 'Nivel 2', nivel3: 'Nivel 3' },
       nivelDefault: 'nivel1',
       zonaContenidoId: 'zona-reto',

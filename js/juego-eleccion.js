@@ -82,6 +82,14 @@
       bindOptionEvents();
       resetRound();
       showStep1();
+      if (window.RitualProgress) {
+        window.RitualProgress.setLast({
+          gameSlug: 'eleccion',
+          page: window.location.pathname.split('/').pop() || '',
+          modeSlug: modeSlug,
+          index: 0,
+        });
+      }
     }
 
     function bindOptionEvents() {
@@ -123,6 +131,12 @@
       });
     }
 
+    var last = window.RitualProgress ? window.RitualProgress.getLast() : null;
+    var currentPage = window.location.pathname.split('/').pop() || '';
+    if (last && last.page === currentPage && last.gameSlug === 'eleccion' && last.modeSlug && modos[last.modeSlug]) {
+      tryStartMode(last.modeSlug);
+    }
+
     if (btnListo1) btnListo1.addEventListener('click', function() {
       if (paso1) paso1.classList.add('hidden');
       if (paso2) paso2.classList.remove('hidden');
@@ -146,6 +160,14 @@
         if (textoPremio) textoPremio.textContent = premio;
       } else {
         if (resultadoNoCoinciden) resultadoNoCoinciden.classList.remove('hidden');
+      }
+      if (window.RitualProgress) {
+        window.RitualProgress.setLast({
+          gameSlug: 'eleccion',
+          page: window.location.pathname.split('/').pop() || '',
+          modeSlug: modoActual || '',
+          index: 1,
+        });
       }
     });
 

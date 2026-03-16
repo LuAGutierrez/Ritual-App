@@ -169,11 +169,9 @@
         }).then(function(session) {
           if (!session) return Promise.reject(new Error('No se pudo guardar la sesión. Intentá de nuevo.'));
           var params = new URLSearchParams(window.location.search);
-          var base = params.get('redirect') || 'index.html';
+          var base = params.get('redirect') || 'mis-experiencias.html';
           var url = base;
-          if (base === 'index.html' && !params.get('redirect')) {
-            url = 'index.html?login=1';
-          } else if (base.indexOf('exito.html') >= 0) {
+          if (base.indexOf('exito.html') >= 0) {
             var sep = base.indexOf('?') >= 0 ? '&' : '?';
             url = base + sep + 'tipo=login';
           }
@@ -194,11 +192,19 @@
       hideError();
       var email = document.getElementById('signup-email').value.trim();
       var password = document.getElementById('signup-password').value;
+      var chkEdad = document.getElementById('signup-edad');
+      var chkAcepto = document.getElementById('signup-acepto');
       if (!email || !password) {
         showError('Completá email y contraseña.'); return;
       }
       if (password.length < 6) {
         showError('La contraseña debe tener al menos 6 caracteres.'); return;
+      }
+      if (chkEdad && !chkEdad.checked) {
+        showError('Tenés que confirmar que sos mayor de 18 años.'); return;
+      }
+      if (chkAcepto && !chkAcepto.checked) {
+        showError('Tenés que aceptar términos y privacidad.'); return;
       }
       var btn = document.getElementById('btn-signup');
       if (btn) { btn.disabled = true; btn.textContent = 'Creando cuenta…'; }
@@ -210,11 +216,9 @@
           return;
         }
         var params = new URLSearchParams(window.location.search);
-        var base = params.get('redirect') || 'index.html';
+        var base = params.get('redirect') || 'mis-experiencias.html';
         var redirect;
-        if (base === 'index.html' && !params.get('redirect')) {
-          redirect = 'index.html?registrado=1';
-        } else if (base.indexOf('exito.html') >= 0) {
+        if (base.indexOf('exito.html') >= 0) {
           var sep = base.indexOf('?') >= 0 ? '&' : '?';
           redirect = base + sep + 'tipo=registro';
         } else {

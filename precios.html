@@ -4,6 +4,16 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Precios — Ritual</title>
+  <meta name="description" content="Elegí el plan de Ritual y desbloqueá todas las experiencias." />
+  <meta property="og:title" content="Precios — Ritual" />
+  <meta property="og:description" content="Probá gratis o desbloqueá todos los modos con suscripción mensual." />
+  <meta property="og:type" content="website" />
+  <meta property="og:image" content="https://ritual.app/og/ritual-og.jpg" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Precios — Ritual" />
+  <meta name="twitter:description" content="Probá gratis o desbloqueá todos los modos con suscripción mensual." />
+  <meta name="twitter:image" content="https://ritual.app/og/ritual-og.jpg" />
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="js/tailwind-config.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -19,6 +29,7 @@
         <a href="index.html#como-funciona" class="text-nude-muted hover:text-nude transition text-sm py-2">Cómo funciona</a>
         <a href="precios.html#empezar" class="text-nude-muted hover:text-nude transition text-sm py-2">Empezar</a>
         <a href="precios.html" class="text-nude text-sm py-2">Precios</a>
+        <a href="mis-experiencias.html" class="text-nude-muted hover:text-nude transition text-sm py-2">Mis experiencias</a>
         <a href="auth.html" id="nav-auth-link" class="text-nude-muted hover:text-nude transition text-sm py-2">Entrar</a>
         <div id="nav-user-menu" class="hidden relative">
           <button type="button" id="nav-btn-user" aria-label="Mi cuenta" aria-expanded="false" aria-haspopup="true" class="touch-target rounded-full p-2 text-nude-muted hover:text-nude hover:bg-white/5 transition">
@@ -41,6 +52,7 @@
     <a href="index.html#como-funciona" class="text-nude text-lg py-3 nav-link">Cómo funciona</a>
     <a href="precios.html#empezar" class="text-nude text-lg py-3 nav-link">Empezar</a>
     <a href="precios.html" class="text-nude text-lg py-3 nav-link">Precios</a>
+    <a href="mis-experiencias.html" class="text-nude text-lg py-3 nav-link">Mis experiencias</a>
     <a href="auth.html" id="nav-auth-link-mobile" class="text-nude text-lg py-3 nav-link">Entrar</a>
     <p id="nav-user-email-mobile" class="hidden text-nude-muted text-sm text-center nav-link"></p>
     <button type="button" id="nav-btn-logout-mobile" class="hidden text-nude text-lg py-3 bg-transparent border-none cursor-pointer font-inherit nav-link">Cerrar sesión</button>
@@ -67,6 +79,10 @@
       <h2 class="font-display text-2xl text-nude mt-2 mb-1">Suscripción mensual</h2>
       <p class="text-3xl font-display text-nude mb-1"><span id="precio-mensual">5000</span> ARS<span class="text-nude-muted text-base font-body font-normal">/mes</span></p>
       <p class="text-nude-muted text-sm mb-6">Desbloqueá los modos 2 y 3 de las cuatro experiencias. Cancelás cuando quieras.</p>
+      <label class="flex items-start gap-2 text-xs text-nude-muted mb-4">
+        <input type="checkbox" id="chk-pago-edad-acepto" class="mt-0.5 rounded border-white/20 bg-white/[0.06]" />
+        <span>Confirmo que soy mayor de 18 años y acepto los <a href="terminos.html" class="text-wine-light underline">Términos y condiciones</a> y la <a href="privacidad.html" class="text-wine-light underline">Política de privacidad</a>.</span>
+      </label>
       <button id="btn-suscripcion" class="touch-target rounded-full bg-wine px-8 py-4 min-h-[48px] text-nude font-medium hover:bg-wine-light transition">Suscribirme</button>
     </div>
 
@@ -79,6 +95,7 @@
 
   <footer class="py-6 sm:py-8 px-4 sm:px-6 border-t border-white/5 text-center text-nude-muted text-sm">
     <p>Ritual — Momentos que acercan. Para mayores de 18 años.</p>
+    <p class="mt-2 text-xs"><a href="terminos.html" class="hover:text-nude transition">Términos</a> · <a href="privacidad.html" class="hover:text-nude transition">Privacidad</a></p>
   </footer>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/supabase-config.js"></script>

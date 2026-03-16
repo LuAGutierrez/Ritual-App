@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="es" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mis experiencias — Ritual</title>
+  <meta name="description" content="Tu espacio en Ritual para seguir jugando y continuar donde lo dejaron." />
+  <meta property="og:title" content="Mis experiencias — Ritual" />
+  <meta property="og:description" content="Entrá y continuá su experiencia en pareja." />
+  <meta property="og:type" content="website" />
+  <meta property="og:image" content="https://ritual.app/og/ritual-og.jpg" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Mis experiencias — Ritual" />
+  <meta name="twitter:description" content="Entrá y continuá su experiencia en pareja." />
+  <meta name="twitter:image" content="https://ritual.app/og/ritual-og.jpg" />
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="js/tailwind-config.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body class="dark bg-ink text-nude font-body antialiased min-h-screen">
+  <header class="fixed top-0 left-0 right-0 z-50 border-b border-white/5 bg-ink/80 backdrop-blur-sm pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]">
+    <nav class="max-w-5xl mx-auto px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
+      <a href="index.html" class="font-display text-2xl font-semibold text-nude">Ritual</a>
+      <button type="button" id="btn-logout" class="text-nude-muted hover:text-nude transition text-sm">Cerrar sesión</button>
+    </nav>
+  </header>
+
+  <main class="pt-24 sm:pt-28 pb-16 sm:pb-24 px-4 sm:px-6 max-w-5xl mx-auto">
+    <p class="text-wine text-xs sm:text-sm uppercase tracking-[0.2em] mb-2">Tu espacio</p>
+    <h1 class="font-display text-3xl sm:text-4xl text-nude mb-3">Mis experiencias</h1>
+    <p id="user-email" class="text-nude-muted text-sm mb-8"></p>
+
+    <div id="continuar-wrap" class="hidden mb-8 p-6 rounded-2xl border border-wine/40 bg-wine-dark/20">
+      <p class="text-wine text-xs uppercase tracking-[0.2em] mb-2">Siguiente paso</p>
+      <h2 class="font-display text-2xl text-nude mb-2">Continuar donde lo dejaron</h2>
+      <p id="continuar-texto" class="text-nude-muted text-sm mb-4"></p>
+      <a id="continuar-link" href="elegir-juego.html" class="inline-block rounded-full bg-wine px-6 py-3 text-nude text-sm hover:bg-wine-light transition">Continuar</a>
+    </div>
+
+    <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+      <a href="juego-conexion.html" class="block p-6 rounded-2xl bg-white/[0.03] border border-white/5 hover:border-wine/40 transition no-underline">
+        <span class="text-wine text-xs uppercase tracking-[0.2em]">Experiencia 1</span>
+        <h2 class="font-display text-2xl text-nude mt-3 mb-2">Conexión</h2>
+        <p class="text-nude-muted text-sm">Preguntas para abrir conversaciones reales.</p>
+      </a>
+      <a href="juego-picante.html" class="block p-6 rounded-2xl bg-white/[0.03] border border-white/5 hover:border-wine/40 transition no-underline">
+        <span class="text-wine text-xs uppercase tracking-[0.2em]">Experiencia 2</span>
+        <h2 class="font-display text-2xl text-nude mt-3 mb-2">Picante</h2>
+        <p class="text-nude-muted text-sm">Retos por niveles con consentimiento.</p>
+      </a>
+      <a href="juego-eleccion.html" class="block p-6 rounded-2xl bg-white/[0.03] border border-white/5 hover:border-wine/40 transition no-underline">
+        <span class="text-wine text-xs uppercase tracking-[0.2em]">Experiencia 3</span>
+        <h2 class="font-display text-2xl text-nude mt-3 mb-2">Elección</h2>
+        <p class="text-nude-muted text-sm">Si coinciden, desbloquean premio.</p>
+      </a>
+      <a href="juego-memoria.html" class="block p-6 rounded-2xl bg-white/[0.03] border border-white/5 hover:border-wine/40 transition no-underline">
+        <span class="text-wine text-xs uppercase tracking-[0.2em]">Experiencia 4</span>
+        <h2 class="font-display text-2xl text-nude mt-3 mb-2">Memoria</h2>
+        <p class="text-nude-muted text-sm">Escriban, revelen y conversen.</p>
+      </a>
+    </div>
+
+    <p class="mt-8 text-nude-muted text-sm">
+      ¿Todavía no eligieron? <a class="text-wine-light underline" href="elegir-juego.html">Ver todas las experiencias</a>
+    </p>
+  </main>
+
+  <footer class="py-6 sm:py-8 px-4 sm:px-6 border-t border-white/5 text-center text-nude-muted text-sm">
+    <p>Ritual — Momentos que acercan.</p>
+    <p class="mt-2 text-xs"><a href="terminos.html" class="hover:text-nude transition">Términos</a> · <a href="privacidad.html" class="hover:text-nude transition">Privacidad</a></p>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/supabase-config.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/mis-experiencias.js"></script>
+</body>
+</html>
