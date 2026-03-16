@@ -4,6 +4,16 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Listo — Ritual</title>
+  <meta name="description" content="Cuenta lista en Ritual." />
+  <meta property="og:title" content="Listo — Ritual" />
+  <meta property="og:description" content="Ya podés seguir con tus experiencias." />
+  <meta property="og:type" content="website" />
+  <meta property="og:image" content="https://ritual.app/og/ritual-og.jpg" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Listo — Ritual" />
+  <meta name="twitter:description" content="Ya podés seguir con tus experiencias." />
+  <meta name="twitter:image" content="https://ritual.app/og/ritual-og.jpg" />
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="js/tailwind-config.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -22,7 +32,7 @@
     <p class="text-wine text-sm uppercase tracking-wider mb-4" id="exito-etiqueta">Listo</p>
     <h1 class="font-display text-3xl sm:text-4xl text-nude mb-6" id="exito-titulo">Registro exitoso</h1>
     <p class="text-nude-muted text-sm sm:text-base mb-10">Elegí una experiencia y probala cuando quieras.</p>
-    <a href="elegir-juego.html" id="btn-continuar" class="touch-target inline-flex items-center justify-center rounded-full bg-wine px-10 py-4 text-nude font-medium hover:bg-wine-light transition min-h-[48px] no-underline">
+    <a href="mis-experiencias.html" id="btn-continuar" class="touch-target inline-flex items-center justify-center rounded-full bg-wine px-10 py-4 text-nude font-medium hover:bg-wine-light transition min-h-[48px] no-underline">
       Probar los juegos
     </a>
   </main>
@@ -36,6 +46,8 @@
       if (tipo === 'login' && titulo) {
         titulo.textContent = 'Sesión iniciada';
         if (etiqueta) etiqueta.textContent = 'Bienvenido de nuevo';
+        var btn = document.getElementById('btn-continuar');
+        if (btn) btn.textContent = 'Ir a mis experiencias';
       } else if (titulo) {
         titulo.textContent = 'Registro exitoso';
         if (etiqueta) etiqueta.textContent = 'Cuenta creada';

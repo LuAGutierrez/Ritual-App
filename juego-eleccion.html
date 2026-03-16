@@ -4,6 +4,16 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Elección mutua — Ritual</title>
+  <meta name="description" content="Elegí en secreto y descubran si coinciden." />
+  <meta property="og:title" content="Elección mutua — Ritual" />
+  <meta property="og:description" content="Elijan en secreto y desbloqueen premio si coinciden." />
+  <meta property="og:type" content="website" />
+  <meta property="og:image" content="https://ritual.app/og/ritual-og.jpg" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Elección mutua — Ritual" />
+  <meta name="twitter:description" content="Elijan en secreto y desbloqueen premio si coinciden." />
+  <meta name="twitter:image" content="https://ritual.app/og/ritual-og.jpg" />
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="js/tailwind-config.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -67,7 +77,7 @@
       <div id="resultado-coinciden" class="ritual-game-card hidden p-6 sm:p-8 rounded-2xl border border-wine/50 bg-wine-dark/20">
         <p class="ritual-game-label text-wine text-sm uppercase tracking-wider mb-2 animate-pulse">🔥 Coincidieron</p>
         <p class="ritual-game-text font-display text-lg sm:text-xl text-nude mb-4" id="texto-premio"></p>
-        <p class="text-nude-muted text-sm">Hacelo cuando les apetezca. No hay prisa.</p>
+        <p class="text-nude-muted text-sm">Hacelo cuando les pinte. No hay apuro.</p>
       </div>
       <div id="resultado-no-coinciden" class="ritual-game-card hidden p-6 sm:p-8 rounded-2xl bg-white/[0.03] border border-white/5">
         <p class="text-nude-muted text-sm sm:text-base">No coincidieron esta vez. Podéis jugar otra ronda o probar otra experiencia.</p>
@@ -79,6 +89,7 @@
 
   <footer class="py-6 sm:py-8 px-4 sm:px-6 border-t border-white/5 text-center text-nude-muted text-sm">
     <p>Ritual — Momentos que acercan.</p>
+    <p class="mt-2 text-xs"><a href="terminos.html" class="hover:text-nude transition">Términos</a> · <a href="privacidad.html" class="hover:text-nude transition">Privacidad</a></p>
   </footer>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/supabase-config.js"></script>

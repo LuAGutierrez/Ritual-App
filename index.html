@@ -5,6 +5,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Ritual — Momentos que acercan</title>
   <meta name="description" content="Experiencias en pareja para conectar de verdad. Preguntas, retos y rituales pensados para vos dos." />
+  <meta property="og:title" content="Ritual — Momentos que acercan" />
+  <meta property="og:description" content="Preguntas, retos y rituales para conectar de verdad." />
+  <meta property="og:type" content="website" />
+  <meta property="og:image" content="https://ritual.app/og/ritual-og.jpg" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Ritual — Momentos que acercan" />
+  <meta name="twitter:description" content="Preguntas, retos y rituales para conectar de verdad." />
+  <meta name="twitter:image" content="https://ritual.app/og/ritual-og.jpg" />
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="js/tailwind-config.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -20,7 +29,7 @@
       <h2 id="welcome-registrado-title" class="font-display text-3xl sm:text-4xl text-nude mb-4">Bienvenido a Ritual</h2>
       <p class="text-nude-muted text-sm sm:text-base leading-relaxed mb-8">Ya estás adentro. Tres experiencias para conectar de verdad: preguntas que abren, retos que acercan y momentos que van a recordar.</p>
       <div class="flex flex-col sm:flex-row gap-3 justify-center">
-        <a href="elegir-juego.html" id="welcome-registrado-cta" class="touch-target rounded-full bg-wine px-8 py-4 text-nude font-medium hover:bg-wine-light transition min-h-[48px] inline-flex items-center justify-center">Explorar experiencias</a>
+        <a href="mis-experiencias.html" id="welcome-registrado-cta" class="touch-target rounded-full bg-wine px-8 py-4 text-nude font-medium hover:bg-wine-light transition min-h-[48px] inline-flex items-center justify-center">Ir a mis experiencias</a>
         <button type="button" id="welcome-registrado-cerrar" class="touch-target rounded-full border border-nude-muted/40 px-6 py-3 text-nude text-sm hover:border-nude transition min-h-[48px]">Quedarme acá</button>
       </div>
     </div>
@@ -38,6 +47,7 @@
         <a href="#como-funciona" class="text-nude-muted hover:text-nude transition text-sm py-2">Cómo funciona</a>
         <a href="#que-incluye" class="text-nude-muted hover:text-nude transition text-sm py-2">Qué incluye</a>
         <a href="precios.html" class="text-nude-muted hover:text-nude transition text-sm py-2">Precios</a>
+        <a href="mis-experiencias.html" class="text-nude-muted hover:text-nude transition text-sm py-2">Mis experiencias</a>
         <a href="auth.html" id="nav-auth-link" class="text-nude-muted hover:text-nude transition text-sm py-2">Entrar</a>
         <div id="nav-user-menu" class="hidden relative">
           <button type="button" id="nav-btn-user" aria-label="Mi cuenta" aria-expanded="false" aria-haspopup="true" class="touch-target rounded-full p-2 text-nude-muted hover:text-nude hover:bg-white/5 transition">
@@ -61,6 +71,7 @@
     <a href="#como-funciona" class="text-nude text-lg py-3 nav-link">Cómo funciona</a>
     <a href="#que-incluye" class="text-nude text-lg py-3 nav-link">Qué incluye</a>
     <a href="precios.html" class="text-nude text-lg py-3 nav-link">Precios</a>
+    <a href="mis-experiencias.html" class="text-nude text-lg py-3 nav-link">Mis experiencias</a>
     <a href="auth.html" id="nav-auth-link-mobile" class="text-nude text-lg py-3 nav-link">Entrar</a>
     <p id="nav-user-email-mobile" class="hidden text-nude-muted text-sm text-center nav-link"></p>
     <button type="button" id="nav-btn-logout-mobile" class="hidden text-nude text-lg py-3 bg-transparent border-none cursor-pointer font-inherit nav-link">Cerrar sesión</button>
@@ -127,7 +138,7 @@
           <span class="flex-shrink-0 w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-wine flex items-center justify-center text-nude font-display text-xl">2</span>
           <div>
             <h3 class="font-display text-xl text-nude mb-2">Preparás el momento</h3>
-            <p class="text-nude-muted">Un rato a solas, sin prisas. Lo que recomiendan las instrucciones lo podés adaptar a su estilo.</p>
+            <p class="text-nude-muted">Un rato a solas, sin apuro. Lo que recomiendan las instrucciones lo podés adaptar a su estilo.</p>
           </div>
         </li>
         <li class="flex gap-4 sm:gap-8 items-start">
@@ -183,6 +194,7 @@
 
   <footer class="py-6 sm:py-8 px-4 sm:px-6 border-t border-white/5 text-center text-nude-muted text-sm">
     <p>Ritual — Momentos que acercan. Para mayores de 18 años.</p>
+    <p class="mt-2 text-xs"><a href="terminos.html" class="hover:text-nude transition">Términos</a> · <a href="privacidad.html" class="hover:text-nude transition">Privacidad</a></p>
   </footer>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/supabase-config.js"></script>

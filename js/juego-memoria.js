@@ -59,6 +59,14 @@
       if (paso2) paso2.classList.add('hidden');
       if (paso3) paso3.classList.add('hidden');
       if (paso4) paso4.classList.add('hidden');
+      if (window.RitualProgress) {
+        window.RitualProgress.setLast({
+          gameSlug: 'memoria',
+          page: window.location.pathname.split('/').pop() || '',
+          modeSlug: modoActual || '',
+          index: index,
+        });
+      }
     }
 
     function empezarModo(modeSlug) {
@@ -89,6 +97,12 @@
           tryStartMode(this.getAttribute('data-mode'));
         });
       });
+    }
+
+    var last = window.RitualProgress ? window.RitualProgress.getLast() : null;
+    var currentPage = window.location.pathname.split('/').pop() || '';
+    if (last && last.page === currentPage && last.gameSlug === 'memoria' && last.modeSlug && datos.memoria[last.modeSlug]) {
+      tryStartMode(last.modeSlug);
     }
 
     if (btnListo1) {

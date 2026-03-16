@@ -21,6 +21,7 @@
     var btnLogoutMobile = document.getElementById('nav-btn-logout-mobile');
     var btnPrueba = document.getElementById('btn-prueba');
     var btnSuscripcion = document.getElementById('btn-suscripcion');
+    var chkPago = document.getElementById('chk-pago-edad-acepto');
     var paywallMsg = document.getElementById('paywall-msg');
     var noConfig = document.getElementById('precios-no-config');
     if (noConfig && (!window.RitualSupabase || !window.RitualSupabase.enabled)) {
@@ -64,6 +65,10 @@
       btnSuscripcion.addEventListener('click', function() {
         if (!window.RitualAuth) {
           showPaywallMsg();
+          return;
+        }
+        if (chkPago && !chkPago.checked) {
+          alert('Para suscribirte tenés que confirmar mayoría de edad y aceptar términos y privacidad.');
           return;
         }
         btnSuscripcion.disabled = true;
