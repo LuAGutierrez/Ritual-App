@@ -23,6 +23,7 @@
     var btnSuscripcion = document.getElementById('btn-suscripcion');
     var chkPago = document.getElementById('chk-pago-edad-acepto');
     var paywallMsg = document.getElementById('paywall-msg');
+    var preciosError = document.getElementById('precios-error');
     var noConfig = document.getElementById('precios-no-config');
     if (noConfig && (!window.RitualSupabase || !window.RitualSupabase.enabled)) {
       noConfig.classList.remove('hidden');
@@ -50,6 +51,15 @@
         paywallMsg.scrollIntoView({ behavior: 'smooth' });
       }
     }
+    function showError(msg) {
+      if (!preciosError) return;
+      preciosError.textContent = msg;
+      preciosError.classList.remove('hidden');
+    }
+    function hideError() {
+      if (!preciosError) return;
+      preciosError.classList.add('hidden');
+    }
 
     if (btnPrueba) {
       if (window.RitualAuth) {
@@ -63,12 +73,13 @@
     }
     if (btnSuscripcion) {
       btnSuscripcion.addEventListener('click', function() {
+        hideError();
         if (!window.RitualAuth) {
           showPaywallMsg();
           return;
         }
         if (chkPago && !chkPago.checked) {
-          alert('Para suscribirte tenés que confirmar mayoría de edad y aceptar términos y privacidad.');
+          showError('Para suscribirte tenés que confirmar mayoría de edad y aceptar términos y privacidad.');
           return;
         }
         btnSuscripcion.disabled = true;
@@ -90,7 +101,7 @@
           if (result.init_point) {
             window.open(result.init_point, '_blank');
           } else {
-            alert(mensajeErrorPago(result));
+            showError(mensajeErrorPago(result));
           }
         }).catch(function() {
           if (btnSuscripcion) {

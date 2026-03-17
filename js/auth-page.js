@@ -68,30 +68,50 @@
     function showLogin() {
       formLogin.classList.remove('hidden');
       formSignup.classList.add('hidden');
+      formLogin.hidden = false;
+      formSignup.hidden = true;
       if (tabLogin) {
         tabLogin.classList.add('border-wine', 'font-medium', 'text-nude');
         tabLogin.classList.remove('border-transparent');
+        tabLogin.setAttribute('aria-selected', 'true');
       }
       if (tabSignup) {
         tabSignup.classList.remove('border-wine', 'text-nude');
         tabSignup.classList.add('border-transparent', 'text-nude-muted');
+        tabSignup.setAttribute('aria-selected', 'false');
       }
     }
     function showSignup() {
       formSignup.classList.remove('hidden');
       formLogin.classList.add('hidden');
+      formSignup.hidden = false;
+      formLogin.hidden = true;
       if (tabSignup) {
         tabSignup.classList.add('border-wine', 'font-medium', 'text-nude');
         tabSignup.classList.remove('border-transparent', 'text-nude-muted');
+        tabSignup.setAttribute('aria-selected', 'true');
       }
       if (tabLogin) {
         tabLogin.classList.remove('border-wine', 'text-nude');
         tabLogin.classList.add('border-transparent', 'text-nude-muted');
+        tabLogin.setAttribute('aria-selected', 'false');
       }
     }
 
     if (tabLogin) tabLogin.addEventListener('click', function() { hideError(); showLogin(); });
     if (tabSignup) tabSignup.addEventListener('click', function() { hideError(); showSignup(); });
+    if (tabLogin && tabSignup) {
+      [tabLogin, tabSignup].forEach(function(tab) {
+        tab.addEventListener('keydown', function(e) {
+          if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+          e.preventDefault();
+          var target = tab === tabLogin ? tabSignup : tabLogin;
+          if (target === tabSignup) showSignup();
+          else showLogin();
+          target.focus();
+        });
+      });
+    }
 
     var btnIrALogin = document.getElementById('btn-ir-a-login');
     if (btnIrALogin) btnIrALogin.addEventListener('click', volverALogin);
@@ -144,12 +164,15 @@
         if (reenviarOk) reenviarOk.classList.add('hidden');
         if (reenviarError) reenviarError.classList.add('hidden');
         btnReenviar.disabled = true;
+        btnReenviar.textContent = 'Enviando…';
         window.RitualAuth.resendConfirmationEmail(email).then(function() {
           if (reenviarOk) { reenviarOk.classList.remove('hidden'); reenviarOk.textContent = 'Correo reenviado. Revisá tu bandeja (y spam).'; }
           btnReenviar.disabled = false;
+          btnReenviar.textContent = 'Reenviar correo';
         }).catch(function(err) {
           if (reenviarError) { reenviarError.textContent = err.message || 'No se pudo reenviar.'; reenviarError.classList.remove('hidden'); }
           btnReenviar.disabled = false;
+          btnReenviar.textContent = 'Reenviar correo';
         });
       });
     }

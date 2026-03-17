@@ -18,12 +18,32 @@
     var btnCerrarWelcome = document.getElementById('welcome-registrado-cerrar');
     if (params.get('registrado') === '1' && welcomeRegistrado) {
       function mostrarBienvenida() {
+        var focusables = welcomeRegistrado.querySelectorAll('a[href], button:not([disabled])');
+        var firstFocusable = focusables[0] || null;
+        var lastFocusable = focusables[focusables.length - 1] || null;
         welcomeRegistrado.classList.remove('hidden');
+        if (firstFocusable) firstFocusable.focus();
         if (history.replaceState) history.replaceState({}, '', window.location.pathname || 'index.html');
         function cerrarWelcome() { welcomeRegistrado.classList.add('hidden'); }
         if (btnCerrarWelcome) btnCerrarWelcome.addEventListener('click', cerrarWelcome);
         welcomeRegistrado.addEventListener('click', function(e) {
           if (e.target === welcomeRegistrado) cerrarWelcome();
+        });
+        welcomeRegistrado.addEventListener('keydown', function(e) {
+          if (welcomeRegistrado.classList.contains('hidden')) return;
+          if (e.key === 'Escape') {
+            e.preventDefault();
+            cerrarWelcome();
+            return;
+          }
+          if (e.key !== 'Tab' || !firstFocusable || !lastFocusable) return;
+          if (e.shiftKey && document.activeElement === firstFocusable) {
+            e.preventDefault();
+            lastFocusable.focus();
+          } else if (!e.shiftKey && document.activeElement === lastFocusable) {
+            e.preventDefault();
+            firstFocusable.focus();
+          }
         });
       }
       if (window.RitualAuth) {

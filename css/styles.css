@@ -15,6 +15,23 @@
   font-family: 'Cormorant Garamond', Georgia, serif;
 }
 
+/* Skip link para navegación por teclado */
+.skip-link {
+  position: absolute;
+  left: 12px;
+  top: -48px;
+  z-index: 100;
+  padding: 10px 14px;
+  border-radius: 9999px;
+  background: #7c2d45;
+  color: #f5ede4;
+  font-size: 13px;
+  line-height: 1;
+}
+.skip-link:focus {
+  top: 10px;
+}
+
 /* Transiciones suaves para ritmo lento */
 a, button {
   transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
@@ -48,6 +65,15 @@ section {
 }
 body.nav-open {
   overflow: hidden;
+}
+
+/* Foco visible consistente */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px #0f0a0b, 0 0 0 4px rgba(114, 47, 55, 0.55);
 }
 
 /* ========== Juegos — cards, texto y botones ========== */
@@ -84,4 +110,10 @@ body.nav-open {
 /* Paywall: ligera profundidad */
 #paywall-block {
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+}
+
+.form-error-inline {
+  color: #f5b7b7;
+  font-size: 12px;
+  margin-top: 10px;
 }

@@ -42,6 +42,7 @@
     var resultadoNoCoinciden = document.getElementById('resultado-no-coinciden');
     var textoPremio = document.getElementById('texto-premio');
     var btnOtra = document.getElementById('btn-otra');
+    var eleccionError = document.getElementById('eleccion-error');
 
     if (!opciones1 || !opciones2) return;
 
@@ -57,6 +58,7 @@
       if (paso3) paso3.classList.add('hidden');
       if (paso2) paso2.classList.add('hidden');
       if (paso1) paso1.classList.remove('hidden');
+      if (eleccionError) eleccionError.classList.add('hidden');
     }
 
     function renderOpciones(container) {
@@ -107,6 +109,7 @@
           opciones2.querySelectorAll('button').forEach(function(b) { b.classList.remove('border-wine', 'bg-wine-dark/30'); });
           this.classList.add('border-wine', 'bg-wine-dark/30');
           eleccion2 = parseInt(this.dataset.index, 10);
+          if (eleccionError) eleccionError.classList.add('hidden');
         });
       });
     }
@@ -144,9 +147,13 @@
 
     if (btnRevelar) btnRevelar.addEventListener('click', function() {
       if (eleccion1 == null || eleccion2 == null) {
-        alert('Las dos personas tienen que elegir una opción.');
+        if (eleccionError) {
+          eleccionError.textContent = 'Las dos personas tienen que elegir una opción.';
+          eleccionError.classList.remove('hidden');
+        }
         return;
       }
+      if (eleccionError) eleccionError.classList.add('hidden');
       if (paso2) paso2.classList.add('hidden');
       if (paso3) paso3.classList.remove('hidden');
       if (eleccion1Span) eleccion1Span.textContent = opciones[eleccion1];
