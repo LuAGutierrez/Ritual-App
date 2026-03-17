@@ -22,6 +22,7 @@
   <link rel="stylesheet" href="css/styles.css" />
 </head>
 <body class="dark bg-ink text-nude font-body antialiased min-h-screen">
+  <a href="#main-content" class="skip-link">Saltar al contenido</a>
   <header class="fixed top-0 left-0 right-0 z-50 border-b border-white/5 bg-ink/80 backdrop-blur-sm pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]">
     <nav class="max-w-5xl mx-auto px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
       <a href="index.html" class="font-display text-2xl font-semibold text-nude">Ritual</a>
@@ -29,32 +30,33 @@
     </nav>
   </header>
 
-  <main class="pt-24 sm:pt-28 pb-16 sm:pb-24 px-4 sm:px-6 max-w-md mx-auto">
+  <main id="main-content" class="pt-24 sm:pt-28 pb-16 sm:pb-24 px-4 sm:px-6 max-w-md mx-auto">
     <h1 class="font-display text-3xl text-nude mb-8">Entrar a tu cuenta</h1>
 
     <div id="auth-no-config" class="hidden mb-6 p-4 rounded-xl bg-wine-dark/30 border border-wine/40 text-nude text-sm">Ritual no está configurado para esta versión. No podés iniciar sesión ni crear cuenta.</div>
 
     <!-- Tabs: Iniciar sesión / Crear cuenta -->
-    <div class="flex border-b border-white/10 mb-8">
-      <button type="button" id="tab-login" class="flex-1 py-3 text-center text-nude border-b-2 border-wine font-medium tab-auth">Iniciar sesión</button>
-      <button type="button" id="tab-signup" class="flex-1 py-3 text-center text-nude-muted border-b-2 border-transparent tab-auth">Crear cuenta</button>
+    <div role="tablist" aria-label="Acceso a cuenta" class="flex border-b border-white/10 mb-8">
+      <button type="button" id="tab-login" role="tab" aria-selected="true" aria-controls="form-login" class="flex-1 py-3 text-center text-nude border-b-2 border-wine font-medium tab-auth">Iniciar sesión</button>
+      <button type="button" id="tab-signup" role="tab" aria-selected="false" aria-controls="form-signup" class="flex-1 py-3 text-center text-nude-muted border-b-2 border-transparent tab-auth">Crear cuenta</button>
     </div>
 
-    <div id="auth-error" class="hidden mb-6 p-4 rounded-xl bg-wine-dark/40 border border-wine/40 text-nude text-sm"></div>
+    <div id="auth-error" aria-live="polite" class="hidden mb-6 p-4 rounded-xl bg-wine-dark/40 border border-wine/40 text-nude text-sm"></div>
     <div id="signup-success-msg" class="hidden mb-6 p-4 rounded-xl border border-wine/40 bg-wine-dark/20 text-nude text-sm">
       <p class="mb-3">Si esa dirección ya está registrada, puede que te hayamos enviado un correo de activación. Si es una cuenta nueva, revisá tu correo (y la carpeta de spam) para activar la cuenta.</p>
       <p class="mb-4 text-nude-muted text-xs">¿Ya tenés cuenta? Entrá con tu email y contraseña.</p>
       <button type="button" id="btn-ir-a-login" class="w-full mb-4 touch-target rounded-full bg-wine py-3 min-h-[48px] text-nude font-medium hover:bg-wine-light transition">Iniciar sesión</button>
       <p class="text-nude-muted text-xs mb-2">No recibí el correo:</p>
+      <div class="flex flex-wrap items-center gap-2 mb-2">
         <input type="email" id="reenviar-email" placeholder="tu@email.com" class="flex-1 min-w-[160px] rounded-lg bg-white/[0.06] border border-white/10 px-3 py-2 text-nude text-sm placeholder-nude-muted/60 focus:outline-none focus:border-wine/50" />
         <button type="button" id="btn-reenviar-correo" class="rounded-full bg-wine/80 px-4 py-2 text-nude text-xs font-medium hover:bg-wine transition">Reenviar correo</button>
       </div>
-      <p id="reenviar-ok" class="hidden text-green-400 text-xs">Correo reenviado. Revisá tu bandeja.</p>
-      <p id="reenviar-error" class="hidden text-red-300 text-xs"></p>
+      <p id="reenviar-ok" aria-live="polite" class="hidden text-green-400 text-xs">Correo reenviado. Revisá tu bandeja.</p>
+      <p id="reenviar-error" aria-live="polite" class="hidden text-red-300 text-xs"></p>
     </div>
 
     <!-- Form Iniciar sesión -->
-    <form id="form-login" class="space-y-5">
+    <form id="form-login" role="tabpanel" aria-labelledby="tab-login" class="space-y-5">
       <div>
         <label for="login-email" class="block text-nude-muted text-sm mb-2">Email</label>
         <input type="email" id="login-email" name="email" required autocomplete="email"
@@ -71,7 +73,7 @@
     </form>
 
     <!-- Form Crear cuenta -->
-    <form id="form-signup" class="hidden space-y-5">
+    <form id="form-signup" role="tabpanel" aria-labelledby="tab-signup" class="hidden space-y-5">
       <div>
         <label for="signup-email" class="block text-nude-muted text-sm mb-2">Email</label>
         <input type="email" id="signup-email" name="email" required autocomplete="email"

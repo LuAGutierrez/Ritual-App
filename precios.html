@@ -22,6 +22,7 @@
   <link rel="stylesheet" href="css/styles.css" />
 </head>
 <body class="dark bg-ink text-nude font-body antialiased min-h-screen">
+  <a href="#main-content" class="skip-link">Saltar al contenido</a>
   <header class="fixed top-0 left-0 right-0 z-50 border-b border-white/5 bg-ink/80 backdrop-blur-sm pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]">
     <nav class="max-w-5xl mx-auto px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
       <a href="index.html" class="font-display text-2xl font-semibold text-nude touch-target min-w-0">Ritual</a>
@@ -59,7 +60,7 @@
     <a href="precios.html#empezar" class="rounded-full bg-wine px-8 py-4 text-nude font-medium nav-link">Empieza hoy</a>
   </div>
 
-  <main class="pt-24 sm:pt-28 pb-16 sm:pb-24 px-4 sm:px-6 max-w-4xl mx-auto">
+  <main id="main-content" class="pt-24 sm:pt-28 pb-16 sm:pb-24 px-4 sm:px-6 max-w-4xl mx-auto">
     <h1 class="font-display text-3xl sm:text-4xl md:text-5xl text-nude mb-4">Elegí cómo vivirlo</h1>
     <p class="text-nude-muted text-base sm:text-lg mb-10 sm:mb-16">Probalo sin compromiso. Si le gusta, sigan por muy poco al mes.</p>
 
@@ -84,6 +85,7 @@
         <span>Confirmo que soy mayor de 18 años y acepto los <a href="terminos.html" class="text-wine-light underline">Términos y condiciones</a> y la <a href="privacidad.html" class="text-wine-light underline">Política de privacidad</a>.</span>
       </label>
       <button id="btn-suscripcion" class="touch-target rounded-full bg-wine px-8 py-4 min-h-[48px] text-nude font-medium hover:bg-wine-light transition">Suscribirme</button>
+      <p id="precios-error" aria-live="polite" class="hidden form-error-inline"></p>
     </div>
 
     <!-- Mensaje post-pago o error -->

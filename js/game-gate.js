@@ -12,6 +12,7 @@
   }
 
   function runGate() {
+    setBusy(true);
     window.RitualGameAccess = false;
     if (isLocalhost()) {
       window.RitualGameAccess = true;
@@ -65,6 +66,7 @@
         ? 'Confirmá tu correo para acceder. Revisá el email que te enviamos al registrarte.'
         : 'Para desbloquear modos avanzados necesitás una suscripción activa. Suscribite y accedé a todas las experiencias.';
     }
+    setBusy(false);
   }
 
   function showGame() {
@@ -72,6 +74,11 @@
     var content = document.getElementById('game-content');
     if (block) block.classList.add('hidden');
     if (content) content.classList.remove('hidden');
+    setBusy(false);
+  }
+
+  function setBusy(isBusy) {
+    if (document.body) document.body.setAttribute('aria-busy', isBusy ? 'true' : 'false');
   }
 
   function canAccessMode(gameSlug, modeSlug, cb) {

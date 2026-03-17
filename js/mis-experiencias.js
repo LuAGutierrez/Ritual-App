@@ -55,7 +55,11 @@
       }
 
       var progress = window.RitualProgress ? window.RitualProgress.getLast() : null;
-      if (!progress || !progress.page) return;
+      var avisoVacio = document.getElementById('continuar-vacio');
+      if (!progress || !progress.page) {
+        if (avisoVacio) avisoVacio.classList.remove('hidden');
+        return;
+      }
 
       var wrap = document.getElementById('continuar-wrap');
       var texto = document.getElementById('continuar-texto');
@@ -67,6 +71,7 @@
       texto.textContent = modo ? (juego + ' · ' + modo) : juego;
       link.href = progress.page;
       wrap.classList.remove('hidden');
+      if (avisoVacio) avisoVacio.classList.add('hidden');
     }).catch(function() {
       window.location.href = 'auth.html?redirect=' + encodeURIComponent('mis-experiencias.html');
     });

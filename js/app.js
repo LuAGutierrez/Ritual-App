@@ -50,16 +50,27 @@
     var btnCerrar = document.getElementById('btn-cerrar');
     var navMobile = document.getElementById('nav-mobile');
     if (!navMobile) return;
+    var lastFocused = null;
+
+    function getFocusable() {
+      return Array.prototype.slice.call(
+        navMobile.querySelectorAll('a[href], button:not([disabled])')
+      );
+    }
 
     function openNav() {
+      lastFocused = document.activeElement;
       navMobile.classList.remove('hidden');
       document.body.classList.add('nav-open');
       if (btnMenu) btnMenu.setAttribute('aria-label', 'Cerrar menú');
+      var focusables = getFocusable();
+      if (focusables.length) focusables[0].focus();
     }
     function closeNav() {
       navMobile.classList.add('hidden');
       document.body.classList.remove('nav-open');
       if (btnMenu) btnMenu.setAttribute('aria-label', 'Abrir menú');
+      if (lastFocused && typeof lastFocused.focus === 'function') lastFocused.focus();
     }
     function toggleNav() {
       if (navMobile.classList.contains('hidden')) openNav(); else closeNav();
@@ -69,6 +80,25 @@
     if (btnCerrar) btnCerrar.addEventListener('click', closeNav);
     navMobile.querySelectorAll('.nav-link').forEach(function(link) {
       link.addEventListener('click', closeNav);
+    });
+    document.addEventListener('keydown', function(e) {
+      if (navMobile.classList.contains('hidden')) return;
+      if (e.key === 'Escape') {
+        closeNav();
+        return;
+      }
+      if (e.key !== 'Tab') return;
+      var focusables = getFocusable();
+      if (!focusables.length) return;
+      var first = focusables[0];
+      var last = focusables[focusables.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
     });
     window.addEventListener('resize', function() {
       if (window.innerWidth >= 768) closeNav();
