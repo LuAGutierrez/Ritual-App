@@ -15,6 +15,11 @@
     return 'No se pudo abrir el pago. Intentá de nuevo. (' + result.error + ')';
   }
 
+  function trackPixel(eventName, params) {
+    if (!window.RitualPixel || typeof window.RitualPixel.track !== 'function') return;
+    window.RitualPixel.track(eventName, params);
+  }
+
   function init() {
     var urlParams = new URLSearchParams(window.location.search);
     var btnLogout = document.getElementById('nav-btn-logout');
@@ -62,6 +67,9 @@
     }
 
     if (btnPrueba) {
+      btnPrueba.addEventListener('click', function() {
+        trackPixel('StartTrial');
+      });
       if (window.RitualAuth) {
         window.RitualAuth.init().then(function() {
           return window.RitualAuth.getSession();
@@ -82,6 +90,12 @@
           showError('Para suscribirte tenés que confirmar mayoría de edad y aceptar términos y privacidad.');
           return;
         }
+        var precioMensualEl = document.getElementById('precio-mensual');
+        var value = precioMensualEl ? Number(precioMensualEl.textContent || '0') : 0;
+        trackPixel('InitiateCheckout', {
+          currency: 'ARS',
+          value: Number.isFinite(value) ? value : 0
+        });
         btnSuscripcion.disabled = true;
         btnSuscripcion.textContent = 'Un momento…';
         window.RitualAuth.init().then(function() {
@@ -118,6 +132,15 @@
       paywallMsg.classList.remove('hidden');
       paywallMsg.innerHTML = '<p class="text-nude mb-4">Gracias. Cuando el pago se acredite tendrás acceso a todos los modos de las cuatro experiencias.</p><p class="text-nude-muted text-sm mb-4">Si ya pagaste, entrá a:</p><p class="flex flex-wrap gap-3 justify-center"><a href="juego-conexion.html" class="text-wine-light underline text-sm">Conexión profunda</a><a href="juego-picante.html" class="text-wine-light underline text-sm">Picante progresivo</a><a href="juego-eleccion.html" class="text-wine-light underline text-sm">Elección mutua</a><a href="juego-memoria.html" class="text-wine-light underline text-sm">Memoria nuestra</a></p>';
       paywallMsg.scrollIntoView({ behavior: 'smooth' });
+      if (!window.sessionStorage.getItem('ritual_pixel_purchase_sent')) {
+        var precioEl = document.getElementById('precio-mensual');
+        var purchaseValue = precioEl ? Number(precioEl.textContent || '0') : 0;
+        trackPixel('Purchase', {
+          currency: 'ARS',
+          value: Number.isFinite(purchaseValue) ? purchaseValue : 0
+        });
+        window.sessionStorage.setItem('ritual_pixel_purchase_sent', '1');
+      }
     }
   }
   if (document.readyState === 'loading') {
