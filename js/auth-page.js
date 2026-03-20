@@ -2,6 +2,11 @@
  * Ritual — Página de login/registro (auth.html)
  */
 (function() {
+  function trackPixel(eventName, params) {
+    if (!window.RitualPixel || typeof window.RitualPixel.track !== 'function') return;
+    window.RitualPixel.track(eventName, params);
+  }
+
   function init() {
     if (!window.RitualAuth) return;
 
@@ -191,6 +196,7 @@
           return window.RitualAuth.getSession();
         }).then(function(session) {
           if (!session) return Promise.reject(new Error('No se pudo guardar la sesión. Intentá de nuevo.'));
+          trackPixel('Login');
           var params = new URLSearchParams(window.location.search);
           var base = params.get('redirect') || 'mis-experiencias.html';
           var url = base;
@@ -234,10 +240,12 @@
       window.RitualAuth.signUp(email, password).then(function(data) {
         var session = data && data.session;
         if (!session) {
+          trackPixel('CompleteRegistration');
           mostrarMensajeConfirmarEmail(email);
           if (btn) { btn.disabled = false; btn.textContent = 'Crear cuenta'; }
           return;
         }
+        trackPixel('CompleteRegistration');
         var params = new URLSearchParams(window.location.search);
         var base = params.get('redirect') || 'mis-experiencias.html';
         var redirect;
