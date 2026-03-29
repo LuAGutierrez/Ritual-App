@@ -6,6 +6,27 @@
 (function() {
   window.Ritual = window.Ritual || {};
 
+  /** Quita candados y estilo “bloqueado” en selectores de modo/nivel si hay suscripción activa. */
+  function applyPremiumSelectorUnlock() {
+    document.querySelectorAll('[data-premium="1"]').forEach(function(btn) {
+      btn.classList.remove('text-nude-muted', 'border-wine/30', 'hover:border-wine/60', 'flex', 'items-center', 'gap-2');
+      btn.classList.add('text-nude', 'border-nude-muted/40', 'hover:border-nude');
+      btn.querySelectorAll('span').forEach(function(span) {
+        if ((span.textContent || '').indexOf('🔒') !== -1) span.remove();
+      });
+    });
+    document.querySelectorAll('.ritual-premium-hint').forEach(function(el) {
+      el.classList.add('hidden');
+    });
+  }
+
+  function maybeUnlockPremiumSelectors() {
+    if (!window.RitualAuth || typeof window.RitualAuth.getSubscriptionStatus !== 'function') return;
+    window.RitualAuth.getSubscriptionStatus().then(function(active) {
+      if (active) applyPremiumSelectorUnlock();
+    }).catch(function() {});
+  }
+
   function isLocalhost() {
     var h = window.location.hostname;
     return h === 'localhost' || h === '127.0.0.1';
@@ -18,7 +39,11 @@
       window.RitualGameAccess = true;
       showGame();
       document.dispatchEvent(new CustomEvent('ritual-game-access-granted'));
-      if (window.RitualAuth) window.RitualAuth.init();
+      if (window.RitualAuth) {
+        window.RitualAuth.init().then(function() {
+          maybeUnlockPremiumSelectors();
+        });
+      }
       return;
     }
     if (!window.RitualAuth) {
@@ -44,6 +69,8 @@
         if (!result.allowed) {
           window.RitualGameAccess = false;
           showPaywall(result);
+        } else {
+          maybeUnlockPremiumSelectors();
         }
       }).catch(function() {
         window.RitualGameAccess = false;
@@ -94,6 +121,7 @@
       if (r && r.allowed) {
         window.RitualGameAccess = true;
         showGame();
+        maybeUnlockPremiumSelectors();
       } else {
         window.RitualGameAccess = false;
         showPaywall(r);
