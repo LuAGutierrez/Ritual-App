@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="es" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Elección mutua a distancia — Ritual</title>
+  <meta name="description" content="Jueguen Elección mutua a distancia, cada uno desde su teléfono." />
+  <meta property="og:title" content="Elección mutua a distancia — Ritual" />
+  <meta property="og:description" content="Creá una sala y jueguen a distancia sin spoilers." />
+  <meta property="og:type" content="website" />
+  <meta property="og:image" content="https://ritual.app/og/ritual-og.jpg" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Elección mutua a distancia — Ritual" />
+  <meta name="twitter:description" content="Creá una sala y jueguen a distancia sin spoilers." />
+  <meta name="twitter:image" content="https://ritual.app/og/ritual-og.jpg" />
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="js/tailwind-config.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body class="dark bg-ink text-nude font-body antialiased min-h-screen">
+  <a href="#main-content" class="skip-link">Saltar al contenido</a>
+  <header class="fixed top-0 left-0 right-0 z-50 border-b border-white/5 bg-ink/80 backdrop-blur-sm pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]">
+    <nav class="max-w-5xl mx-auto px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
+      <a href="index.html" class="font-display text-2xl font-semibold text-nude touch-target min-w-0">Ritual</a>
+      <button type="button" id="btn-volver" class="text-nude-muted hover:text-nude transition text-sm touch-target min-h-[44px] inline-flex items-center bg-transparent border-none cursor-pointer font-inherit">Volver</button>
+    </nav>
+  </header>
+
+  <main id="main-content" class="pt-24 sm:pt-28 pb-16 sm:pb-24 px-4 sm:px-6 max-w-2xl md:max-w-4xl mx-auto">
+    <p class="text-wine text-xs sm:text-sm uppercase tracking-[0.2em] mb-2">Experiencia 3 · Nuevo</p>
+    <h1 class="font-display text-2xl sm:text-3xl md:text-4xl text-nude mb-4">Elección mutua a distancia</h1>
+    <p class="text-nude-muted text-sm sm:text-base mb-8">Cada uno juega desde su teléfono. Nadie ve la elección del otro hasta revelar.</p>
+
+    <div id="remote-error" aria-live="polite" class="hidden mb-6 p-4 rounded-xl bg-wine-dark/40 border border-wine/40 text-nude text-sm"></div>
+
+    <section id="remote-lobby" class="mb-8 p-6 sm:p-8 rounded-2xl bg-white/[0.03] border border-white/5">
+      <h2 class="font-display text-xl text-nude mb-4">Crear sala (host con plan activo)</h2>
+      <p class="text-nude-muted text-sm mb-4">Elegí modo, creá la sala y compartí el código con tu pareja.</p>
+      <div class="flex flex-wrap gap-3 mb-4">
+        <button type="button" data-mode="modo1" class="remote-mode-btn touch-target rounded-full border border-nude-muted/40 px-5 py-3 min-h-[48px] text-sm text-nude hover:border-nude transition">Modo 1</button>
+        <button type="button" data-mode="modo2" class="remote-mode-btn touch-target rounded-full border border-nude-muted/40 px-5 py-3 min-h-[48px] text-sm text-nude hover:border-nude transition">Modo 2</button>
+        <button type="button" data-mode="modo3" class="remote-mode-btn touch-target rounded-full border border-nude-muted/40 px-5 py-3 min-h-[48px] text-sm text-nude hover:border-nude transition">Modo 3</button>
+      </div>
+      <button type="button" id="btn-crear-sala" class="touch-target rounded-full bg-wine px-6 py-3 min-h-[48px] text-nude text-sm hover:bg-wine-light transition">Crear sala</button>
+
+      <div class="my-6 border-t border-white/10"></div>
+
+      <h2 class="font-display text-xl text-nude mb-3">Unirme a sala</h2>
+      <div class="flex flex-col sm:flex-row gap-3 sm:items-center">
+        <input id="input-room-code" type="text" maxlength="6" placeholder="Código (ej: A1B2C3)" class="w-full sm:w-auto sm:flex-1 rounded-xl bg-white/[0.06] border border-white/10 px-4 py-3 text-nude uppercase placeholder-nude-muted/60 focus:outline-none focus:border-wine/50" />
+        <button type="button" id="btn-unirme-sala" class="touch-target rounded-full border border-nude-muted/40 px-6 py-3 min-h-[48px] text-nude text-sm hover:border-nude transition">Unirme</button>
+      </div>
+    </section>
+
+    <section id="remote-room" class="hidden mb-8 p-6 sm:p-8 rounded-2xl border border-wine/40 bg-wine-dark/10">
+      <p class="text-wine text-xs uppercase tracking-[0.2em] mb-2">Sala activa</p>
+      <p class="text-nude text-sm">Código: <span id="room-code-text" class="font-medium tracking-widest"></span></p>
+      <p class="text-nude-muted text-sm mt-1">Modo: <span id="room-mode-text"></span></p>
+      <p id="room-status-text" class="text-nude-muted text-sm mt-3">Esperando a la otra persona…</p>
+    </section>
+
+    <section id="remote-play" class="hidden">
+      <div class="ritual-game-card p-6 sm:p-8 rounded-2xl bg-white/[0.03] border border-white/5 mb-6">
+        <p class="ritual-game-label text-wine text-sm uppercase tracking-wider mb-4">Elegí sin mirar al otro</p>
+        <div id="remote-opciones" class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4"></div>
+      </div>
+      <button type="button" id="btn-enviar-eleccion" class="touch-target rounded-full bg-wine px-6 py-3 min-h-[48px] text-nude text-sm hover:bg-wine-light transition">Enviar elección</button>
+      <p id="my-choice-status" class="text-nude-muted text-sm mt-3"></p>
+    </section>
+
+    <section id="remote-result" class="hidden mt-8">
+      <div class="ritual-game-card p-6 sm:p-8 rounded-2xl bg-white/[0.03] border border-white/5 mb-6">
+        <p class="ritual-game-label text-wine text-sm uppercase tracking-wider mb-4">Resultado</p>
+        <p class="text-nude-muted text-sm">Tu elección: <span id="my-choice-text" class="text-nude"></span></p>
+        <p class="text-nude-muted text-sm mt-1">Elección de tu pareja: <span id="other-choice-text" class="text-nude"></span></p>
+      </div>
+      <div id="remote-coinciden" class="hidden ritual-game-card p-6 sm:p-8 rounded-2xl border border-wine/50 bg-wine-dark/20">
+        <p class="text-wine text-sm uppercase tracking-wider mb-2">Coincidieron</p>
+        <p id="remote-premio" class="font-display text-lg sm:text-xl text-nude"></p>
+      </div>
+      <div id="remote-no-coinciden" class="hidden ritual-game-card p-6 sm:p-8 rounded-2xl bg-white/[0.03] border border-white/5">
+        <p class="text-nude-muted text-sm sm:text-base">No coincidieron esta vez. Pueden abrir otra ronda.</p>
+      </div>
+      <button type="button" id="btn-nueva-ronda" class="hidden mt-6 touch-target rounded-full border border-nude-muted/40 px-6 py-3 min-h-[48px] text-nude text-sm hover:border-nude transition">Nueva ronda</button>
+    </section>
+  </main>
+
+  <footer class="py-6 sm:py-8 px-4 sm:px-6 border-t border-white/5 text-center text-nude-muted text-sm">
+    <p>Ritual — Momentos que acercan.</p>
+    <p class="mt-2 text-xs"><a href="terminos.html" class="hover:text-nude transition">Términos</a> · <a href="privacidad.html" class="hover:text-nude transition">Privacidad</a></p>
+  </footer>
+
+  <script src="js/meta-pixel.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/supabase-config.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/datos-juegos.js"></script>
+  <script src="js/juego-eleccion-remoto.js"></script>
+  <script>(function(){ var b = document.getElementById('btn-volver'); if (b) b.addEventListener('click', function(){ try { var r = document.referrer; if (!r || new URL(r).origin !== location.origin) { location.href = 'elegir-juego.html'; return; } } catch (e) {} history.back(); }); })();</script>
+</body>
+</html>
