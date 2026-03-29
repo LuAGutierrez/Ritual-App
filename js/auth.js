@@ -217,6 +217,7 @@
       var client = getClient();
       if (!client) return Promise.resolve();
       return client.auth.signOut().then(function() {
+        try { sessionStorage.removeItem('ritual_subscription_cache_v1'); } catch (e) {}
         window.location.href = 'index.html';
       });
     },
@@ -224,7 +225,9 @@
     signOutSilent: function() {
       var client = getClient();
       if (!client) return Promise.resolve();
-      return client.auth.signOut();
+      return client.auth.signOut().then(function() {
+        try { sessionStorage.removeItem('ritual_subscription_cache_v1'); } catch (e) {}
+      });
     },
     /** Reenvía el correo de confirmación al email indicado. */
     resendConfirmationEmail: function(email) {

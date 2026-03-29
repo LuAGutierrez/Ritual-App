@@ -5,14 +5,41 @@
  */
 (function() {
   window.Ritual = window.Ritual || {};
+  var SUB_CACHE_KEY = 'ritual_subscription_cache_v1';
+  var SUB_CACHE_TTL_MS = 2 * 60 * 1000;
 
-  /** Quita candados y estilo “bloqueado” en selectores de modo/nivel si hay suscripción activa. */
+  function readSubscriptionCache(userId) {
+    try {
+      var raw = sessionStorage.getItem(SUB_CACHE_KEY);
+      if (!raw) return null;
+      var parsed = JSON.parse(raw);
+      if (!parsed || parsed.userId !== userId) return null;
+      if (typeof parsed.fetchedAt !== 'number') return null;
+      if (Date.now() - parsed.fetchedAt > SUB_CACHE_TTL_MS) return null;
+      if (typeof parsed.active !== 'boolean') return null;
+      return parsed.active;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function writeSubscriptionCache(userId, active) {
+    try {
+      sessionStorage.setItem(SUB_CACHE_KEY, JSON.stringify({
+        userId: userId,
+        active: !!active,
+        fetchedAt: Date.now()
+      }));
+    } catch (e) {}
+  }
+
+  /** Estado “desbloqueado”: oculta candados visuales para usuarios con suscripción activa. */
   function applyPremiumSelectorUnlock() {
     document.querySelectorAll('[data-premium="1"]').forEach(function(btn) {
       btn.classList.remove('text-nude-muted', 'border-wine/30', 'hover:border-wine/60', 'flex', 'items-center', 'gap-2');
       btn.classList.add('text-nude', 'border-nude-muted/40', 'hover:border-nude');
-      btn.querySelectorAll('span').forEach(function(span) {
-        if ((span.textContent || '').indexOf('🔒') !== -1) span.remove();
+      btn.querySelectorAll('.ritual-lock-icon').forEach(function(span) {
+        span.classList.add('hidden');
       });
     });
     document.querySelectorAll('.ritual-premium-hint').forEach(function(el) {
@@ -20,10 +47,34 @@
     });
   }
 
-  function maybeUnlockPremiumSelectors() {
+  /** Estado “bloqueado”: vuelve a mostrar candados visuales para usuarios sin suscripción activa. */
+  function applyPremiumSelectorLock() {
+    document.querySelectorAll('[data-premium="1"]').forEach(function(btn) {
+      btn.classList.add('text-nude-muted', 'border-wine/30', 'hover:border-wine/60', 'flex', 'items-center', 'gap-2');
+      btn.classList.remove('text-nude', 'border-nude-muted/40', 'hover:border-nude');
+      btn.querySelectorAll('.ritual-lock-icon').forEach(function(span) {
+        span.classList.remove('hidden');
+      });
+    });
+    document.querySelectorAll('.ritual-premium-hint').forEach(function(el) {
+      el.classList.remove('hidden');
+    });
+  }
+
+  function applyPremiumSelectorsFromCache(userId) {
+    var cached = readSubscriptionCache(userId);
+    if (cached === null) return false;
+    if (cached) applyPremiumSelectorUnlock();
+    else applyPremiumSelectorLock();
+    return true;
+  }
+
+  function refreshPremiumSelectors(userId) {
     if (!window.RitualAuth || typeof window.RitualAuth.getSubscriptionStatus !== 'function') return;
     window.RitualAuth.getSubscriptionStatus().then(function(active) {
+      writeSubscriptionCache(userId, active);
       if (active) applyPremiumSelectorUnlock();
+      else applyPremiumSelectorLock();
     }).catch(function() {});
   }
 
@@ -41,7 +92,13 @@
       document.dispatchEvent(new CustomEvent('ritual-game-access-granted'));
       if (window.RitualAuth) {
         window.RitualAuth.init().then(function() {
-          maybeUnlockPremiumSelectors();
+          window.RitualAuth.getSessionValidated().then(function(session) {
+            if (session && session.user && session.user.id) {
+              if (!applyPremiumSelectorsFromCache(session.user.id)) {
+                refreshPremiumSelectors(session.user.id);
+              }
+            }
+          }).catch(function() {});
         });
       }
       return;
@@ -62,6 +119,7 @@
       // Mostrar juego en cuanto hay sesión; el servidor valida email/sesión en paralelo.
       window.RitualGameAccess = true;
       window.RitualShowPaywall = showPaywall;
+      applyPremiumSelectorsFromCache(session.user.id);
       showGame();
       document.dispatchEvent(new CustomEvent('ritual-game-access-granted'));
       window.RitualAuth.checkGameAccess().then(function(result) {
@@ -70,7 +128,7 @@
           window.RitualGameAccess = false;
           showPaywall(result);
         } else {
-          maybeUnlockPremiumSelectors();
+          refreshPremiumSelectors(session.user.id);
         }
       }).catch(function() {
         window.RitualGameAccess = false;
@@ -121,7 +179,11 @@
       if (r && r.allowed) {
         window.RitualGameAccess = true;
         showGame();
-        maybeUnlockPremiumSelectors();
+        window.RitualAuth.getSessionValidated().then(function(session) {
+          if (session && session.user && session.user.id) {
+            refreshPremiumSelectors(session.user.id);
+          }
+        }).catch(function() {});
       } else {
         window.RitualGameAccess = false;
         showPaywall(r);
