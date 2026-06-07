@@ -1,0 +1,172 @@
+---
+alwaysApply: true
+---
+
+# Rituales — Cursor Rules
+
+## Core Philosophy
+
+- Prioritize emotional simplicity over feature complexity.
+- Every feature must support:
+  - emotional engagement,
+  - retention,
+  - or relationship connection.
+- The product should feel:
+  - warm,
+  - elegant,
+  - calm,
+  - intimate,
+  - and emotionally safe.
+
+Avoid:
+- noisy interfaces,
+- childish gamification,
+- feature overload,
+- aggressive monetization,
+- manipulative UX patterns.
+
+---
+
+# Product Behavior
+
+- Mobile-first always.
+- Optimize for short sessions (3–5 minutes).
+- Reduce friction in all flows.
+- Keep onboarding lightweight and emotionally inviting.
+- Prefer one primary action per screen.
+- Shared participation between partners is a core principle.
+
+---
+
+# UX Principles
+
+- Use breathable layouts and generous spacing.
+- Maintain clean visual hierarchy.
+- Favor subtle motion and smooth transitions.
+- Interactions should feel soft and intentional.
+- Avoid cognitive overload.
+- Avoid excessive modals and interruptions.
+- UX should resemble a premium emotional companion, not a game dashboard.
+
+---
+
+# Engineering Standards
+
+- Use TypeScript strictly.
+- Use Next.js App Router architecture.
+- Use Tailwind CSS for styling.
+- Prefer server components when appropriate.
+- Build reusable and composable components.
+- Avoid duplicated logic.
+- Keep components modular and scalable.
+- Maintain clean folder structure.
+
+---
+
+# Backend Standards
+
+- Use Supabase for:
+  - authentication,
+  - database,
+  - realtime,
+  - storage,
+  - and edge functions.
+- Design schemas for scalability from the start.
+- Prefer normalized relational data structures.
+- Keep APIs minimal and predictable.
+
+---
+
+# Realtime & Sync
+
+- Shared couple interactions should feel synchronized.
+- Realtime should support:
+  - ritual completion,
+  - live reveals,
+  - streak updates,
+  - shared participation.
+
+Avoid unnecessary realtime complexity.
+
+---
+
+# Notifications
+
+Notifications must feel:
+- calm,
+- warm,
+- and meaningful.
+
+Avoid:
+- spam,
+- fake urgency,
+- pressure-based engagement.
+
+Good notification examples:
+- “Your ritual is ready.”
+- “Your partner already answered.”
+- “Day 14 completed.”
+
+---
+
+# Monetization Rules
+
+- Never block the core emotional experience.
+- Free users must receive a complete usable experience.
+- Premium should add:
+  - depth,
+  - personalization,
+  - exclusivity,
+  - and emotional richness.
+- Avoid aggressive paywalls.
+
+---
+
+# AI Experience Principles
+
+AI features should feel:
+- relational,
+- emotionally aware,
+- personalized,
+- and subtle.
+
+Avoid:
+- generic chatbot behavior,
+- robotic assistant tone,
+- excessive AI exposure in UI.
+
+The AI should feel embedded naturally into the relationship experience.
+
+---
+
+# Performance Standards
+
+- Prioritize fast loading and responsiveness.
+- Avoid heavy client-side rendering when unnecessary.
+- Optimize mobile performance aggressively.
+- Keep animations performant and subtle.
+
+---
+
+# Design Consistency
+
+- Maintain visual consistency across all screens.
+- Reuse spacing, typography, and interaction patterns.
+- Prefer calm and premium aesthetics.
+- Avoid visual clutter.
+
+---
+
+# Development Workflow
+
+Before implementing features:
+- reference relevant project documentation,
+- follow architecture docs,
+- preserve emotional UX consistency,
+- and validate alignment with product vision.
+
+Relevant docs may include:
+- product-vision.md
+- technical-architecture.md
+- rituales-design-system.md
+- monetizacion-escalado.md

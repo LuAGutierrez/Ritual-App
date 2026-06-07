@@ -2,25 +2,27 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "type": "chrome",
+      "name": "Next.js: debug server-side",
+      "type": "node-terminal",
       "request": "launch",
-      "name": "Chrome: index.html",
-      "url": "http://localhost:5500/index.html",
-      "webRoot": "${workspaceFolder}"
+      "command": "npm run dev"
     },
     {
+      "name": "Next.js: debug client-side",
       "type": "chrome",
       "request": "launch",
-      "name": "Chrome: auth.html",
-      "url": "http://localhost:5500/auth.html",
-      "webRoot": "${workspaceFolder}"
+      "url": "http://localhost:3000"
     },
     {
-      "type": "chrome",
+      "name": "Next.js: debug full stack",
+      "type": "node-terminal",
       "request": "launch",
-      "name": "Chrome: precios.html",
-      "url": "http://localhost:5500/precios.html",
-      "webRoot": "${workspaceFolder}"
+      "command": "npm run dev",
+      "serverReadyAction": {
+        "pattern": "started server on .+, url: (https?://.+)",
+        "uriFormat": "%s",
+        "action": "debugWithChrome"
+      }
     }
   ]
 }

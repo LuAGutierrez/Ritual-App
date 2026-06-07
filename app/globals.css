@@ -1,0 +1,58 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&family=Outfit:wght@300;400;500;600&display=swap');
+
+@layer base {
+  :root {
+    --bg: #0F0D0B;
+    --bg-soft: #1A1612;
+    --gold: #C9A97A;
+    --cream: #E8D5B7;
+    --terra: #8B6F5E;
+    --rose: #D4A5A5;
+    --text: #F0EBE3;
+    --muted: #A89880;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    background-color: var(--bg);
+    color: var(--text);
+    font-family: 'Outfit', sans-serif;
+    min-height: 100dvh;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  /* Scrollbar minimalista */
+  ::-webkit-scrollbar {
+    width: 4px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #3a2c24;
+    border-radius: 2px;
+  }
+
+  /* Focus ring cálido */
+  .focus-warm:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px #C9A97A40;
+  }
+}
