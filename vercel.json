@@ -1,6 +1,10 @@
 {
   "version": 2,
-  "buildCommand": null,
-  "outputDirectory": ".",
-  "framework": null
+  "framework": "nextjs",
+  "crons": [
+    {
+      "path": "/api/cron/daily-reminder",
+      "schedule": "0 * * * *"
+    }
+  ]
 }
