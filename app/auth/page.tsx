@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, Suspense } from 'react'
+import { useState, useEffect, useLayoutEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 
@@ -11,6 +11,9 @@ function AuthForm() {
   const searchParams = useSearchParams()
   const redirect = searchParams.get('redirect') || '/ritual'
 
+  const [isRecoveryFlow, setIsRecoveryFlow] = useState(
+    searchParams.get('recovery') === '1'
+  )
   const [tab, setTab] = useState<Tab>(
     searchParams.get('recovery') === '1' ? 'nueva_contraseña' : 'login'
   )
@@ -21,6 +24,7 @@ function AuthForm() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
+  const [recoveryEmail, setRecoveryEmail] = useState<string | null>(null)
 
   const supabase = createClient()
 
@@ -31,8 +35,49 @@ function AuthForm() {
   }, [searchParams])
 
   useEffect(() => {
+    const token_hash = searchParams.get('token_hash')
+    const type = searchParams.get('type')
+    if (token_hash && type === 'recovery') {
+      window.location.replace(
+        `/auth/callback?token_hash=${encodeURIComponent(token_hash)}&type=recovery`
+      )
+    }
+  }, [searchParams])
+
+  useLayoutEffect(() => {
+    const hash = window.location.hash.slice(1)
+    if (!hash) return
+
+    const params = new URLSearchParams(hash)
+    if (params.get('error') || params.get('error_code')) {
+      setError('El link expiró o no es válido. Pedí uno nuevo.')
+      window.history.replaceState(null, '', window.location.pathname + window.location.search)
+      return
+    }
+
+    if (params.get('type') === 'recovery' || params.has('access_token')) {
+      setIsRecoveryFlow(true)
+      setTab('nueva_contraseña')
+    }
+  }, [])
+
+  useEffect(() => {
+    if (tab !== 'nueva_contraseña') return
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) {
+        setError('El link expiró o no es válido. Pedí uno nuevo desde "Olvidé mi contraseña".')
+        setTab('olvidé')
+        return
+      }
+      setRecoveryEmail(user.email ?? null)
+    })
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tab])
+
+  useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === 'PASSWORD_RECOVERY') {
+        setIsRecoveryFlow(true)
         setTab('nueva_contraseña')
         setError(null)
       }
@@ -41,7 +86,10 @@ function AuthForm() {
   }, [supabase.auth])
 
   useEffect(() => {
-    if (tab === 'nueva_contraseña') return
+    if (isRecoveryFlow || tab === 'nueva_contraseña') return
+    const hash = window.location.hash
+    if (hash && /access_token|type=recovery/.test(hash)) return
+
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (user) {
         router.refresh()
@@ -49,7 +97,7 @@ function AuthForm() {
       }
     })
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [redirect, tab])
+  }, [redirect, tab, isRecoveryFlow])
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault()
@@ -187,8 +235,9 @@ function AuthForm() {
       return
     }
 
-    router.refresh()
-    router.replace('/ritual')
+    setIsRecoveryFlow(false)
+    setSuccess('Contraseña actualizada. Entrando...')
+    window.location.href = '/ritual'
   }
 
   return (
@@ -232,9 +281,16 @@ function AuthForm() {
         )}
 
         {tab === 'nueva_contraseña' && (
-          <p className="text-ritual-cream font-body text-sm text-center mb-6">
-            Elegí tu nueva contraseña
-          </p>
+          <div className="text-center mb-6 space-y-1">
+            <p className="text-ritual-cream font-body text-sm">
+              Elegí tu nueva contraseña
+            </p>
+            {recoveryEmail && (
+              <p className="text-ritual-muted font-body text-xs">
+                Para {recoveryEmail}
+              </p>
+            )}
+          </div>
         )}
 
         {tab === 'olvidé' && (
@@ -269,18 +325,20 @@ function AuthForm() {
             </div>
           )}
 
-          <div>
-            <label className="block text-ritual-muted text-xs mb-2 font-body">
-              Email
-            </label>
-            <input
-              type="email"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              placeholder="tu@email.com"
-              className="w-full bg-ritual-bg-soft border border-white/10 rounded-xl px-4 py-3.5 text-ritual-text placeholder-ritual-muted/50 font-body text-sm focus:outline-none focus:border-ritual-gold/50 transition-colors"
-            />
-          </div>
+          {tab !== 'nueva_contraseña' && (
+            <div>
+              <label className="block text-ritual-muted text-xs mb-2 font-body">
+                Email
+              </label>
+              <input
+                type="email"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                placeholder="tu@email.com"
+                className="w-full bg-ritual-bg-soft border border-white/10 rounded-xl px-4 py-3.5 text-ritual-text placeholder-ritual-muted/50 font-body text-sm focus:outline-none focus:border-ritual-gold/50 transition-colors"
+              />
+            </div>
+          )}
 
           {tab !== 'olvidé' && tab !== 'nueva_contraseña' && (
             <div>
