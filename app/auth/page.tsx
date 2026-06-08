@@ -4,16 +4,19 @@ import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 
-type Tab = 'login' | 'registro'
+type Tab = 'login' | 'registro' | 'olvidé' | 'nueva_contraseña'
 
 function AuthForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const redirect = searchParams.get('redirect') || '/ritual'
 
-  const [tab, setTab] = useState<Tab>('login')
+  const [tab, setTab] = useState<Tab>(
+    searchParams.get('recovery') === '1' ? 'nueva_contraseña' : 'login'
+  )
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [newPassword, setNewPassword] = useState('')
   const [name, setName] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -22,6 +25,23 @@ function AuthForm() {
   const supabase = createClient()
 
   useEffect(() => {
+    if (searchParams.get('error') === 'link_invalido') {
+      setError('El link expiró o no es válido. Pedí uno nuevo.')
+    }
+  }, [searchParams])
+
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        setTab('nueva_contraseña')
+        setError(null)
+      }
+    })
+    return () => subscription.unsubscribe()
+  }, [supabase.auth])
+
+  useEffect(() => {
+    if (tab === 'nueva_contraseña') return
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (user) {
         router.refresh()
@@ -29,7 +49,7 @@ function AuthForm() {
       }
     })
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [redirect])
+  }, [redirect, tab])
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault()
@@ -125,6 +145,52 @@ function AuthForm() {
     setLoading(false)
   }
 
+  async function handleForgotPassword(e: React.FormEvent) {
+    e.preventDefault()
+    setError(null)
+
+    if (!email.trim()) {
+      setError('Ingresá tu email.')
+      return
+    }
+
+    setLoading(true)
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/auth/callback?type=recovery`,
+    })
+
+    if (error) {
+      setError('No se pudo enviar el email. Intentá de nuevo.')
+      setLoading(false)
+      return
+    }
+
+    setSuccess('Te enviamos un link para restablecer tu contraseña.')
+    setLoading(false)
+  }
+
+  async function handleNewPassword(e: React.FormEvent) {
+    e.preventDefault()
+    setError(null)
+
+    if (newPassword.length < 6) {
+      setError('La contraseña debe tener al menos 6 caracteres.')
+      return
+    }
+
+    setLoading(true)
+    const { error } = await supabase.auth.updateUser({ password: newPassword })
+
+    if (error) {
+      setError('No se pudo actualizar la contraseña. Pedí un link nuevo.')
+      setLoading(false)
+      return
+    }
+
+    router.refresh()
+    router.replace('/ritual')
+  }
+
   return (
     <div className="min-h-dvh bg-ritual-bg flex flex-col items-center justify-center px-6 py-12">
       {/* Logo */}
@@ -140,31 +206,53 @@ function AuthForm() {
       {/* Card */}
       <div className="w-full max-w-sm animate-fade-up">
         {/* Tabs */}
-        <div className="flex bg-ritual-bg-soft rounded-2xl p-1 mb-8">
-          <button
-            onClick={() => { setTab('login'); setError(null); setSuccess(null) }}
-            className={`flex-1 py-2.5 rounded-xl text-sm font-body font-medium transition-all duration-300 ${
-              tab === 'login'
-                ? 'bg-ritual-gold text-ritual-bg'
-                : 'text-ritual-muted hover:text-ritual-text'
-            }`}
-          >
-            Entrar
-          </button>
-          <button
-            onClick={() => { setTab('registro'); setError(null); setSuccess(null) }}
-            className={`flex-1 py-2.5 rounded-xl text-sm font-body font-medium transition-all duration-300 ${
-              tab === 'registro'
-                ? 'bg-ritual-gold text-ritual-bg'
-                : 'text-ritual-muted hover:text-ritual-text'
-            }`}
-          >
-            Registrarse
-          </button>
-        </div>
+        {tab !== 'nueva_contraseña' && tab !== 'olvidé' && (
+          <div className="flex bg-ritual-bg-soft rounded-2xl p-1 mb-8">
+            <button
+              onClick={() => { setTab('login'); setError(null); setSuccess(null) }}
+              className={`flex-1 py-2.5 rounded-xl text-sm font-body font-medium transition-all duration-300 ${
+                tab === 'login'
+                  ? 'bg-ritual-gold text-ritual-bg'
+                  : 'text-ritual-muted hover:text-ritual-text'
+              }`}
+            >
+              Entrar
+            </button>
+            <button
+              onClick={() => { setTab('registro'); setError(null); setSuccess(null) }}
+              className={`flex-1 py-2.5 rounded-xl text-sm font-body font-medium transition-all duration-300 ${
+                tab === 'registro'
+                  ? 'bg-ritual-gold text-ritual-bg'
+                  : 'text-ritual-muted hover:text-ritual-text'
+              }`}
+            >
+              Registrarse
+            </button>
+          </div>
+        )}
+
+        {tab === 'nueva_contraseña' && (
+          <p className="text-ritual-cream font-body text-sm text-center mb-6">
+            Elegí tu nueva contraseña
+          </p>
+        )}
+
+        {tab === 'olvidé' && (
+          <p className="text-ritual-cream font-body text-sm text-center mb-6">
+            Te enviamos un link a tu email
+          </p>
+        )}
 
         {/* Form */}
-        <form onSubmit={tab === 'login' ? handleLogin : handleRegister} className="space-y-4">
+        <form
+          onSubmit={
+            tab === 'login' ? handleLogin
+            : tab === 'registro' ? handleRegister
+            : tab === 'olvidé' ? handleForgotPassword
+            : handleNewPassword
+          }
+          className="space-y-4"
+        >
           {tab === 'registro' && (
             <div>
               <label className="block text-ritual-muted text-xs mb-2 font-body">
@@ -194,18 +282,45 @@ function AuthForm() {
             />
           </div>
 
-          <div>
-            <label className="block text-ritual-muted text-xs mb-2 font-body">
-              Contraseña
-            </label>
-            <input
-              type="password"
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              placeholder="Mínimo 6 caracteres"
-              className="w-full bg-ritual-bg-soft border border-white/10 rounded-xl px-4 py-3.5 text-ritual-text placeholder-ritual-muted/50 font-body text-sm focus:outline-none focus:border-ritual-gold/50 transition-colors"
-            />
-          </div>
+          {tab !== 'olvidé' && tab !== 'nueva_contraseña' && (
+            <div>
+              <label className="block text-ritual-muted text-xs mb-2 font-body">
+                Contraseña
+              </label>
+              <input
+                type="password"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                placeholder="Mínimo 6 caracteres"
+                className="w-full bg-ritual-bg-soft border border-white/10 rounded-xl px-4 py-3.5 text-ritual-text placeholder-ritual-muted/50 font-body text-sm focus:outline-none focus:border-ritual-gold/50 transition-colors"
+              />
+              {tab === 'login' && (
+                <button
+                  type="button"
+                  onClick={() => { setTab('olvidé'); setError(null); setSuccess(null) }}
+                  className="text-ritual-muted text-xs font-body mt-2 hover:text-ritual-gold transition-colors"
+                >
+                  Olvidé mi contraseña
+                </button>
+              )}
+            </div>
+          )}
+
+          {tab === 'nueva_contraseña' && (
+            <div>
+              <label className="block text-ritual-muted text-xs mb-2 font-body">
+                Nueva contraseña
+              </label>
+              <input
+                type="password"
+                value={newPassword}
+                onChange={e => setNewPassword(e.target.value)}
+                placeholder="Mínimo 6 caracteres"
+                autoFocus
+                className="w-full bg-ritual-bg-soft border border-white/10 rounded-xl px-4 py-3.5 text-ritual-text placeholder-ritual-muted/50 font-body text-sm focus:outline-none focus:border-ritual-gold/50 transition-colors"
+              />
+            </div>
+          )}
 
           {error && (
             <p className="text-red-400/80 text-sm font-body text-center py-1">
@@ -228,15 +343,25 @@ function AuthForm() {
           >
             {loading
               ? 'Un momento...'
-              : tab === 'login'
-              ? 'Entrar'
-              : 'Crear cuenta'}
+              : tab === 'login' ? 'Entrar'
+              : tab === 'registro' ? 'Crear cuenta'
+              : tab === 'olvidé' ? 'Enviar link'
+              : 'Guardar contraseña'}
           </button>
         </form>
 
         {/* Switch tab */}
         <p className="text-center text-ritual-muted text-sm mt-6 font-body">
-          {tab === 'login' ? (
+          {tab === 'olvidé' || tab === 'nueva_contraseña' ? (
+            <>
+              <button
+                onClick={() => { setTab('login'); setError(null); setSuccess(null) }}
+                className="text-ritual-gold hover:text-ritual-cream transition-colors"
+              >
+                Volver a entrar
+              </button>
+            </>
+          ) : tab === 'login' ? (
             <>
               ¿No tenés cuenta?{' '}
               <button
