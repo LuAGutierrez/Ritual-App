@@ -50,11 +50,7 @@ function AuthForm() {
     if (!hash) return
 
     const params = new URLSearchParams(hash)
-    if (params.get('error') || params.get('error_code')) {
-      setError('El link expiró o no es válido. Pedí uno nuevo.')
-      window.history.replaceState(null, '', window.location.pathname + window.location.search)
-      return
-    }
+    if (params.get('error') || params.get('error_code')) return
 
     if (params.get('type') === 'recovery' || params.has('access_token')) {
       setIsRecoveryFlow(true)
@@ -69,42 +65,58 @@ function AuthForm() {
     setRecoveryChecking(true)
     setError(null)
 
-    const failRecovery = () => {
+    async function initRecoverySession() {
+      const hash = window.location.hash.slice(1)
+      if (hash) {
+        const params = new URLSearchParams(hash)
+        if (params.get('error') || params.get('error_code')) {
+          window.history.replaceState(null, '', window.location.pathname + window.location.search)
+          setRecoveryChecking(false)
+          setError('El link expiró o no es válido. Pedí uno nuevo.')
+          setTab('olvidé')
+          return
+        }
+
+        const access_token = params.get('access_token')
+        const refresh_token = params.get('refresh_token')
+        if (access_token && refresh_token) {
+          const { data, error } = await supabase.auth.setSession({ access_token, refresh_token })
+          window.history.replaceState(null, '', window.location.pathname + window.location.search)
+          if (cancelled) return
+          setRecoveryChecking(false)
+          if (error || !data.session) {
+            setError('El link expiró o no es válido. Pedí uno nuevo desde "Olvidé mi contraseña".')
+            setTab('olvidé')
+            return
+          }
+          setRecoveryEmail(data.session.user.email ?? null)
+          return
+        }
+      }
+
+      const { data: { session } } = await supabase.auth.getSession()
+      if (cancelled) return
+      if (session?.user) {
+        setRecoveryChecking(false)
+        setRecoveryEmail(session.user.email ?? null)
+        return
+      }
+
+      await new Promise(resolve => window.setTimeout(resolve, 1500))
+      const { data: { session: retrySession } } = await supabase.auth.getSession()
       if (cancelled) return
       setRecoveryChecking(false)
+      if (retrySession?.user) {
+        setRecoveryEmail(retrySession.user.email ?? null)
+        return
+      }
+
       setError('El link expiró o no es válido. Pedí uno nuevo desde "Olvidé mi contraseña".')
       setTab('olvidé')
     }
 
-    const succeedRecovery = (userEmail: string | undefined) => {
-      if (cancelled) return
-      setRecoveryChecking(false)
-      setRecoveryEmail(userEmail ?? null)
-      setError(null)
-    }
-
-    const timeout = window.setTimeout(failRecovery, 4000)
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'PASSWORD_RECOVERY' || (session && (event === 'SIGNED_IN' || event === 'INITIAL_SESSION'))) {
-        window.clearTimeout(timeout)
-        succeedRecovery(session?.user?.email)
-      }
-    })
-
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) {
-        window.clearTimeout(timeout)
-        succeedRecovery(session.user.email)
-      }
-    })
-
-    return () => {
-      cancelled = true
-      window.clearTimeout(timeout)
-      subscription.unsubscribe()
-      setRecoveryChecking(false)
-    }
+    initRecoverySession()
+    return () => { cancelled = true }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab])
 
