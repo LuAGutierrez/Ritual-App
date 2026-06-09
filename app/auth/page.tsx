@@ -25,6 +25,7 @@ function AuthForm() {
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
   const [recoveryEmail, setRecoveryEmail] = useState<string | null>(null)
+  const [recoveryChecking, setRecoveryChecking] = useState(false)
 
   const supabase = createClient()
 
@@ -63,14 +64,47 @@ function AuthForm() {
 
   useEffect(() => {
     if (tab !== 'nueva_contraseña') return
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      if (!user) {
-        setError('El link expiró o no es válido. Pedí uno nuevo desde "Olvidé mi contraseña".')
-        setTab('olvidé')
-        return
+
+    let cancelled = false
+    setRecoveryChecking(true)
+    setError(null)
+
+    const failRecovery = () => {
+      if (cancelled) return
+      setRecoveryChecking(false)
+      setError('El link expiró o no es válido. Pedí uno nuevo desde "Olvidé mi contraseña".')
+      setTab('olvidé')
+    }
+
+    const succeedRecovery = (userEmail: string | undefined) => {
+      if (cancelled) return
+      setRecoveryChecking(false)
+      setRecoveryEmail(userEmail ?? null)
+      setError(null)
+    }
+
+    const timeout = window.setTimeout(failRecovery, 4000)
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'PASSWORD_RECOVERY' || (session && (event === 'SIGNED_IN' || event === 'INITIAL_SESSION'))) {
+        window.clearTimeout(timeout)
+        succeedRecovery(session?.user?.email)
       }
-      setRecoveryEmail(user.email ?? null)
     })
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        window.clearTimeout(timeout)
+        succeedRecovery(session.user.email)
+      }
+    })
+
+    return () => {
+      cancelled = true
+      window.clearTimeout(timeout)
+      subscription.unsubscribe()
+      setRecoveryChecking(false)
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab])
 
@@ -283,9 +317,9 @@ function AuthForm() {
         {tab === 'nueva_contraseña' && (
           <div className="text-center mb-6 space-y-1">
             <p className="text-ritual-cream font-body text-sm">
-              Elegí tu nueva contraseña
+              {recoveryChecking ? 'Verificando tu link...' : 'Elegí tu nueva contraseña'}
             </p>
-            {recoveryEmail && (
+            {recoveryEmail && !recoveryChecking && (
               <p className="text-ritual-muted font-body text-xs">
                 Para {recoveryEmail}
               </p>
@@ -364,7 +398,7 @@ function AuthForm() {
             </div>
           )}
 
-          {tab === 'nueva_contraseña' && (
+          {tab === 'nueva_contraseña' && !recoveryChecking && (
             <div>
               <label className="block text-ritual-muted text-xs mb-2 font-body">
                 Nueva contraseña
@@ -396,10 +430,10 @@ function AuthForm() {
 
           <button
             type="submit"
-            disabled={loading}
+            disabled={loading || (tab === 'nueva_contraseña' && recoveryChecking)}
             className="w-full bg-ritual-gold text-ritual-bg font-body font-medium py-4 rounded-2xl mt-2 transition-all duration-300 hover:bg-ritual-cream active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {loading
+            {loading || (tab === 'nueva_contraseña' && recoveryChecking)
               ? 'Un momento...'
               : tab === 'login' ? 'Entrar'
               : tab === 'registro' ? 'Crear cuenta'
