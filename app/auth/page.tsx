@@ -3,6 +3,7 @@
 import { useState, useEffect, useLayoutEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import type { AuthChangeEvent } from '@supabase/supabase-js'
 
 type Tab = 'login' | 'registro' | 'olvidé' | 'nueva_contraseña'
 
@@ -121,7 +122,7 @@ function AuthForm() {
   }, [tab])
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event: AuthChangeEvent) => {
       if (event === 'PASSWORD_RECOVERY') {
         setIsRecoveryFlow(true)
         setTab('nueva_contraseña')
