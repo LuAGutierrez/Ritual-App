@@ -8,9 +8,10 @@ export async function GET(request: Request) {
   const token_hash = searchParams.get('token_hash')
   const type = searchParams.get('type')
   const next = type === 'recovery' ? '/auth?recovery=1' : '/ritual'
-  const errorRedirect = `${origin}/auth?error=link_invalido`
+  let redirectTo = `${origin}/auth?error=link_invalido`
 
   const cookieStore = await cookies()
+  const pendingCookies: Array<{ name: string; value: string; options?: CookieOptions }> = []
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -21,6 +22,7 @@ export async function GET(request: Request) {
           return cookieStore.getAll()
         },
         setAll(cookiesToSet: Array<{ name: string; value: string; options?: CookieOptions }>) {
+          pendingCookies.push(...cookiesToSet)
           cookiesToSet.forEach(({ name, value, options }) =>
             cookieStore.set(name, value, options)
           )
@@ -31,17 +33,15 @@ export async function GET(request: Request) {
 
   if (code) {
     const { error } = await supabase.auth.exchangeCodeForSession(code)
-    if (!error) {
-      return NextResponse.redirect(`${origin}${next}`)
-    }
-  }
-
-  if (token_hash && type === 'recovery') {
+    if (!error) redirectTo = `${origin}${next}`
+  } else if (token_hash && type === 'recovery') {
     const { error } = await supabase.auth.verifyOtp({ token_hash, type: 'recovery' })
-    if (!error) {
-      return NextResponse.redirect(`${origin}${next}`)
-    }
+    if (!error) redirectTo = `${origin}${next}`
   }
 
-  return NextResponse.redirect(errorRedirect)
+  const response = NextResponse.redirect(redirectTo)
+  pendingCookies.forEach(({ name, value, options }) =>
+    response.cookies.set(name, value, options)
+  )
+  return response
 }
