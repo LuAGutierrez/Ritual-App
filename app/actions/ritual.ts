@@ -212,31 +212,35 @@ export async function getStreakAction(coupleId: string): Promise<Streak | null> 
   return data as Streak | null
 }
 
+const HISTORIAL_PAGE_SIZE = 15
+
 export async function getHistorialAction(
   coupleId: string,
-  categoria?: string
-): Promise<CoupleRitualSession[]> {
+  categoria?: string,
+  offset = 0,
+  limit = HISTORIAL_PAGE_SIZE
+): Promise<{ sessions: CoupleRitualSession[]; hasMore: boolean }> {
   const supabase = await createClient()
+  const useCategory = categoria && categoria !== 'todos'
 
   let query = supabase
     .from('couple_ritual_sessions')
-    .select('*, ritual:rituals(*)')
+    .select(useCategory ? '*, ritual:rituals!inner(*)' : '*, ritual:rituals(*)')
     .eq('couple_id', coupleId)
     .not('revealed_at', 'is', null)
     .order('session_date', { ascending: false })
-    .limit(30)
+    .range(offset, offset + limit)
 
-  if (categoria && categoria !== 'todos') {
+  if (useCategory) {
     query = query.eq('ritual.category', categoria)
   }
 
   const { data } = await query
-  // Filtrar en JS si la categoria filter no funcionó por el join
-  const sessions = (data ?? []) as CoupleRitualSession[]
-  if (categoria && categoria !== 'todos') {
-    return sessions.filter(s => s.ritual?.category === categoria)
-  }
-  return sessions
+  const rows = (data ?? []) as CoupleRitualSession[]
+  const hasMore = rows.length > limit
+  const sessions = hasMore ? rows.slice(0, limit) : rows
+
+  return { sessions, hasMore }
 }
 
 export async function updateStreakAction(coupleId: string): Promise<Streak | null> {

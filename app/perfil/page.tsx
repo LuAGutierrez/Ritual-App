@@ -197,7 +197,7 @@ export default function PerfilPage() {
                 {streak?.wildcards_remaining} comodín disponible
               </p>
               <p className="text-ritual-muted text-xs font-body mt-0.5">
-                Se usa automáticamente si se rompe la racha
+                Tocalo desde el ritual del día si se rompe la racha
               </p>
             </div>
           )}

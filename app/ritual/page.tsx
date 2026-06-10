@@ -49,12 +49,12 @@ export default function RitualPage() {
   const { subscribe, loading: pushLoading, isSupported } = usePushNotifications()
 
   // ─── Calcular el estado de la sesión ───────────────────────────
-  function resolveState(s: CoupleRitualSession, userId: string): SessionState {
+  function resolveState(s: CoupleRitualSession, userId: string, alreadySeen = false): SessionState {
     const isUser1 = s.user1_id === userId
     const myCompleted = isUser1 ? !!s.user1_completed_at : !!s.user2_completed_at
     const partnerCompleted = isUser1 ? !!s.user2_completed_at : !!s.user1_completed_at
 
-    if (s.revealed_at) return 'revealed'
+    if (s.revealed_at) return alreadySeen ? 'completed' : 'revealed'
     if (!myCompleted) return 'waiting_self'
     if (!partnerCompleted) return 'waiting_partner'
     return 'revealed'
@@ -140,14 +140,14 @@ export default function RitualPage() {
       }
 
       setSession(ritualSession)
-      const sessionState = resolveState(ritualSession, context.userId)
+      const sessionState = resolveState(ritualSession, context.userId, true)
       setState(sessionState)
 
       if (partnerRespondedFirst(ritualSession, context.userId)) {
         setShowPartnerBanner(true)
       }
 
-      if (sessionState === 'revealed') {
+      if (sessionState === 'revealed' || sessionState === 'completed') {
         handleStreakUpdate(context.couple.id)
       }
 
@@ -317,7 +317,7 @@ export default function RitualPage() {
               Tu racha de <span className="text-ritual-gold font-medium">{streak?.current_streak} días</span> está en riesgo
             </p>
             <p className="text-ritual-muted text-xs font-body mb-3">
-              Tenés {streak?.wildcards_remaining} comodín disponible · Se usa automáticamente para proteger tu racha
+              Tenés {streak?.wildcards_remaining} comodín disponible · Tocalo para proteger tu racha
             </p>
             <button
               onClick={handleComodin}
@@ -377,13 +377,30 @@ export default function RitualPage() {
             myName={ctx.profile?.display_name}
             partnerName={ctx.partnerProfile?.display_name}
             streak={streak}
-            onContinue={() => {
-              // Mañana hay otro ritual — cerrar con mensaje
-              setState('waiting_self')
-              setSession(null)
-              router.push('/')
-            }}
+            onContinue={() => setState('completed')}
           />
+        )}
+
+        {/* Ritual de hoy completado */}
+        {state === 'completed' && ctx?.couple && (
+          <div className="text-center py-10 space-y-5">
+            <p className="text-3xl">✦</p>
+            <div className="space-y-2">
+              <p className="font-display text-xl text-ritual-cream">Listo por hoy</p>
+              <p className="text-ritual-muted font-body text-sm leading-relaxed">
+                Mañana los espera un nuevo ritual.
+              </p>
+            </div>
+            {streak && streak.current_streak > 0 && (
+              <StreakBadge streak={streak} partnerName={ctx.partnerProfile?.display_name} />
+            )}
+            <button
+              onClick={() => router.push('/historial')}
+              className="w-full bg-white/5 border border-white/10 text-ritual-muted font-body text-sm py-4 rounded-2xl hover:border-white/20 hover:text-ritual-text transition-all duration-300"
+            >
+              Ver historial
+            </button>
+          </div>
         )}
 
         {/* Pareja no vinculada y tiene ritual disponible */}

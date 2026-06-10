@@ -9,3 +9,4 @@ supabase/.temp/
 .DS_Store
 tsconfig.tsbuildinfo
 .cursor/rules/skills/superpowers/
+.vercel
