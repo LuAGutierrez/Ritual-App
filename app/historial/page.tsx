@@ -38,7 +38,15 @@ export default function HistorialPage() {
   const [sessions, setSessions] = useState<CoupleRitualSession[]>([])
   const [categoria, setCategoria] = useState('todos')
   const [loading, setLoading] = useState(true)
+  const [loadingMore, setLoadingMore] = useState(false)
+  const [hasMore, setHasMore] = useState(false)
   const [expanded, setExpanded] = useState<string | null>(null)
+
+  async function loadHistorial(coupleId: string, cat: string, offset = 0, append = false) {
+    const { sessions: data, hasMore: more } = await getHistorialAction(coupleId, cat, offset)
+    setSessions(prev => append ? [...prev, ...data] : data)
+    setHasMore(more)
+  }
 
   useEffect(() => {
     async function init() {
@@ -46,8 +54,7 @@ export default function HistorialPage() {
       if (!context) { router.replace('/auth'); return }
       if (!context.couple) { router.replace('/onboarding'); return }
       setCtx(context)
-      const data = await getHistorialAction(context.couple.id)
-      setSessions(data)
+      await loadHistorial(context.couple.id, 'todos')
       setLoading(false)
     }
     init()
@@ -58,9 +65,16 @@ export default function HistorialPage() {
     if (!ctx?.couple) return
     setCategoria(cat)
     setLoading(true)
-    const data = await getHistorialAction(ctx.couple.id, cat)
-    setSessions(data)
+    setExpanded(null)
+    await loadHistorial(ctx.couple.id, cat)
     setLoading(false)
+  }
+
+  async function handleLoadMore() {
+    if (!ctx?.couple || loadingMore || !hasMore) return
+    setLoadingMore(true)
+    await loadHistorial(ctx.couple.id, categoria, sessions.length, true)
+    setLoadingMore(false)
   }
 
   function getMyResponse(s: CoupleRitualSession): string {
@@ -201,6 +215,15 @@ export default function HistorialPage() {
                 </div>
               )
             })}
+            {hasMore && (
+              <button
+                onClick={handleLoadMore}
+                disabled={loadingMore}
+                className="w-full bg-white/5 border border-white/10 text-ritual-muted font-body text-sm py-4 rounded-2xl hover:border-white/20 hover:text-ritual-text transition-all duration-300 disabled:opacity-40"
+              >
+                {loadingMore ? 'Cargando...' : 'Cargar más'}
+              </button>
+            )}
           </div>
         )}
       </main>

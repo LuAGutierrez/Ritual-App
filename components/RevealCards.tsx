@@ -101,9 +101,9 @@ export default function RevealCards({
       <motion.div variants={cardVariants} className="w-full pt-2">
         <button
           onClick={onContinue}
-          className="w-full bg-white/5 border border-white/10 text-ritual-muted font-body text-sm py-4 rounded-2xl hover:border-white/20 hover:text-ritual-text transition-all duration-300"
+          className="w-full bg-ritual-gold text-ritual-bg font-body font-medium text-sm py-4 rounded-2xl hover:bg-ritual-cream transition-all duration-300"
         >
-          Hasta mañana
+          Listo por hoy
         </button>
       </motion.div>
     </motion.div>
