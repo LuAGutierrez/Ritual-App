@@ -74,6 +74,15 @@ export default function RitualPage() {
     if (updated) setStreak(updated)
   }
 
+  // ─── Prompt de push post-reveal ─────────────────────────────────
+  async function maybeShowPushPrompt() {
+    if (!isSupported) return
+    if (isPushPromptDismissed()) return
+    const prefs = await getNotificationPrefsAction()
+    if (prefs?.push_enabled) return
+    setShowPushPrompt(true)
+  }
+
   // ─── Suscripción Realtime ───────────────────────────────────────
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const subscribeToSession = useCallback((coupleId: string, sessionId: string, userId: string) => {
@@ -104,6 +113,7 @@ export default function RitualPage() {
 
           if (newState === 'revealed' && coupleId) {
             handleStreakUpdate(coupleId)
+            maybeShowPushPrompt()
           }
         }
       )
@@ -184,6 +194,7 @@ export default function RitualPage() {
 
     if (newState === 'revealed' && ctx.couple) {
       await handleStreakUpdate(ctx.couple.id)
+      await maybeShowPushPrompt()
     }
 
     setSubmitting(false)

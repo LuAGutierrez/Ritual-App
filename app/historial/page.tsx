@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { getUserContextAction, getHistorialAction } from '@/app/actions/ritual'
+import { FREE_HISTORIAL_LIMIT } from '@/lib/plans'
 import type { CoupleRitualSession, UserContext, RitualCategory } from '@/types'
 
 const CATEGORIAS: { id: string; label: string }[] = [
@@ -40,12 +41,24 @@ export default function HistorialPage() {
   const [loading, setLoading] = useState(true)
   const [loadingMore, setLoadingMore] = useState(false)
   const [hasMore, setHasMore] = useState(false)
+  const [isPremium, setIsPremium] = useState(false)
+  const [totalCompleted, setTotalCompleted] = useState(0)
+  const [totalCompletedAll, setTotalCompletedAll] = useState(0)
+  const [error, setError] = useState<string | null>(null)
   const [expanded, setExpanded] = useState<string | null>(null)
 
   async function loadHistorial(coupleId: string, cat: string, offset = 0, append = false) {
-    const { sessions: data, hasMore: more } = await getHistorialAction(coupleId, cat, offset)
-    setSessions(prev => append ? [...prev, ...data] : data)
-    setHasMore(more)
+    try {
+      const { sessions: data, hasMore: more, isPremium: premium, totalCompleted: total, totalCompletedAll: totalAll } = await getHistorialAction(coupleId, cat, offset)
+      setSessions(prev => append ? [...prev, ...data] : data)
+      setHasMore(more)
+      setIsPremium(premium)
+      setTotalCompleted(total)
+      setTotalCompletedAll(totalAll)
+      setError(null)
+    } catch {
+      setError('No se pudo cargar el historial. Intentá de nuevo.')
+    }
   }
 
   useEffect(() => {
@@ -87,6 +100,10 @@ export default function HistorialPage() {
     return ctx.userId === s.user1_id ? (s.user2_response ?? '') : (s.user1_response ?? '')
   }
 
+  const showPremiumUpsell = categoria === 'todos' && !isPremium && totalCompletedAll > FREE_HISTORIAL_LIMIT && !hasMore
+
+  const headerCount = categoria === 'todos' ? totalCompletedAll : totalCompleted
+
   if (loading) {
     return (
       <div className="min-h-dvh bg-ritual-bg flex items-center justify-center">
@@ -102,8 +119,8 @@ export default function HistorialPage() {
         <div>
           <h1 className="font-display text-xl text-ritual-cream tracking-wide">Historial</h1>
           <p className="text-ritual-muted text-xs font-body mt-0.5">
-            {sessions.length > 0
-              ? `${sessions.length} ritual${sessions.length !== 1 ? 'es' : ''} completado${sessions.length !== 1 ? 's' : ''}`
+            {headerCount > 0
+              ? `${headerCount} ritual${headerCount !== 1 ? 'es' : ''} completado${headerCount !== 1 ? 's' : ''}${categoria !== 'todos' ? ` · ${CATEGORIAS.find(c => c.id === categoria)?.label}` : ''}`
               : 'Aún no completaron rituales'}
           </p>
         </div>
@@ -134,7 +151,12 @@ export default function HistorialPage() {
 
       {/* Lista */}
       <main className="flex-1 px-5 pb-10 max-w-md mx-auto w-full">
-        {sessions.length === 0 ? (
+        {error && (
+          <div className="mb-4 bg-red-500/10 border border-red-500/20 rounded-2xl p-4 text-center">
+            <p className="text-red-300 font-body text-sm">{error}</p>
+          </div>
+        )}
+        {sessions.length === 0 && !error ? (
           <div className="text-center py-16">
             <p className="font-display text-2xl text-ritual-cream mb-3">
               Todavía no hay rituales aquí
@@ -223,6 +245,22 @@ export default function HistorialPage() {
               >
                 {loadingMore ? 'Cargando...' : 'Cargar más'}
               </button>
+            )}
+            {showPremiumUpsell && (
+              <div className="bg-ritual-gold/8 border border-ritual-gold/20 rounded-2xl p-5 text-center space-y-3">
+                <p className="font-display text-lg text-ritual-cream">
+                  Hay más recuerdos guardados
+                </p>
+                <p className="text-ritual-muted font-body text-sm leading-relaxed">
+                  Llevan {totalCompletedAll} rituales juntos. Con Premium podés ver todo su historial.
+                </p>
+                <button
+                  onClick={() => router.push('/precios')}
+                  className="w-full bg-ritual-gold text-ritual-bg font-body font-medium text-sm py-3.5 rounded-2xl hover:bg-ritual-cream transition-all duration-300"
+                >
+                  Ver Premium
+                </button>
+              </div>
             )}
           </div>
         )}

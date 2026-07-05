@@ -1,0 +1,137 @@
+# Deuda técnica y oportunidades de mejora — Rituales
+
+Última actualización: julio 2026
+
+> Este documento registra problemas conocidos, deuda técnica y oportunidades de simplificación/refactorización.
+> NO modificar código sin primero entender el impacto. Ver FLUJO.md y ARQUITECTURA.md.
+
+---
+
+## Bugs activos
+
+### ~~`showPushPrompt` nunca se activa en /ritual~~ RESUELTO (julio 2026)
+Se agregó `maybeShowPushPrompt()` que se llama post-reveal en `handleSubmit` y en el callback de Realtime.
+Condición: `isSupported && !isPushPromptDismissed() && !prefs.push_enabled`.
+
+---
+
+## Consultas N+1 y performance
+
+### getUserContextAction hace 4 queries secuenciales
+**Archivo**: `app/actions/ritual.ts:15`
+**Problema**:
+```
+1. profiles WHERE id = user.id
+2. couple_members WHERE user_id = user.id
+3. couples WHERE id = membership.couple_id
+4. couple_members WHERE couple_id = ... AND user_id != user.id
+5. profiles WHERE id = partner.user_id
+```
+Son 5 queries (o 4 si no hay pareja) que podrían ser 1-2 con JOINs.
+**Impacto**: Carga lenta del ritual (primera pantalla).
+**Nota**: Supabase JS no soporta JOINs entre tablas arbitrarias fácilmente; se puede resolver con una DB function o con `select('*, couple:couple_members!inner(couple:couples(*))')`.
+
+### getPerfilAction trae TODAS las sesiones para contar y categoría favorita
+**Archivo**: `app/actions/perfil.ts:47`
+**Problema**: Hace `.select('*, ritual:rituals(category)')` de todas las sesiones reveladas para contar y calcular la categoría favorita en JS. Con cientos de sesiones esto es costoso.
+**Solución**: Usar `select('id', { count: 'exact' })` para el conteo, y una query con GROUP BY via RPC o función SQL para la categoría favorita.
+
+---
+
+## Código duplicado / redundante
+
+### Patron auth check repetido en cada action
+**Archivos**: Todos los archivos en `app/actions/`
+**Problema**: Cada action hace:
+```typescript
+const { data: { user } } = await supabase.auth.getUser()
+if (!user) return null // o { ok: false }
+```
+No es un problema grave (el middleware ya protege las rutas), pero es verboso.
+**Nota**: No abstraer prematuramente — la duplicación aquí es clara y segura. Solo si se vuelve fuente de bugs.
+
+### resolveState definida dentro del componente
+**Archivo**: `app/ritual/page.tsx:52`
+**Problema**: `resolveState` es una función pura (no usa estado ni props del componente) definida dentro del componente, lo que la hace recrear en cada render.
+**Solución**: Moverla fuera del componente como función top-level.
+
+---
+
+## Deuda de UI/UX
+
+### Navegación inconsistente (sin nav bar)
+**Problema**: La navegación entre /ritual, /historial y /perfil se hace con botones de texto en el header de cada página. No hay navegación persistente.
+**Impacto**: UX frágil, cada página tiene que reimplementar los botones de nav manualmente.
+**Posible solución**: Un layout compartido para las rutas autenticadas con una nav bar inferior fija (estilo mobile-first).
+
+### Spinner genérico como loading state
+**Problema**: Todas las páginas muestran el mismo spinner mientras cargan datos. No hay skeleton screens.
+**Impacto**: Experiencia percibida de carga más lenta.
+
+### Header duplicado en cada página
+**Archivos**: `app/ritual/page.tsx`, `app/historial/page.tsx`, `app/perfil/page.tsx`, `app/precios/page.tsx`
+**Problema**: Cada página implementa su propio header con estructura similar (título + botones de nav). Código duplicado.
+**Solución**: Extraer un componente `PageHeader` o un layout compartido.
+
+---
+
+## Codigo/archivos potencialmente obsoletos
+
+### Migraciones legacy de MercadoPago / eleccion-remoto
+**Archivos**: `supabase/migrations/003_mercadopago_subscription.sql`, `005_eleccion_remota.sql`
+**Estado**: Migraciones aplicadas, tablas en la DB. No hay código en Next.js que las use activamente.
+**Riesgo**: Bajo. Las tablas existen pero no interfieren. Las Edge Functions (`create-mp-subscription`, `mp-webhook`, `eleccion-remoto`) tampoco están llamadas desde el frontend.
+**Accion recomendada**: Documentar como legacy, no eliminar (ya aplicadas en producción).
+
+### `~/.cursor` directory en raíz del proyecto
+**Path**: `C:\Users\Usuario\Downloads\Parejas Juego\~\.cursor`
+**Problema**: Hay un directorio `~/` en la raíz del proyecto, probablemente creado por error con `mkdir ~` en Windows. Contiene una carpeta `.cursor` vacía.
+**Accion**: Verificar si es accidental y eliminar si es el caso. No está en `.gitignore`.
+
+### `supabase/functions/` — Edge Functions no integradas
+**Archivos**: `check-game-access`, `create-mp-subscription`, `mp-webhook`, `eleccion-remoto`
+**Estado**: Código existe pero las funciones no se llaman desde la app Next.js actual.
+**Accion**: Marcar como legacy en documentación. Evaluar en Sprint 3 si se reusan o eliminan.
+
+---
+
+## Mejoras pendientes identificadas
+
+### Timezone hardcodeada como default ART
+**Archivo**: `app/actions/notifications.ts:12`
+```typescript
+timezone: 'America/Argentina/Buenos_Aires',
+```
+**Impacto**: Si la app escala internacionalmente, los nuevos usuarios tendrán el default incorrecto.
+**Solución**: Detectar timezone del browser al guardar las prefs por primera vez (`Intl.DateTimeFormat().resolvedOptions().timeZone`).
+
+### Sin índices explícitos en DB para queries frecuentes
+**Queries frecuentes**:
+- `couple_ritual_sessions WHERE couple_id = X AND session_date = today`
+- `couple_members WHERE user_id = X`
+- `notification_log WHERE user_id = X AND type = Y AND sent_at >= today`
+**Accion**: Revisar `EXPLAIN ANALYZE` en Supabase Dashboard cuando haya volumen real.
+
+### Historial: offset basado en `sessions.length` puede romper con filtros
+**Archivo**: `app/historial/page.tsx:89`
+```typescript
+await loadHistorial(ctx.couple.id, categoria, sessions.length, true)
+```
+Si el usuario cambia el filtro y luego hace load more, el offset podría ser incorrecto. Actualmente se resetea en `handleCategoria`, así que está mitigado, pero frágil.
+
+### getHistorialAction: query de count separada del fetch de datos
+**Archivo**: `app/actions/ritual.ts:229`
+**Problema**: Hay 2-3 queries por llamada a `getHistorialAction` (count total, count filtrado, datos). Podría optimizarse con una query que retorne count en el mismo select (`{ count: 'exact' }`).
+
+---
+
+## Limitaciones de arquitectura actuales
+
+### Ritual determinístico puede repetirse
+El algoritmo `dayOfYear % rituals.length` hace que los rituales se repitan anualmente (o antes si hay pocos). Con ~200 rituales en el catálogo y una pareja activa, empezarían a ver repeticiones desde el año 2. No es crítico pero debe considerarse al agregar contenido.
+
+### Un solo comodín por pareja (hardcoded en migración)
+`wildcards_remaining DEFAULT 1` en la migración. Si se quiere dar más comodines (feature premium?), requiere migración o UI para recargarlo.
+
+### Pareja de exactamente 2 personas
+El modelo `user1_id / user2_id` en `couple_ritual_sessions` asume exactamente 2 miembros. El ROADMAP menciona "grupos pequeños" como expansión futura — requeriría refactor significativo del modelo de sesiones.

@@ -10,3 +10,4 @@ supabase/.temp/
 tsconfig.tsbuildinfo
 .cursor/rules/skills/superpowers/
 .vercel
+.claude.json
