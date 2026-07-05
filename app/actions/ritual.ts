@@ -2,6 +2,8 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { notifyPartnerResponded } from '@/lib/push/notify'
+import { isCouplePremiumAction } from '@/app/actions/subscription'
+import { FREE_HISTORIAL_LIMIT } from '@/lib/plans'
 import type { CoupleRitualSession, UserContext, Profile, Couple, Streak } from '@/types'
 
 function getDayOfYear(date: Date): number {
@@ -219,9 +221,39 @@ export async function getHistorialAction(
   categoria?: string,
   offset = 0,
   limit = HISTORIAL_PAGE_SIZE
-): Promise<{ sessions: CoupleRitualSession[]; hasMore: boolean }> {
+): Promise<{ sessions: CoupleRitualSession[]; hasMore: boolean; isPremium: boolean; totalCompleted: number; totalCompletedAll: number }> {
   const supabase = await createClient()
+  const isPremium = await isCouplePremiumAction(coupleId)
   const useCategory = categoria && categoria !== 'todos'
+
+  const { count: totalAll } = await supabase
+    .from('couple_ritual_sessions')
+    .select('id', { count: 'exact', head: true })
+    .eq('couple_id', coupleId)
+    .not('revealed_at', 'is', null)
+
+  const totalCompletedAll = totalAll ?? 0
+
+  let countQuery = supabase
+    .from('couple_ritual_sessions')
+    .select(useCategory ? '*, ritual:rituals!inner(category)' : 'id', { count: 'exact', head: true })
+    .eq('couple_id', coupleId)
+    .not('revealed_at', 'is', null)
+
+  if (useCategory) {
+    countQuery = countQuery.eq('ritual.category', categoria)
+  }
+
+  const { count } = await countQuery
+  const totalCompleted = count ?? 0
+
+  if (!isPremium && offset >= FREE_HISTORIAL_LIMIT) {
+    return { sessions: [], hasMore: false, isPremium, totalCompleted, totalCompletedAll }
+  }
+
+  const cappedLimit = isPremium
+    ? limit
+    : Math.min(limit, FREE_HISTORIAL_LIMIT - offset)
 
   let query = supabase
     .from('couple_ritual_sessions')
@@ -229,7 +261,7 @@ export async function getHistorialAction(
     .eq('couple_id', coupleId)
     .not('revealed_at', 'is', null)
     .order('session_date', { ascending: false })
-    .range(offset, offset + limit)
+    .range(offset, offset + cappedLimit)
 
   if (useCategory) {
     query = query.eq('ritual.category', categoria)
@@ -237,10 +269,13 @@ export async function getHistorialAction(
 
   const { data } = await query
   const rows = (data ?? []) as CoupleRitualSession[]
-  const hasMore = rows.length > limit
-  const sessions = hasMore ? rows.slice(0, limit) : rows
+  const hasMoreRows = rows.length > cappedLimit
+  const sessions = hasMoreRows ? rows.slice(0, cappedLimit) : rows
+  const hasMore = isPremium
+    ? hasMoreRows
+    : hasMoreRows && offset + sessions.length < FREE_HISTORIAL_LIMIT
 
-  return { sessions, hasMore }
+  return { sessions, hasMore, isPremium, totalCompleted, totalCompletedAll }
 }
 
 export async function updateStreakAction(coupleId: string): Promise<Streak | null> {
