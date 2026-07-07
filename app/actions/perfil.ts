@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { isCouplePremiumAction } from '@/app/actions/subscription'
 import type { Profile, Streak } from '@/types'
 
 export type PerfilData = {
@@ -9,6 +10,7 @@ export type PerfilData = {
   ritualesCompletados: number
   categoriaFavorita: string | null
   partnerName: string | null
+  isPremium: boolean
 }
 
 export async function getPerfilAction(): Promise<PerfilData | null> {
@@ -32,10 +34,11 @@ export async function getPerfilAction(): Promise<PerfilData | null> {
     .single()
 
   if (!membership) {
-    return { profile: profile as Profile, streak: null, ritualesCompletados: 0, categoriaFavorita: null, partnerName: null }
+    return { profile: profile as Profile, streak: null, ritualesCompletados: 0, categoriaFavorita: null, partnerName: null, isPremium: false }
   }
 
   const coupleId = membership.couple_id
+  const isPremium = await isCouplePremiumAction(coupleId)
 
   const { data: streak } = await supabase
     .from('streaks')
@@ -84,6 +87,7 @@ export async function getPerfilAction(): Promise<PerfilData | null> {
     ritualesCompletados,
     categoriaFavorita,
     partnerName,
+    isPremium,
   }
 }
 
