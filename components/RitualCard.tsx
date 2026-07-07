@@ -8,6 +8,9 @@ const CATEGORY_LABELS: Record<string, string> = {
   diversion: 'Diversión',
   intimidad: 'Intimidad',
   reto: 'Reto',
+  viajes: 'Viajes',
+  planes: 'Planes',
+  fantasias: 'Fantasías',
 }
 
 const CATEGORY_COLORS: Record<string, string> = {
@@ -15,6 +18,9 @@ const CATEGORY_COLORS: Record<string, string> = {
   diversion: 'text-ritual-cream',
   intimidad: 'text-ritual-rose',
   reto: 'text-ritual-terra',
+  viajes: 'text-ritual-gold',
+  planes: 'text-ritual-cream',
+  fantasias: 'text-ritual-rose',
 }
 
 type Props = {
@@ -47,6 +53,11 @@ export default function RitualCard({
         <span className={`font-body text-xs uppercase tracking-widest ${categoryColor}`}>
           {categoryLabel}
         </span>
+        {ritual.premium && (
+          <span className="ml-2 font-body text-[10px] uppercase tracking-widest text-ritual-gold/70">
+            ✦ Premium
+          </span>
+        )}
       </div>
 
       {/* Prompt del ritual */}

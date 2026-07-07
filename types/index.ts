@@ -13,7 +13,7 @@ export type Couple = {
   created_at: string
 }
 
-export type RitualCategory = 'conexion' | 'diversion' | 'intimidad' | 'reto'
+export type RitualCategory = 'conexion' | 'diversion' | 'intimidad' | 'reto' | 'viajes' | 'planes' | 'fantasias'
 
 export type Ritual = {
   id: string

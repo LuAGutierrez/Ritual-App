@@ -12,7 +12,7 @@ Stack actual: **Next.js 14 (App Router) + TypeScript + Tailwind CSS + Supabase**
 |--------|--------|
 | Sprint 1 — Core | ✅ Completo |
 | Sprint 2 — Engagement | ✅ Completo (reminder diario: 1x/día por plan Hobby) |
-| Sprint 3 — Monetización | ❌ Pendiente |
+| Sprint 3 — Monetización | 🚧 En progreso (Mercado Pago) |
 | Sprint 4 — IA | ❌ Pendiente |
 
 ---
@@ -82,22 +82,25 @@ Stack actual: **Next.js 14 (App Router) + TypeScript + Tailwind CSS + Supabase**
 
 ---
 
-## Sprint 3 — Monetización ❌ PENDIENTE
+## Sprint 3 — Monetización 🚧 EN PROGRESO (Mercado Pago, no Stripe)
 
-> Existe infra legacy del proyecto HTML anterior (tabla `subscriptions`, Mercado Pago, `precios.html`, Edge Functions) pero **no está integrada** al flujo Next.js de Rituales.
+> Se reusa la infra legacy del proyecto HTML anterior (tabla `subscriptions`, Mercado Pago, Edge Functions) integrándola al flujo Next.js.
 
 ### Premium
-- [ ] Plan freemium definido: X rituales gratis → premium desbloquea categorías exclusivas, historial completo, rituales de IA
-- [ ] Integrar **Stripe** (Checkout + Webhooks) en Next.js
-  - Suscripción mensual/anual
-  - Tabla `subscriptions` en Supabase (existe, sin uso en app)
-- [ ] Paywall suave: mostrar ritual premium bloqueado, no bloquear la experiencia core
-- [ ] Página `/precios` en App Router
+- [x] Plan freemium definido: historial >30 rituales y categorías premium desbloquean con Premium (`lib/plans.ts`)
+- [x] Integrar **Mercado Pago** (preapproval/suscripción recurrente + webhook) vía Edge Functions `create-mp-subscription` y `mp-webhook`
+  - Tabla `subscriptions` en Supabase, con `mp_subscription_id` (migración `003`)
+- [x] Paywall suave: historial limitado a 30, ritual del día siempre disponible
+- [x] Página `/precios` en App Router con checkout
+- [x] Link visible a `/precios` desde `/perfil` ("Conocer Premium")
+- [ ] Probar flujo completo en sandbox de Mercado Pago (checkout → webhook → premium activo)
+- [ ] Dominio propio para pasar de sandbox a producción (MP no acepta `back_url` en `*.vercel.app` en producción)
 
 ### Rituales premium
-- [ ] Rituales con `premium = true` (hoy todos son gratuitos)
-- [ ] Categorías adicionales: viajes, planes, fantasías
+- [x] Rituales con `premium = true` (migración `013`) — la selección diaria excluye premium para parejas free y las incluye para parejas premium (`getRitualOfDayAction`)
+- [x] Categorías adicionales: viajes, planes, fantasías (30 rituales nuevos, todos premium)
 - [ ] Rituales de temporada / eventos especiales
+- [ ] Rituales de aniversario / hitos (requiere modelar fecha de aniversario en `couples`)
 
 ---
 

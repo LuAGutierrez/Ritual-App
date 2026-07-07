@@ -20,6 +20,5 @@ Los archivos en `docs/archivo-anterior/` corresponden a la versión HTML/vanilla
 ## Estado actual (julio 2026)
 
 - Sprint 1 (Core) y Sprint 2 (Engagement) completados.
-- Sprint 3 (Monetización) es el próximo paso: integrar Stripe, activar paywall.
-- La página `/precios` existe pero el botón de compra está deshabilitado ("Próximamente").
-- Bug conocido crítico: `showPushPrompt` nunca se activa — ver DEUDA-TECNICA.md.
+- Sprint 3 (Monetización) en progreso: Mercado Pago integrado (checkout + webhook), paywall de historial activo, rituales premium con categorías exclusivas (viajes, planes, fantasías). Falta probar el flujo end-to-end en sandbox y conseguir dominio propio para producción.
+- Ver `ROADMAP.md` para el detalle punto por punto.
