@@ -3,7 +3,14 @@
     "allow": [
       "Bash(claude mcp:*)",
       "mcp__supabase__execute_sql",
-      "mcp__supabase__deploy_edge_function"
+      "mcp__supabase__deploy_edge_function",
+      "mcp__supabase__list_projects",
+      "mcp__supabase__list_edge_functions",
+      "mcp__supabase__get_logs",
+      "mcp__supabase__get_publishable_keys",
+      "mcp__supabase__get_project_url",
+      "Bash(curl *)",
+      "Bash(git fetch *)"
     ]
   }
 }
