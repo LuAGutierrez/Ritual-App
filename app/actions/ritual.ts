@@ -78,12 +78,18 @@ export async function getRitualOfDayAction(coupleId: string): Promise<CoupleRitu
   if (existing) return existing as CoupleRitualSession
 
   const dayOfYear = getDayOfYear(new Date())
+  const isPremium = await isCouplePremiumAction(coupleId)
 
-  const { data: rituals } = await supabase
+  let ritualsQuery = supabase
     .from('rituals')
     .select('id')
-    .eq('premium', false)
     .order('created_at', { ascending: true })
+
+  if (!isPremium) {
+    ritualsQuery = ritualsQuery.eq('premium', false)
+  }
+
+  const { data: rituals } = await ritualsQuery
 
   if (!rituals || rituals.length === 0) return null
 

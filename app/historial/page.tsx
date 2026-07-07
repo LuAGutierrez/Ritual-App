@@ -12,6 +12,9 @@ const CATEGORIAS: { id: string; label: string }[] = [
   { id: 'diversion', label: 'Diversión' },
   { id: 'intimidad', label: 'Intimidad' },
   { id: 'reto', label: 'Reto' },
+  { id: 'viajes', label: 'Viajes' },
+  { id: 'planes', label: 'Planes' },
+  { id: 'fantasias', label: 'Fantasías' },
 ]
 
 const CATEGORY_COLORS: Record<RitualCategory, string> = {
@@ -19,6 +22,9 @@ const CATEGORY_COLORS: Record<RitualCategory, string> = {
   diversion: 'text-ritual-cream border-ritual-cream/30 bg-ritual-cream/10',
   intimidad: 'text-[#D4A5A5] border-[#D4A5A5]/30 bg-[#D4A5A5]/10',
   reto: 'text-[#8B6F5E] border-[#8B6F5E]/40 bg-[#8B6F5E]/10',
+  viajes: 'text-ritual-gold border-ritual-gold/30 bg-ritual-gold/10',
+  planes: 'text-ritual-cream border-ritual-cream/30 bg-ritual-cream/10',
+  fantasias: 'text-[#D4A5A5] border-[#D4A5A5]/30 bg-[#D4A5A5]/10',
 }
 
 const CATEGORY_LABELS: Record<RitualCategory, string> = {
@@ -26,6 +32,9 @@ const CATEGORY_LABELS: Record<RitualCategory, string> = {
   diversion: 'Diversión',
   intimidad: 'Intimidad',
   reto: 'Reto',
+  viajes: 'Viajes',
+  planes: 'Planes',
+  fantasias: 'Fantasías',
 }
 
 function formatFecha(dateStr: string) {
