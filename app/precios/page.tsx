@@ -5,14 +5,11 @@ import { useRouter } from 'next/navigation'
 import { getUserContextAction } from '@/app/actions/ritual'
 import { isCouplePremiumAction } from '@/app/actions/subscription'
 import { FREE_FEATURES, PREMIUM_FEATURES, PREMIUM_PRICE } from '@/lib/plans'
-import { createClient } from '@/lib/supabase/client'
 
 export default function PreciosPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(true)
   const [isPremium, setIsPremium] = useState(false)
-  const [checkoutLoading, setCheckoutLoading] = useState(false)
-  const [success, setSuccess] = useState(false)
 
   useEffect(() => {
     async function load() {
@@ -23,25 +20,7 @@ export default function PreciosPage() {
       setLoading(false)
     }
     load()
-
-    const params = new URLSearchParams(window.location.search)
-    if (params.get('success') === '1') setSuccess(true)
   }, [])
-
-  async function handleCheckout() {
-    setCheckoutLoading(true)
-    try {
-      const supabase = createClient()
-      const { data, error } = await supabase.functions.invoke('create-mp-subscription')
-      if (error || !data?.init_point) {
-        console.error('Error al crear suscripción', error ?? data)
-        return
-      }
-      window.location.href = data.init_point
-    } finally {
-      setCheckoutLoading(false)
-    }
-  }
 
   if (loading) {
     return (
@@ -64,12 +43,6 @@ export default function PreciosPage() {
       </header>
 
       <main className="flex-1 px-5 pb-10 max-w-md mx-auto w-full space-y-6">
-        {success && (
-          <div className="bg-ritual-gold/15 border border-ritual-gold/30 text-ritual-gold font-body text-sm px-4 py-3 rounded-2xl text-center">
-            Pago exitoso — ya tenés Premium activo
-          </div>
-        )}
-
         <div className="text-center space-y-2 pt-2">
           <p className="text-3xl">✦</p>
           <p className="font-display text-2xl text-ritual-cream leading-snug">
@@ -124,11 +97,10 @@ export default function PreciosPage() {
             </div>
           ) : (
             <button
-              onClick={handleCheckout}
-              disabled={checkoutLoading}
-              className="w-full bg-ritual-gold text-ritual-bg font-body font-medium py-4 rounded-2xl transition-opacity disabled:opacity-60 disabled:cursor-not-allowed"
+              disabled
+              className="w-full bg-ritual-gold text-ritual-bg font-body font-medium py-4 rounded-2xl opacity-60 cursor-not-allowed"
             >
-              {checkoutLoading ? 'Redirigiendo...' : `Suscribirse — ${PREMIUM_PRICE.label} / ${PREMIUM_PRICE.period}`}
+              Próximamente — suscripción mensual
             </button>
           )}
           <p className="text-ritual-muted text-xs font-body text-center leading-relaxed">
