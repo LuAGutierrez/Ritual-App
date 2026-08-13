@@ -3,11 +3,11 @@ node_modules/
 .env
 .env.*
 !.env.example
-.vercel/
+.vercel
 supabase/.temp/
 *.log
 .DS_Store
 tsconfig.tsbuildinfo
 .cursor/rules/skills/superpowers/
-.vercel
 .claude.json
+.claude/settings.local.json
