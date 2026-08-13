@@ -1,0 +1,26 @@
+---
+description: Antes de trabajar con un servicio externo, revisar si hay MCP; si no, crear o conectar uno
+alwaysApply: true
+---
+
+# MCP obligatorio por servicio
+
+Cuando la tarea involucre un producto o servicio externo (Supabase, Vercel, Linear, Figma, GitHub, Stripe, etc.):
+
+1. **Revisá** si ya hay un MCP conectado y usable para ese servicio (`GetMcpTools` / servers disponibles).
+2. Si **existe y está autenticado**, usalo (no improvisar con APIs a ciegas si el MCP cubre lo necesario).
+3. Si **no existe** o está en `needsAuth` / error:
+   - autenticá el MCP si solo falta login,
+   - o **creá / configurá / instalá** el MCP del servicio,
+   - o pedí al usuario que lo conecte si requiere acción manual.
+4. No sigas “a ojo” con datos de producción, deploys, issues o diseño si el MCP correspondiente podría hacerlo bien.
+
+## Qué cuenta como “crear uno”
+
+- Instalar/habilitar un MCP oficial del servicio, o
+- configurar el server en Cursor (auth, project link), o
+- si no hay MCP oficial y hace falta de verdad, proponer/crear uno mínimo — **preguntando antes** si implica trabajo grande.
+
+## Excepción
+
+Tareas 100% locales (UI, copy, refactors sin tocar servicios) no requieren MCP.

@@ -12,6 +12,7 @@
 | [DESIGN-SYSTEM.md](./DESIGN-SYSTEM.md) | Paleta, tipografía, animaciones, patrones de componentes |
 | [DEUDA-TECNICA.md](./DEUDA-TECNICA.md) | Bugs activos, queries ineficientes, codigo redundante, limitaciones |
 | [ROADMAP.md](./ROADMAP.md) | Sprints completados y pendientes, backlog |
+| [LINEAR.md](./LINEAR.md) | Tutorial paso a paso de Linear (crear, mover y completar tareas) |
 
 ## Archivos archivo (historia anterior)
 

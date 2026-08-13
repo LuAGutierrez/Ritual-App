@@ -1,0 +1,28 @@
+---
+description: Tras cambios de código, abrir el browser de Cursor y verificar móvil + desktop
+alwaysApply: true
+---
+
+# Verificación visual en browser (obligatoria)
+
+Después de **cualquier** mejora de código, arreglo de error, cambio de UI o flujo que el usuario pueda ver o usar:
+
+1. Abrí el **browser nativo de Cursor** (Simple Browser / Open Browser).
+2. Navegá a la URL local relevante (por defecto `http://localhost:3000` y las rutas tocadas).
+3. Revisá en **móvil** (~375px) y en **desktop** (~1024px+).
+4. Confirmá que:
+   - funciona el flujo cambiado (sin pantalla blanca, errores visibles o loops),
+   - se ve acorde a Rituales (cálido, limpio, mobile-first, sin clutter),
+   - no hay overflow horizontal ni botones inutilizables en móvil.
+
+## Cuándo aplica
+
+- Fixes de bugs, refactors visibles, nuevas pantallas, copy/UI, auth, ritual, historial, perfil, precios, etc.
+
+## Cuándo no hace falta
+
+- Solo docs, rules, commits, o cambios de backend/SQL sin impacto en UI ni en un flujo que se pueda abrir en browser.
+
+## Al reportar
+
+Decí brevemente qué abriste, en qué viewports revisaste, y si quedó OK o qué ajustaste tras verlo.
