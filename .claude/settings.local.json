@@ -10,7 +10,17 @@
       "mcp__supabase__get_publishable_keys",
       "mcp__supabase__get_project_url",
       "Bash(curl *)",
-      "Bash(git fetch *)"
+      "Bash(git fetch *)",
+      "mcp__supabase__list_tables",
+      "mcp__supabase__apply_migration",
+      "mcp__supabase__get_advisors",
+      "Bash(git add *)",
+      "Bash(git log *)",
+      "Bash(git -C \".cursor/rules/skills/superpowers\" status)",
+      "Bash(git diff *)",
+      "mcp__supabase__list_migrations",
+      "Bash(echo \"rc=$?\")",
+      "Bash(git hash-object *)"
     ]
   }
 }
