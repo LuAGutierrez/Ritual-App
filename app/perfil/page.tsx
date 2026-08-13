@@ -203,20 +203,6 @@ export default function PerfilPage() {
           )}
         </div>
 
-        {/* Premium */}
-        {data?.isPremium ? (
-          <div className="w-full bg-ritual-gold/8 border border-ritual-gold/20 text-ritual-gold font-body text-sm py-4 rounded-2xl text-center">
-            ✦ Premium activo
-          </div>
-        ) : (
-          <button
-            onClick={() => router.push('/precios')}
-            className="w-full bg-ritual-gold text-ritual-bg font-body font-medium text-sm py-4 rounded-2xl transition-all duration-300 hover:bg-ritual-cream active:scale-[0.98]"
-          >
-            ✦ Conocer Premium
-          </button>
-        )}
-
         {/* Link al historial */}
         <button
           onClick={() => router.push('/historial')}
