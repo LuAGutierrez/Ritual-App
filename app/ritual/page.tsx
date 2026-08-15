@@ -4,10 +4,8 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import {
-  getUserContextAction,
-  getRitualOfDayAction,
+  getRitualPageDataAction,
   submitResponseAction,
-  getStreakAction,
   updateStreakAction,
   usarComodinAction,
 } from '@/app/actions/ritual'
@@ -59,12 +57,6 @@ export default function RitualPage() {
     if (!myCompleted) return 'waiting_self'
     if (!partnerCompleted) return 'waiting_partner'
     return 'revealed'
-  }
-
-  // ─── Cargar streak ──────────────────────────────────────────────
-  async function loadStreak(coupleId: string) {
-    const data = await getStreakAction(coupleId)
-    if (data) setStreak(data)
   }
 
   // ─── Actualizar streak al completar reveal ──────────────────────
@@ -129,9 +121,10 @@ export default function RitualPage() {
     async function init() {
       setError(null)
 
-      const context = await getUserContextAction()
-      if (!context) { router.replace('/auth'); return }
+      const pageData = await getRitualPageDataAction()
+      if (!pageData) { router.replace('/auth'); return }
 
+      const { context, session: ritualSession, streak: initialStreak } = pageData
       setCtx(context)
 
       if (!context.couple) {
@@ -139,10 +132,7 @@ export default function RitualPage() {
         return
       }
 
-      const [ritualSession] = await Promise.all([
-        getRitualOfDayAction(context.couple.id),
-        loadStreak(context.couple.id),
-      ])
+      if (initialStreak) setStreak(initialStreak)
 
       if (!ritualSession) {
         setError('No hay ritual disponible para hoy.')
