@@ -7,7 +7,9 @@ export async function GET(request: Request) {
   const code = searchParams.get('code')
   const token_hash = searchParams.get('token_hash')
   const type = searchParams.get('type')
-  const next = type === 'recovery' ? '/auth?recovery=1' : '/ritual'
+  const redirectParam = searchParams.get('redirect')
+  const safeRedirect = redirectParam?.startsWith('/') && !redirectParam.startsWith('//') ? redirectParam : null
+  const next = type === 'recovery' ? '/auth?recovery=1' : (safeRedirect || '/ritual')
   let redirectTo = `${origin}/auth?error=link_invalido`
 
   const cookieStore = await cookies()
