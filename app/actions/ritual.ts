@@ -214,6 +214,27 @@ export async function getStreakAction(coupleId: string): Promise<Streak | null> 
   return data as Streak | null
 }
 
+// Junta getUserContextAction + ritual del dia + racha en un solo viaje
+// cliente-servidor en vez de dos (contexto, despues el resto) -- las llamadas
+// a Supabase adentro ya estaban en paralelo, pero cada Server Action por
+// separado paga su propio round-trip Vercel<->browser.
+export async function getRitualPageDataAction(): Promise<{
+  context: UserContext
+  session: CoupleRitualSession | null
+  streak: Streak | null
+} | null> {
+  const context = await getUserContextAction()
+  if (!context) return null
+  if (!context.couple) return { context, session: null, streak: null }
+
+  const [session, streak] = await Promise.all([
+    getRitualOfDayAction(context.couple.id),
+    getStreakAction(context.couple.id),
+  ])
+
+  return { context, session, streak }
+}
+
 const HISTORIAL_PAGE_SIZE = 15
 
 export async function getHistorialAction(
@@ -277,6 +298,26 @@ export async function getHistorialAction(
     : hasMoreRows && offset + sessions.length < FREE_HISTORIAL_LIMIT
 
   return { sessions, hasMore, isPremium, totalCompleted, totalCompletedAll }
+}
+
+// Igual que getRitualPageDataAction: junta contexto + primer pagina de
+// historial en un solo round-trip para la carga inicial de /historial.
+// handleCategoria/handleLoadMore siguen llamando a getHistorialAction directo
+// porque ahi ya se conoce el coupleId, no hace falta repetir el contexto.
+export async function getHistorialPageDataAction(categoria = 'todos'): Promise<{
+  context: UserContext
+  sessions: CoupleRitualSession[]
+  hasMore: boolean
+  isPremium: boolean
+  totalCompleted: number
+  totalCompletedAll: number
+} | { context: UserContext } | null> {
+  const context = await getUserContextAction()
+  if (!context) return null
+  if (!context.couple) return { context }
+
+  const historial = await getHistorialAction(context.couple.id, categoria)
+  return { context, ...historial }
 }
 
 export async function updateStreakAction(coupleId: string): Promise<Streak | null> {

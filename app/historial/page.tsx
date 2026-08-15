@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { getUserContextAction, getHistorialAction } from '@/app/actions/ritual'
+import { getHistorialPageDataAction, getHistorialAction } from '@/app/actions/ritual'
 import { FREE_HISTORIAL_LIMIT } from '@/lib/plans'
 import BottomNav from '@/components/BottomNav'
 import type { CoupleRitualSession, UserContext, RitualCategory } from '@/types'
@@ -54,15 +54,19 @@ export default function HistorialPage() {
   const [error, setError] = useState<string | null>(null)
   const [expanded, setExpanded] = useState<string | null>(null)
 
+  function applyHistorial(result: { sessions: CoupleRitualSession[]; hasMore: boolean; isPremium: boolean; totalCompleted: number; totalCompletedAll: number }, append = false) {
+    setSessions(prev => append ? [...prev, ...result.sessions] : result.sessions)
+    setHasMore(result.hasMore)
+    setIsPremium(result.isPremium)
+    setTotalCompleted(result.totalCompleted)
+    setTotalCompletedAll(result.totalCompletedAll)
+    setError(null)
+  }
+
   async function loadHistorial(coupleId: string, cat: string, offset = 0, append = false) {
     try {
-      const { sessions: data, hasMore: more, isPremium: premium, totalCompleted: total, totalCompletedAll: totalAll } = await getHistorialAction(coupleId, cat, offset)
-      setSessions(prev => append ? [...prev, ...data] : data)
-      setHasMore(more)
-      setIsPremium(premium)
-      setTotalCompleted(total)
-      setTotalCompletedAll(totalAll)
-      setError(null)
+      const result = await getHistorialAction(coupleId, cat, offset)
+      applyHistorial(result, append)
     } catch {
       setError('No se pudo cargar el historial. Intentá de nuevo.')
     }
@@ -70,11 +74,15 @@ export default function HistorialPage() {
 
   useEffect(() => {
     async function init() {
-      const context = await getUserContextAction()
-      if (!context) { router.replace('/auth'); return }
-      if (!context.couple) { router.replace('/onboarding'); return }
-      setCtx(context)
-      await loadHistorial(context.couple.id, 'todos')
+      try {
+        const pageData = await getHistorialPageDataAction('todos')
+        if (!pageData) { router.replace('/auth'); return }
+        setCtx(pageData.context)
+        if (!pageData.context.couple) { router.replace('/onboarding'); return }
+        if ('sessions' in pageData) applyHistorial(pageData)
+      } catch {
+        setError('No se pudo cargar el historial. Intentá de nuevo.')
+      }
       setLoading(false)
     }
     init()
