@@ -13,6 +13,16 @@
 Se agregó `maybeShowPushPrompt()` que se llama post-reveal en `handleSubmit` y en el callback de Realtime.
 Condición: `isSupported && !isPushPromptDismissed() && !prefs.push_enabled`.
 
+### ~~Corte de día en racha/ritual a las 21:00 ART en vez de medianoche~~ RESUELTO (agosto 2026)
+`getRitualOfDayAction`, `updateStreakAction` y `usarComodinAction` (`app/actions/ritual.ts`) calculaban "hoy" con
+`new Date().toISOString().split('T')[0]`, que da la fecha en UTC. Como Vercel corre en UTC y Argentina es UTC-3,
+el "día" cambiaba a las 21:00 ART — justo la franja de uso principal del producto ("ritual antes de dormir").
+Esto podía crear dos sesiones distintas para la misma noche si cada miembro de la pareja abría la app antes y
+después de esa hora, y podía romper la racha aunque hubieran respondido todas las noches. Fix: se agregó
+`todayInArgentina()` (usa `toLocaleDateString('en-CA', { timeZone: 'America/Argentina/Buenos_Aires' })`) y
+`addDaysToDateStr()`, reemplazando todos los cálculos de fecha del día en `ritual.ts` y en `streakEnRiesgo`
+(`app/ritual/page.tsx`).
+
 ---
 
 ## Consultas N+1 y performance
@@ -59,10 +69,8 @@ No es un problema grave (el middleware ya protege las rutas), pero es verboso.
 
 ## Deuda de UI/UX
 
-### Navegación inconsistente (sin nav bar)
-**Problema**: La navegación entre /ritual, /historial y /perfil se hace con botones de texto en el header de cada página. No hay navegación persistente.
-**Impacto**: UX frágil, cada página tiene que reimplementar los botones de nav manualmente.
-**Posible solución**: Un layout compartido para las rutas autenticadas con una nav bar inferior fija (estilo mobile-first).
+### ~~Navegación inconsistente (sin nav bar)~~ RESUELTO (agosto 2026)
+Se agregó `components/BottomNav.tsx`, una nav bar inferior fija con 4 tabs (Hoy / Juegos / Historial / Perfil) usada en `/ritual`, `/juegos`, `/historial` y `/perfil`. El logout se movió de `/ritual` a `/perfil`.
 
 ### Spinner genérico como loading state
 **Problema**: Todas las páginas muestran el mismo spinner mientras cargan datos. No hay skeleton screens.
@@ -77,21 +85,25 @@ No es un problema grave (el middleware ya protege las rutas), pero es verboso.
 
 ## Codigo/archivos potencialmente obsoletos
 
-### Migraciones legacy de MercadoPago / eleccion-remoto
-**Archivos**: `supabase/migrations/003_mercadopago_subscription.sql`, `005_eleccion_remota.sql`
-**Estado**: Migraciones aplicadas, tablas en la DB. No hay código en Next.js que las use activamente.
-**Riesgo**: Bajo. Las tablas existen pero no interfieren. Las Edge Functions (`create-mp-subscription`, `mp-webhook`, `eleccion-remoto`) tampoco están llamadas desde el frontend.
-**Accion recomendada**: Documentar como legacy, no eliminar (ya aplicadas en producción).
+### Migración legacy de eleccion-remoto (superseded)
+**Archivos**: `supabase/migrations/005_eleccion_remota.sql`, `supabase/functions/eleccion-remoto`
+**Estado**: El juego "Elección" del roadmap se implementó de cero en agosto 2026 como `couple_eleccion_rounds`
+(migración `015`) + `app/actions/eleccion.ts` + `app/juegos/eleccion/page.tsx`, usando `couple_id` y Realtime
+en vez del sistema de salas con código (`remote_eleccion_rooms`) que requería la Edge Function porque el
+proyecto legacy no tenía auth de pareja. La tabla `remote_eleccion_rooms` y la función `eleccion-remoto`
+quedan sin uso — se pueden eliminar cuando se confirme que no hay referencias externas.
+**Riesgo**: Bajo. No interfieren con el flujo actual.
+
+### Migración legacy de MercadoPago (activa)
+**Archivos**: `supabase/migrations/003_mercadopago_subscription.sql`
+**Estado**: `create-mp-subscription` y `mp-webhook` SÍ están integradas — `/precios` las invoca para el checkout.
+`check-game-access` sigue sin uso.
+**Accion recomendada**: ninguna, documentado para referencia.
 
 ### `~/.cursor` directory en raíz del proyecto
 **Path**: `C:\Users\Usuario\Downloads\Parejas Juego\~\.cursor`
 **Problema**: Hay un directorio `~/` en la raíz del proyecto, probablemente creado por error con `mkdir ~` en Windows. Contiene una carpeta `.cursor` vacía.
 **Accion**: Verificar si es accidental y eliminar si es el caso. No está en `.gitignore`.
-
-### `supabase/functions/` — Edge Functions no integradas
-**Archivos**: `check-game-access`, `create-mp-subscription`, `mp-webhook`, `eleccion-remoto`
-**Estado**: Código existe pero las funciones no se llaman desde la app Next.js actual.
-**Accion**: Marcar como legacy en documentación. Evaluar en Sprint 3 si se reusan o eliminan.
 
 ---
 

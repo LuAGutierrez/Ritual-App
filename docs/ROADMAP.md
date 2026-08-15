@@ -2,7 +2,7 @@
 
 Stack actual: **Next.js 14 (App Router) + TypeScript + Tailwind CSS + Supabase**
 
-Última actualización: junio 2026
+Última actualización: agosto 2026
 
 ---
 
@@ -93,7 +93,7 @@ Stack actual: **Next.js 14 (App Router) + TypeScript + Tailwind CSS + Supabase**
 - [x] Paywall suave: historial limitado a 30, ritual del día siempre disponible
 - [x] Página `/precios` en App Router con checkout
 - [x] Link visible a `/precios` desde `/perfil` ("Conocer Premium")
-- [ ] Probar flujo completo en sandbox de Mercado Pago (checkout → webhook → premium activo)
+- [x] Probar flujo completo en sandbox de Mercado Pago (checkout → webhook → premium activo) — verificado agosto 2026 con cuentas de test comprador/vendedor
 - [ ] Dominio propio para pasar de sandbox a producción (MP no acepta `back_url` en `*.vercel.app` en producción)
 
 ### Rituales premium
@@ -101,6 +101,22 @@ Stack actual: **Next.js 14 (App Router) + TypeScript + Tailwind CSS + Supabase**
 - [x] Categorías adicionales: viajes, planes, fantasías (30 rituales nuevos, todos premium)
 - [ ] Rituales de temporada / eventos especiales
 - [ ] Rituales de aniversario / hitos (requiere modelar fecha de aniversario en `couples`)
+
+---
+
+## Juegos (fuera de sprint, agosto 2026) ✅
+
+Además del ritual diario, se agregó una sección `/juegos` para engagement fuera del ciclo de una vez al día.
+
+- [x] Hub `/juegos` con las 4 opciones
+- [x] Elección — match sincronizado por Realtime (`couple_eleccion_rounds`, migración `015`), portado del legacy `eleccion-remoto` pero sin sistema de salas (usa `couple_id` directo)
+- [x] Verdad o Reto — contenido estático, un solo dispositivo
+- [x] Esto o Aquello — rondas rápidas tipo icebreaker, un solo dispositivo
+- [x] Ruleta Picante — contenido +18, con pantalla de aviso previo
+- [x] Tab "Juegos" en la nav bar inferior
+- [ ] Variantes de Elección con consecuencia/doble apuesta (specs ya escritas en `docs/archivo-anterior/ELECCION-OPCIONES-2-Y-3.md`)
+- [ ] Gating premium para Ruleta Picante (hoy es libre para todos)
+- [ ] Contenido dinámico desde DB en vez de arrays estáticos en `lib/juegos.ts` (permitiría admin/IA generar más adelante)
 
 ---
 
