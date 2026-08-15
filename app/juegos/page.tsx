@@ -1,12 +1,31 @@
 'use client'
 
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { useTransition } from 'react'
 import { JUEGOS } from '@/lib/juegos'
 import BottomNav from '@/components/BottomNav'
+import PageLoader from '@/components/PageLoader'
 
 export default function JuegosPage() {
+  const router = useRouter()
+  const [isPending, startTransition] = useTransition()
+
+  function handleClick(e: React.MouseEvent, href: string) {
+    e.preventDefault()
+    startTransition(() => {
+      router.push(href)
+    })
+  }
+
   return (
     <div className="min-h-dvh bg-ritual-bg flex flex-col">
+      {isPending && (
+        <div className="fixed inset-0 z-50">
+          <PageLoader />
+        </div>
+      )}
+
       <header className="px-5 pt-8 pb-4">
         <h1 className="font-display text-xl text-ritual-cream tracking-wide">Juegos</h1>
         <p className="text-ritual-muted text-xs font-body mt-0.5">Para jugar juntos, más allá del ritual de hoy</p>
@@ -18,6 +37,7 @@ export default function JuegosPage() {
             key={j.id}
             href={`/juegos/${j.id}`}
             prefetch
+            onClick={e => handleClick(e, `/juegos/${j.id}`)}
             className={`w-full text-left bg-ritual-bg-soft border rounded-2xl px-5 py-4 flex items-center gap-4 transition-all duration-200 hover:border-white/20 ${
               j.picante ? 'border-[#D4A5A5]/30' : 'border-white/8'
             }`}

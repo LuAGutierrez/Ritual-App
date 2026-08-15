@@ -1,7 +1,9 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
+import { useTransition } from 'react'
+import PageLoader from './PageLoader'
 
 const TABS = [
   {
@@ -49,27 +51,49 @@ const TABS = [
 
 export default function BottomNav() {
   const pathname = usePathname()
+  const router = useRouter()
+  const [isPending, startTransition] = useTransition()
+
+  function handleClick(e: React.MouseEvent, href: string) {
+    if (href === pathname) return
+    e.preventDefault()
+    startTransition(() => {
+      router.push(href)
+    })
+  }
 
   return (
-    <nav className="fixed bottom-0 inset-x-0 bg-ritual-bg/95 backdrop-blur-sm border-t border-white/8 pb-[env(safe-area-inset-bottom)] z-40">
-      <div className="max-w-md mx-auto flex items-stretch">
-        {TABS.map(tab => {
-          const active = pathname === tab.href
-          return (
-            <Link
-              key={tab.href}
-              href={tab.href}
-              prefetch
-              className={`flex-1 flex flex-col items-center gap-1 py-3 transition-colors duration-200 ${
-                active ? 'text-ritual-gold' : 'text-ritual-muted hover:text-ritual-text'
-              }`}
-            >
-              {tab.icon(active)}
-              <span className="font-body text-[10px] tracking-wide">{tab.label}</span>
-            </Link>
-          )
-        })}
-      </div>
-    </nav>
+    <>
+      {/* isPending queda true hasta que la ruta nueva termina de renderizar
+          (Suspense incluido) -- se muestra apenas se hace click, no cuando
+          Next.js decide revelar el loading.tsx del segmento. */}
+      {isPending && (
+        <div className="fixed inset-0 z-50">
+          <PageLoader />
+        </div>
+      )}
+
+      <nav className="fixed bottom-0 inset-x-0 bg-ritual-bg/95 backdrop-blur-sm border-t border-white/8 pb-[env(safe-area-inset-bottom)] z-40">
+        <div className="max-w-md mx-auto flex items-stretch">
+          {TABS.map(tab => {
+            const active = pathname === tab.href
+            return (
+              <Link
+                key={tab.href}
+                href={tab.href}
+                prefetch
+                onClick={e => handleClick(e, tab.href)}
+                className={`flex-1 flex flex-col items-center gap-1 py-3 transition-colors duration-200 ${
+                  active ? 'text-ritual-gold' : 'text-ritual-muted hover:text-ritual-text'
+                }`}
+              >
+                {tab.icon(active)}
+                <span className="font-body text-[10px] tracking-wide">{tab.label}</span>
+              </Link>
+            )
+          })}
+        </div>
+      </nav>
+    </>
   )
 }
