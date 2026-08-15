@@ -6,10 +6,26 @@ import { isCouplePremiumAction } from '@/app/actions/subscription'
 import { FREE_HISTORIAL_LIMIT } from '@/lib/plans'
 import type { CoupleRitualSession, UserContext, Profile, Couple, Streak } from '@/types'
 
-function getDayOfYear(date: Date): number {
-  const start = new Date(date.getFullYear(), 0, 0)
-  const diff = date.getTime() - start.getTime()
-  return Math.floor(diff / (1000 * 60 * 60 * 24))
+const ART_TZ = 'America/Argentina/Buenos_Aires'
+
+// El "día" del ritual y de la racha corta a medianoche en Argentina, no en UTC —
+// evita que el corte de día ocurra a las 21:00 ART (justo la franja "antes de dormir").
+function todayInArgentina(): string {
+  return new Date().toLocaleDateString('en-CA', { timeZone: ART_TZ })
+}
+
+function addDaysToDateStr(dateStr: string, delta: number): string {
+  const [year, month, day] = dateStr.split('-').map(Number)
+  const d = new Date(Date.UTC(year, month - 1, day))
+  d.setUTCDate(d.getUTCDate() + delta)
+  return d.toISOString().split('T')[0]
+}
+
+function getDayOfYear(dateStr: string): number {
+  const [year, month, day] = dateStr.split('-').map(Number)
+  const date = Date.UTC(year, month - 1, day)
+  const start = Date.UTC(year, 0, 0)
+  return Math.floor((date - start) / (1000 * 60 * 60 * 24))
 }
 
 export async function getUserContextAction(): Promise<UserContext | null> {
@@ -66,7 +82,7 @@ export async function getUserContextAction(): Promise<UserContext | null> {
 
 export async function getRitualOfDayAction(coupleId: string): Promise<CoupleRitualSession | null> {
   const supabase = await createClient()
-  const today = new Date().toISOString().split('T')[0]
+  const today = todayInArgentina()
 
   const { data: existing } = await supabase
     .from('couple_ritual_sessions')
@@ -77,7 +93,7 @@ export async function getRitualOfDayAction(coupleId: string): Promise<CoupleRitu
 
   if (existing) return existing as CoupleRitualSession
 
-  const dayOfYear = getDayOfYear(new Date())
+  const dayOfYear = getDayOfYear(today)
 
   const { data: rituals } = await supabase
     .from('rituals')
@@ -180,10 +196,8 @@ export async function usarComodinAction(coupleId: string): Promise<{ ok: boolean
   if (!streak) return { ok: false, error: 'No hay racha registrada.' }
   if ((streak.wildcards_remaining ?? 0) <= 0) return { ok: false, error: 'No te quedan comodines.' }
 
-  const today = new Date().toISOString().split('T')[0]
-  const yesterday = new Date()
-  yesterday.setDate(yesterday.getDate() - 1)
-  const yesterdayStr = yesterday.toISOString().split('T')[0]
+  const today = todayInArgentina()
+  const yesterdayStr = addDaysToDateStr(today, -1)
 
   // Solo aplica si la racha se rompería hoy (último día registrado fue anteayer o antes)
   if (streak.last_completed_date === today || streak.last_completed_date === yesterdayStr) {
@@ -280,7 +294,7 @@ export async function getHistorialAction(
 
 export async function updateStreakAction(coupleId: string): Promise<Streak | null> {
   const supabase = await createClient()
-  const today = new Date().toISOString().split('T')[0]
+  const today = todayInArgentina()
 
   const { data: streak } = await supabase
     .from('streaks')
@@ -297,9 +311,7 @@ export async function updateStreakAction(coupleId: string): Promise<Streak | nul
     return newStreak as Streak
   }
 
-  const yesterday = new Date()
-  yesterday.setDate(yesterday.getDate() - 1)
-  const yesterdayStr = yesterday.toISOString().split('T')[0]
+  const yesterdayStr = addDaysToDateStr(today, -1)
 
   if (streak.last_completed_date === today) return streak as Streak
 
