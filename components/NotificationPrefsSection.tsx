@@ -6,7 +6,7 @@ import {
   updateNotificationPrefsAction,
 } from '@/app/actions/notifications'
 import { usePushNotifications } from '@/hooks/usePushNotifications'
-import { bravePushHint } from '@/lib/push/client'
+import { bravePushHint, iosInstallHint } from '@/lib/push/client'
 import type { NotificationPrefs } from '@/types'
 
 const TIMEZONES = [
@@ -29,6 +29,7 @@ export default function NotificationPrefsSection() {
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const braveHint = bravePushHint()
+  const iosHint = iosInstallHint()
 
   useEffect(() => {
     getNotificationPrefsAction().then(setPrefs)
@@ -132,6 +133,12 @@ export default function NotificationPrefsSection() {
         {braveHint && (
           <p className="text-ritual-muted text-xs font-body leading-relaxed">
             {braveHint}
+          </p>
+        )}
+
+        {!isSupported && iosHint && (
+          <p className="text-ritual-muted text-xs font-body leading-relaxed">
+            {iosHint}
           </p>
         )}
 
