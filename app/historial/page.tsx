@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { getUserContextAction, getHistorialAction } from '@/app/actions/ritual'
 import { FREE_HISTORIAL_LIMIT } from '@/lib/plans'
+import BottomNav from '@/components/BottomNav'
 import type { CoupleRitualSession, UserContext, RitualCategory } from '@/types'
 
 const CATEGORIAS: { id: string; label: string }[] = [
@@ -121,21 +122,13 @@ export default function HistorialPage() {
   return (
     <div className="min-h-dvh bg-ritual-bg flex flex-col">
       {/* Header */}
-      <header className="px-5 pt-8 pb-4 flex items-center justify-between">
-        <div>
-          <h1 className="font-display text-xl text-ritual-cream tracking-wide">Historial</h1>
-          <p className="text-ritual-muted text-xs font-body mt-0.5">
-            {headerCount > 0
-              ? `${headerCount} ritual${headerCount !== 1 ? 'es' : ''} completado${headerCount !== 1 ? 's' : ''}${categoria !== 'todos' ? ` · ${CATEGORIAS.find(c => c.id === categoria)?.label}` : ''}`
-              : 'Aún no completaron rituales'}
-          </p>
-        </div>
-        <button
-          onClick={() => router.push('/ritual')}
-          className="text-ritual-muted text-xs font-body hover:text-ritual-text transition-colors py-2 px-3"
-        >
-          ← Ritual de hoy
-        </button>
+      <header className="px-5 pt-8 pb-4">
+        <h1 className="font-display text-xl text-ritual-cream tracking-wide">Historial</h1>
+        <p className="text-ritual-muted text-xs font-body mt-0.5">
+          {headerCount > 0
+            ? `${headerCount} ritual${headerCount !== 1 ? 'es' : ''} completado${headerCount !== 1 ? 's' : ''}${categoria !== 'todos' ? ` · ${CATEGORIAS.find(c => c.id === categoria)?.label}` : ''}`
+            : 'Aún no completaron rituales'}
+        </p>
       </header>
 
       {/* Filtro de categorías */}
@@ -156,7 +149,7 @@ export default function HistorialPage() {
       </div>
 
       {/* Lista */}
-      <main className="flex-1 px-5 pb-10 max-w-md mx-auto w-full">
+      <main className="flex-1 px-5 pb-28 max-w-md mx-auto w-full">
         {error && (
           <div className="mb-4 bg-red-500/10 border border-red-500/20 rounded-2xl p-4 text-center">
             <p className="text-red-300 font-body text-sm">{error}</p>
@@ -271,6 +264,8 @@ export default function HistorialPage() {
           </div>
         )}
       </main>
+
+      <BottomNav />
     </div>
   )
 }

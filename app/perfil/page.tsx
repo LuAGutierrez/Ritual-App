@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation'
 import { getPerfilAction, updatePerfilAction } from '@/app/actions/perfil'
 import type { PerfilData } from '@/app/actions/perfil'
 import NotificationPrefsSection from '@/components/NotificationPrefsSection'
+import BottomNav from '@/components/BottomNav'
+import { createClient } from '@/lib/supabase/client'
 
 const AVATARS = [
   '🌙', '✨', '🌿', '🦋', '🌸', '🔥', '💫', '🌊',
@@ -54,6 +56,12 @@ export default function PerfilPage() {
     setSaving(false)
   }
 
+  async function handleLogout() {
+    const supabase = createClient()
+    await supabase.auth.signOut()
+    router.push('/auth')
+  }
+
   if (loading) {
     return (
       <div className="min-h-dvh bg-ritual-bg flex items-center justify-center">
@@ -68,17 +76,11 @@ export default function PerfilPage() {
   return (
     <div className="min-h-dvh bg-ritual-bg flex flex-col">
       {/* Header */}
-      <header className="px-5 pt-8 pb-4 flex items-center justify-between">
+      <header className="px-5 pt-8 pb-4">
         <h1 className="font-display text-xl text-ritual-cream tracking-wide">Perfil</h1>
-        <button
-          onClick={() => router.push('/ritual')}
-          className="text-ritual-muted text-xs font-body hover:text-ritual-text transition-colors py-2 px-3"
-        >
-          ← Volver
-        </button>
       </header>
 
-      <main className="flex-1 px-5 pb-10 max-w-md mx-auto w-full space-y-6">
+      <main className="flex-1 px-5 pb-28 max-w-md mx-auto w-full space-y-6">
 
         {/* Avatar actual */}
         <div className="text-center pt-2">
@@ -210,7 +212,17 @@ export default function PerfilPage() {
         >
           Ver historial de rituales →
         </button>
+
+        {/* Cerrar sesión */}
+        <button
+          onClick={handleLogout}
+          className="w-full text-ritual-muted/70 font-body text-xs py-2 hover:text-ritual-text transition-colors"
+        >
+          Cerrar sesión
+        </button>
       </main>
+
+      <BottomNav />
     </div>
   )
 }
