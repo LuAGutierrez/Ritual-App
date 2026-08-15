@@ -85,10 +85,11 @@ export default function RitualCard({
           onChange={e => onResponseChange(e.target.value)}
           placeholder="Escribí tu respuesta..."
           rows={4}
+          maxLength={500}
           className="w-full bg-ritual-bg-soft border border-white/10 rounded-2xl px-5 py-4 text-ritual-text placeholder-ritual-muted/40 font-body text-sm resize-none focus:outline-none focus:border-ritual-gold/40 transition-colors leading-relaxed"
         />
         <p className="text-ritual-muted/50 text-xs font-body mt-2 text-right">
-          {response.length > 0 && `${response.length} caracteres`}
+          {response.length > 0 && `${response.length}/500 caracteres`}
         </p>
       </div>
 

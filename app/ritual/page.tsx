@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
+import dynamic from 'next/dynamic'
 import { createClient } from '@/lib/supabase/client'
 import {
   getRitualPageDataAction,
@@ -12,15 +13,20 @@ import {
 import type { CoupleRitualSession, Streak, UserContext, SessionState } from '@/types'
 import RitualCard from '@/components/RitualCard'
 import WaitingState from '@/components/WaitingState'
-import RevealCards from '@/components/RevealCards'
 import StreakBadge from '@/components/StreakBadge'
 import PartnerRespondedBanner from '@/components/PartnerRespondedBanner'
-import PushPermissionPrompt from '@/components/PushPermissionPrompt'
 import BottomNav from '@/components/BottomNav'
 import PageLoader from '@/components/PageLoader'
 import { getNotificationPrefsAction } from '@/app/actions/notifications'
 import { usePushNotifications } from '@/hooks/usePushNotifications'
 import { isPushPromptDismissed } from '@/lib/push/client'
+
+// Cargados solo cuando hacen falta (reveal / prompt de push) en vez de ir
+// en el bundle inicial de /ritual -- son las dos piezas mas pesadas de la
+// pantalla mas visitada de la app (RevealCards y PushPermissionPrompt
+// usan Framer Motion), pero la mayoria de las visitas ni las renderiza.
+const RevealCards = dynamic(() => import('@/components/RevealCards'))
+const PushPermissionPrompt = dynamic(() => import('@/components/PushPermissionPrompt'))
 
 function partnerRespondedFirst(s: CoupleRitualSession, userId: string): boolean {
   const isUser1 = s.user1_id === userId
@@ -74,7 +80,9 @@ export default function RitualPage() {
     if (isPushPromptDismissed()) return
     const prefs = await getNotificationPrefsAction()
     if (prefs?.push_enabled) return
-    setShowPushPrompt(true)
+    // Un respiro para que la animación del reveal no quede tapada al toque
+    // por un modal a pantalla completa.
+    setTimeout(() => setShowPushPrompt(true), 2500)
   }
 
   // ─── Suscripción Realtime ───────────────────────────────────────
