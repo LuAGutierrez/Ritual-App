@@ -18,6 +18,7 @@ import RevealCards from '@/components/RevealCards'
 import StreakBadge from '@/components/StreakBadge'
 import PartnerRespondedBanner from '@/components/PartnerRespondedBanner'
 import PushPermissionPrompt from '@/components/PushPermissionPrompt'
+import BottomNav from '@/components/BottomNav'
 import { getNotificationPrefsAction } from '@/app/actions/notifications'
 import { usePushNotifications } from '@/hooks/usePushNotifications'
 import { isPushPromptDismissed } from '@/lib/push/client'
@@ -204,10 +205,11 @@ export default function RitualPage() {
   function streakEnRiesgo(): boolean {
     if (!streak || comodinUsado) return false
     if ((streak.wildcards_remaining ?? 0) <= 0) return false
-    const today = new Date().toISOString().split('T')[0]
-    const yesterday = new Date()
-    yesterday.setDate(yesterday.getDate() - 1)
-    const yesterdayStr = yesterday.toISOString().split('T')[0]
+    const today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Argentina/Buenos_Aires' })
+    const [y, m, d] = today.split('-').map(Number)
+    const yesterdayUtc = new Date(Date.UTC(y, m - 1, d))
+    yesterdayUtc.setUTCDate(yesterdayUtc.getUTCDate() - 1)
+    const yesterdayStr = yesterdayUtc.toISOString().split('T')[0]
     const last = streak.last_completed_date
     return !!last && last !== today && last !== yesterdayStr && streak.current_streak > 0
   }
@@ -223,12 +225,6 @@ export default function RitualPage() {
       setError(result.error ?? 'No se pudo usar el comodín.')
     }
     setComodinLoading(false)
-  }
-
-  // ─── Logout ──────────────────────────────────────────────────────
-  async function handleLogout() {
-    await supabase.auth.signOut()
-    router.push('/auth')
   }
 
   // ─── Render ──────────────────────────────────────────────────────
@@ -249,38 +245,13 @@ export default function RitualPage() {
   return (
     <div className="min-h-dvh bg-ritual-bg flex flex-col">
       {/* Header */}
-      <header className="px-5 pt-8 pb-4 flex items-center justify-between">
-        <div>
-          <h1 className="font-display text-xl text-ritual-cream tracking-wide">Rituales</h1>
-          <p className="text-ritual-muted text-xs font-body capitalize mt-0.5">{today}</p>
-        </div>
-
-        <div className="flex items-center gap-1">
-          {ctx?.couple && (
-            <button
-              onClick={() => router.push('/historial')}
-              className="text-ritual-muted text-xs font-body hover:text-ritual-text transition-colors py-2 px-2"
-            >
-              Historial
-            </button>
-          )}
-          <button
-            onClick={() => router.push('/perfil')}
-            className="text-ritual-muted text-xs font-body hover:text-ritual-text transition-colors py-2 px-2"
-          >
-            Perfil
-          </button>
-          <button
-            onClick={handleLogout}
-            className="text-ritual-muted text-xs font-body hover:text-ritual-text transition-colors py-2 px-2"
-          >
-            Salir
-          </button>
-        </div>
+      <header className="px-5 pt-8 pb-4">
+        <h1 className="font-display text-xl text-ritual-cream tracking-wide">Rituales</h1>
+        <p className="text-ritual-muted text-xs font-body capitalize mt-0.5">{today}</p>
       </header>
 
       {/* Contenido principal */}
-      <main className="flex-1 px-5 pb-10 flex flex-col justify-center max-w-md mx-auto w-full">
+      <main className="flex-1 px-5 pb-28 flex flex-col justify-center max-w-md mx-auto w-full">
 
         {/* Sin pareja */}
         {state === 'no_couple' && (
@@ -441,6 +412,8 @@ export default function RitualPage() {
           onDismiss={() => setShowPushPrompt(false)}
         />
       )}
+
+      <BottomNav />
     </div>
   )
 }
