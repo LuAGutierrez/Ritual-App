@@ -21,13 +21,6 @@ function addDaysToDateStr(dateStr: string, delta: number): string {
   return d.toISOString().split('T')[0]
 }
 
-function getDayOfYear(dateStr: string): number {
-  const [year, month, day] = dateStr.split('-').map(Number)
-  const date = Date.UTC(year, month - 1, day)
-  const start = Date.UTC(year, 0, 0)
-  return Math.floor((date - start) / (1000 * 60 * 60 * 24))
-}
-
 export async function getUserContextAction(): Promise<UserContext | null> {
   const supabase = await createClient()
 
@@ -64,53 +57,6 @@ export async function getUserContextAction(): Promise<UserContext | null> {
     couple: couple as Couple | null,
     partnerProfile,
   }
-}
-
-export async function getRitualOfDayAction(coupleId: string): Promise<CoupleRitualSession | null> {
-  const supabase = await createClient()
-  const today = todayInArgentina()
-
-  const { data: existing } = await supabase
-    .from('couple_ritual_sessions')
-    .select('*, ritual:rituals(*)')
-    .eq('couple_id', coupleId)
-    .eq('session_date', today)
-    .single()
-
-  if (existing) return existing as CoupleRitualSession
-
-  const dayOfYear = getDayOfYear(today)
-
-  const { data: rituals } = await supabase
-    .from('rituals')
-    .select('id')
-    .eq('premium', false)
-    .order('created_at', { ascending: true })
-
-  if (!rituals || rituals.length === 0) return null
-
-  const ritualId = rituals[dayOfYear % rituals.length].id
-
-  const { data: members } = await supabase
-    .from('couple_members')
-    .select('user_id')
-    .eq('couple_id', coupleId)
-
-  const [user1, user2] = (members || []).map(m => m.user_id)
-
-  const { data: session } = await supabase
-    .from('couple_ritual_sessions')
-    .insert({
-      couple_id: coupleId,
-      ritual_id: ritualId,
-      session_date: today,
-      user1_id: user1 || null,
-      user2_id: user2 || null,
-    })
-    .select('*, ritual:rituals(*)')
-    .single()
-
-  return session as CoupleRitualSession | null
 }
 
 export async function submitResponseAction(
@@ -204,35 +150,30 @@ export async function usarComodinAction(coupleId: string): Promise<{ ok: boolean
   return { ok: true, streak: updated as Streak }
 }
 
-export async function getStreakAction(coupleId: string): Promise<Streak | null> {
-  const supabase = await createClient()
-  const { data } = await supabase
-    .from('streaks')
-    .select('*')
-    .eq('couple_id', coupleId)
-    .single()
-  return data as Streak | null
-}
-
-// Junta getUserContextAction + ritual del dia + racha en un solo viaje
-// cliente-servidor en vez de dos (contexto, despues el resto) -- las llamadas
-// a Supabase adentro ya estaban en paralelo, pero cada Server Action por
-// separado paga su propio round-trip Vercel<->browser.
+// Version RPC: junta contexto + ritual del dia + racha en una sola
+// consulta a Postgres (ver migracion 017_ritual_page_rpc.sql), mismo
+// enfoque que getHistorialPageDataAction. La eleccion del ritual del dia
+// y la creacion de la sesion si no existe pasan a resolverse adentro de
+// la funcion SQL con ON CONFLICT DO NOTHING -- ademas de mas rapido,
+// evita la condicion de carrera que tenia el codigo anterior si los dos
+// miembros de la pareja abrian /ritual por primera vez el mismo dia casi
+// al mismo tiempo (el insert perdedor podia devolver null en vez de la
+// sesion ya creada por el otro).
 export async function getRitualPageDataAction(): Promise<{
   context: UserContext
   session: CoupleRitualSession | null
   streak: Streak | null
 } | null> {
-  const context = await getUserContextAction()
-  if (!context) return null
-  if (!context.couple) return { context, session: null, streak: null }
+  const supabase = await createClient()
+  const { data, error } = await supabase.rpc('get_ritual_page_data')
 
-  const [session, streak] = await Promise.all([
-    getRitualOfDayAction(context.couple.id),
-    getStreakAction(context.couple.id),
-  ])
+  if (error || !data) return null
 
-  return { context, session, streak }
+  return data as {
+    context: UserContext
+    session: CoupleRitualSession | null
+    streak: Streak | null
+  }
 }
 
 const HISTORIAL_PAGE_SIZE = 15
