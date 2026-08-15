@@ -3,9 +3,8 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { getUserContextAction } from '@/app/actions/ritual'
 import {
-  getActiveEleccionRoundAction,
+  getEleccionPageDataAction,
   startEleccionRoundAction,
   submitEleccionChoiceAction,
 } from '@/app/actions/eleccion'
@@ -45,14 +44,13 @@ export default function EleccionPage() {
 
   useEffect(() => {
     async function init() {
-      const context = await getUserContextAction()
-      if (!context) { router.replace('/auth'); return }
-      if (!context.couple) { router.replace('/onboarding'); return }
-      setCtx(context)
+      const pageData = await getEleccionPageDataAction()
+      if (!pageData) { router.replace('/auth'); return }
+      if (!pageData.context.couple) { router.replace('/onboarding'); return }
 
-      const active = await getActiveEleccionRoundAction(context.couple.id)
-      setRound(active)
-      subscribeToRounds(context.couple.id)
+      setCtx(pageData.context)
+      setRound(pageData.round)
+      subscribeToRounds(pageData.context.couple.id)
       setLoading(false)
     }
     init()

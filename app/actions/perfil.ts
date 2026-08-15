@@ -1,7 +1,6 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
-import { isCouplePremiumAction } from '@/app/actions/subscription'
 import type { Profile, Streak } from '@/types'
 
 export type PerfilData = {
@@ -13,82 +12,17 @@ export type PerfilData = {
   isPremium: boolean
 }
 
+// El codigo TS anterior encadenaba hasta 9-10 round trips secuenciales
+// (ni en paralelo entre si) para armar esta pantalla. Ver
+// get_perfil_page_data() en supabase/migrations/018_perfil_eleccion_precios_rpc.sql --
+// mismo enfoque que /ritual y /historial: todo el JOIN se resuelve
+// adentro de Postgres en una sola llamada.
 export async function getPerfilAction(): Promise<PerfilData | null> {
   const supabase = await createClient()
+  const { data, error } = await supabase.rpc('get_perfil_page_data')
 
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return null
-
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', user.id)
-    .single()
-
-  if (!profile) return null
-
-  const { data: membership } = await supabase
-    .from('couple_members')
-    .select('couple_id')
-    .eq('user_id', user.id)
-    .single()
-
-  if (!membership) {
-    return { profile: profile as Profile, streak: null, ritualesCompletados: 0, categoriaFavorita: null, partnerName: null, isPremium: false }
-  }
-
-  const coupleId = membership.couple_id
-  const isPremium = await isCouplePremiumAction(coupleId)
-
-  const { data: streak } = await supabase
-    .from('streaks')
-    .select('*')
-    .eq('couple_id', coupleId)
-    .single()
-
-  const { data: sessions } = await supabase
-    .from('couple_ritual_sessions')
-    .select('*, ritual:rituals(category)')
-    .eq('couple_id', coupleId)
-    .not('revealed_at', 'is', null)
-
-  const ritualesCompletados = sessions?.length ?? 0
-
-  // Categoría favorita
-  const counts: Record<string, number> = {}
-  for (const s of sessions ?? []) {
-    const cat = (s.ritual as { category?: string } | null)?.category
-    if (cat) counts[cat] = (counts[cat] ?? 0) + 1
-  }
-  const categoriaFavorita = Object.keys(counts).length > 0
-    ? Object.entries(counts).sort((a, b) => b[1] - a[1])[0][0]
-    : null
-
-  // Partner
-  const { data: members } = await supabase
-    .from('couple_members')
-    .select('user_id')
-    .eq('couple_id', coupleId)
-    .neq('user_id', user.id)
-
-  let partnerName: string | null = null
-  if (members && members.length > 0) {
-    const { data: partner } = await supabase
-      .from('profiles')
-      .select('display_name')
-      .eq('id', members[0].user_id)
-      .single()
-    partnerName = partner?.display_name ?? null
-  }
-
-  return {
-    profile: profile as Profile,
-    streak: streak as Streak | null,
-    ritualesCompletados,
-    categoriaFavorita,
-    partnerName,
-    isPremium,
-  }
+  if (error || !data) return null
+  return data as PerfilData
 }
 
 export async function updatePerfilAction(
