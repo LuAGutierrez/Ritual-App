@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect } from 'react'
+import PageLoader from '@/components/PageLoader'
 
 export function AuthHashRedirect() {
   useEffect(() => {
@@ -9,9 +10,5 @@ export function AuthHashRedirect() {
     window.location.replace(hasAuthHash ? `/auth${hash}` : '/auth')
   }, [])
 
-  return (
-    <div className="min-h-dvh bg-ritual-bg flex items-center justify-center">
-      <div className="w-6 h-6 border-2 border-ritual-gold/40 border-t-ritual-gold rounded-full animate-spin" />
-    </div>
-  )
+  return <PageLoader />
 }

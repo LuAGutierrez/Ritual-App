@@ -6,6 +6,7 @@ import { getUserContextAction } from '@/app/actions/ritual'
 import { isCouplePremiumAction } from '@/app/actions/subscription'
 import { FREE_FEATURES, PREMIUM_FEATURES, PREMIUM_PRICE } from '@/lib/plans'
 import { createClient } from '@/lib/supabase/client'
+import PageLoader from '@/components/PageLoader'
 
 export default function PreciosPage() {
   const router = useRouter()
@@ -44,11 +45,7 @@ export default function PreciosPage() {
   }
 
   if (loading) {
-    return (
-      <div className="min-h-dvh bg-ritual-bg flex items-center justify-center">
-        <div className="w-6 h-6 border-2 border-ritual-gold/40 border-t-ritual-gold rounded-full animate-spin" />
-      </div>
-    )
+    return <PageLoader />
   }
 
   return (

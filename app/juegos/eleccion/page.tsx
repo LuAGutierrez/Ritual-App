@@ -10,6 +10,7 @@ import {
   submitEleccionChoiceAction,
 } from '@/app/actions/eleccion'
 import type { EleccionRound, UserContext } from '@/types'
+import PageLoader from '@/components/PageLoader'
 
 export default function EleccionPage() {
   const router = useRouter()
@@ -83,11 +84,7 @@ export default function EleccionPage() {
   }
 
   if (loading) {
-    return (
-      <div className="min-h-dvh bg-ritual-bg flex items-center justify-center">
-        <div className="w-6 h-6 border-2 border-ritual-gold/40 border-t-ritual-gold rounded-full animate-spin" />
-      </div>
-    )
+    return <PageLoader />
   }
 
   const isUser1 = round?.user1_id === ctx?.userId
