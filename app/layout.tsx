@@ -9,6 +9,11 @@ export const metadata: Metadata = {
     description: 'Un ritual diario para parejas.',
     type: 'website',
   },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: 'Rituales',
+  },
 }
 
 export const viewport: Viewport = {

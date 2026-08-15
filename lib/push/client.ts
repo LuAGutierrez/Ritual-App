@@ -61,6 +61,26 @@ export function friendlyPushError(message: string): string {
   return message
 }
 
+export function isIosDevice(): boolean {
+  if (typeof navigator === 'undefined') return false
+  const ua = navigator.userAgent
+  const isIPhoneOrIpad = /iPad|iPhone|iPod/.test(ua)
+  // iPadOS 13+ se identifica como Mac de escritorio, pero tiene soporte táctil
+  const isIpadOs13Plus = navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1
+  return isIPhoneOrIpad || isIpadOs13Plus
+}
+
+export function isStandaloneDisplay(): boolean {
+  if (typeof window === 'undefined') return false
+  const nav = navigator as Navigator & { standalone?: boolean }
+  return window.matchMedia('(display-mode: standalone)').matches || nav.standalone === true
+}
+
+export function iosInstallHint(): string | null {
+  if (!isIosDevice() || isStandaloneDisplay()) return null
+  return 'En iPhone/iPad, los avisos solo funcionan si agregás Rituales a tu pantalla de inicio: tocá el ícono de Compartir → "Agregar a pantalla de inicio", y abrí la app desde ese ícono.'
+}
+
 export function isPushSupported(): boolean {
   return (
     typeof window !== 'undefined' &&
