@@ -1,12 +1,10 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { JUEGOS } from '@/lib/juegos'
 import BottomNav from '@/components/BottomNav'
 
 export default function JuegosPage() {
-  const router = useRouter()
-
   return (
     <div className="min-h-dvh bg-ritual-bg flex flex-col">
       <header className="px-5 pt-8 pb-4">
@@ -16,9 +14,10 @@ export default function JuegosPage() {
 
       <main className="flex-1 px-5 pb-28 max-w-md mx-auto w-full space-y-3">
         {JUEGOS.map(j => (
-          <button
+          <Link
             key={j.id}
-            onClick={() => router.push(`/juegos/${j.id}`)}
+            href={`/juegos/${j.id}`}
+            prefetch
             className={`w-full text-left bg-ritual-bg-soft border rounded-2xl px-5 py-4 flex items-center gap-4 transition-all duration-200 hover:border-white/20 ${
               j.picante ? 'border-[#D4A5A5]/30' : 'border-white/8'
             }`}
@@ -33,7 +32,7 @@ export default function JuegosPage() {
                 +18
               </span>
             )}
-          </button>
+          </Link>
         ))}
       </main>
 

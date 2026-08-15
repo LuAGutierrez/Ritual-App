@@ -34,33 +34,19 @@ export async function getUserContextAction(): Promise<UserContext | null> {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return null
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', user.id)
-    .single()
-
-  const { data: membership } = await supabase
-    .from('couple_members')
-    .select('couple_id')
-    .eq('user_id', user.id)
-    .single()
+  const [{ data: profile }, { data: membership }] = await Promise.all([
+    supabase.from('profiles').select('*').eq('id', user.id).single(),
+    supabase.from('couple_members').select('couple_id').eq('user_id', user.id).single(),
+  ])
 
   if (!membership) {
     return { userId: user.id, profile: profile as Profile | null, couple: null, partnerProfile: null }
   }
 
-  const { data: couple } = await supabase
-    .from('couples')
-    .select('*')
-    .eq('id', membership.couple_id)
-    .single()
-
-  const { data: members } = await supabase
-    .from('couple_members')
-    .select('user_id')
-    .eq('couple_id', membership.couple_id)
-    .neq('user_id', user.id)
+  const [{ data: couple }, { data: members }] = await Promise.all([
+    supabase.from('couples').select('*').eq('id', membership.couple_id).single(),
+    supabase.from('couple_members').select('user_id').eq('couple_id', membership.couple_id).neq('user_id', user.id),
+  ])
 
   let partnerProfile: Profile | null = null
   if (members && members.length > 0) {
@@ -237,16 +223,7 @@ export async function getHistorialAction(
   limit = HISTORIAL_PAGE_SIZE
 ): Promise<{ sessions: CoupleRitualSession[]; hasMore: boolean; isPremium: boolean; totalCompleted: number; totalCompletedAll: number }> {
   const supabase = await createClient()
-  const isPremium = await isCouplePremiumAction(coupleId)
   const useCategory = categoria && categoria !== 'todos'
-
-  const { count: totalAll } = await supabase
-    .from('couple_ritual_sessions')
-    .select('id', { count: 'exact', head: true })
-    .eq('couple_id', coupleId)
-    .not('revealed_at', 'is', null)
-
-  const totalCompletedAll = totalAll ?? 0
 
   let countQuery = supabase
     .from('couple_ritual_sessions')
@@ -258,8 +235,18 @@ export async function getHistorialAction(
     countQuery = countQuery.eq('ritual.category', categoria)
   }
 
-  const { count } = await countQuery
-  const totalCompleted = count ?? 0
+  const [isPremium, totalAllResult, countResult] = await Promise.all([
+    isCouplePremiumAction(coupleId),
+    supabase
+      .from('couple_ritual_sessions')
+      .select('id', { count: 'exact', head: true })
+      .eq('couple_id', coupleId)
+      .not('revealed_at', 'is', null),
+    countQuery,
+  ])
+
+  const totalCompletedAll = totalAllResult.count ?? 0
+  const totalCompleted = countResult.count ?? 0
 
   if (!isPremium && offset >= FREE_HISTORIAL_LIMIT) {
     return { sessions: [], hasMore: false, isPremium, totalCompleted, totalCompletedAll }
