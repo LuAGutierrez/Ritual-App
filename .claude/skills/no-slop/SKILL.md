@@ -81,7 +81,28 @@ repetido para cada ítem.
 - Si dudás entre la opción obvia y una menos obvia, elegí la menos obvia y mostrá las dos si hace falta
   confirmar — no asumas que la primera idea es la mejor solo porque compila más rápido.
 
-## 7. Antes de commitear
+## 7. Migraciones y funciones SQL: ejecutá la función, no la leas nomás
+
+Ya pasó: `check_invite_code` se marcó `STABLE` en la migración 021 mientras hacía un `INSERT` para
+rate-limiting adentro. Postgres tira "INSERT is not allowed in a non-volatile function" al ejecutarla —
+pero leyendo el SQL nada de eso saltaba a la vista, y `tsc --noEmit` no lo detecta porque no es un error
+de TypeScript. Rompió el link de invitación entero en producción hasta que alguien lo probó de verdad.
+
+- Antes de dar por buena una función `STABLE`/`IMMUTABLE`, releela línea por línea buscando
+  `INSERT`/`UPDATE`/`DELETE` en el cuerpo. Si escribe algo, no puede ser `STABLE` ni `IMMUTABLE` — sacale
+  la marca (default `VOLATILE`).
+- Nunca alcanza con leer la migración y "parece correcta". Después de aplicarla (`npx supabase db push`),
+  llamá la función real vía RPC (o el flujo de la app que la dispara) y mirá que no tire error — no
+  solo que la migración se haya aplicado sin errores de sintaxis.
+- Si la función depende de `auth.uid()` (la mayoría de las `SECURITY DEFINER` de este repo), probarla con
+  `execute_sql` como superusuario no sirve: no hay sesión de usuario. Hay que dispararla desde el flujo
+  real de la app (navegador logueado, o un usuario de test) para que el `auth.uid()` no sea `NULL`.
+- Si el flujo involucra "usuario nuevo que nunca pasó por acá" (unirse a pareja, primer registro, primer
+  invite), probalo con una cuenta de test nueva, no con tu cuenta ya-onboardeada — el camino de "primera
+  vez" (primer `INSERT` en una tabla, primera fila de un estado) es justo el que no se ejercita si siempre
+  reusás la misma cuenta.
+
+## 8. Antes de commitear
 
 - `git status` y `git diff` — confirmá que lo que vas a commitear es lo que de verdad cambiaste, nada de
   un `git add -A` a ciegas.
