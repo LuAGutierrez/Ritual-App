@@ -48,38 +48,22 @@ export async function startEleccionRoundAction(coupleId: string): Promise<Elecci
   return data as EleccionRound | null
 }
 
+// Igual que submit_ritual_response: la escritura pasa por una funcion
+// SECURITY DEFINER (migracion 020) que decide server-side de que lado
+// estas y solo toca esa columna, en vez de confiar en lo que mande el
+// cliente. De paso agrega un guard "ya elegiste" -- antes nada impedia
+// cambiar tu propia eleccion despues de ver la de tu pareja por Realtime.
 export async function submitEleccionChoiceAction(
   roundId: string,
   choice: 0 | 1
 ): Promise<EleccionRound | null> {
   const supabase = await createClient()
 
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return null
+  const { data, error } = await supabase.rpc('submit_eleccion_choice', {
+    p_round_id: roundId,
+    p_choice: choice,
+  })
 
-  const { data: round } = await supabase
-    .from('couple_eleccion_rounds')
-    .select('*')
-    .eq('id', roundId)
-    .single()
-
-  if (!round) return null
-
-  const isUser1 = round.user1_id === user.id
-  const patch = isUser1 ? { user1_choice: choice } : { user2_choice: choice }
-
-  const nextUser1 = isUser1 ? choice : round.user1_choice
-  const nextUser2 = isUser1 ? round.user2_choice : choice
-
-  const { data: updated } = await supabase
-    .from('couple_eleccion_rounds')
-    .update({
-      ...patch,
-      revealed_at: nextUser1 != null && nextUser2 != null ? new Date().toISOString() : null,
-    })
-    .eq('id', roundId)
-    .select('*')
-    .single()
-
-  return updated as EleccionRound | null
+  if (error || !data?.ok) return null
+  return data.round as EleccionRound
 }

@@ -59,6 +59,13 @@ export async function getUserContextAction(): Promise<UserContext | null> {
   }
 }
 
+// La escritura pasa por submit_ritual_response (SECURITY DEFINER, ver
+// migracion 020): decide server-side si sos user1 o user2 de la sesion y
+// solo toca esa columna. authenticated ya no tiene permiso de UPDATE
+// directo sobre couple_ritual_sessions -- antes, una llamada REST directa
+// (sin pasar por esta funcion) podia reescribir la respuesta del otro
+// miembro de la pareja, porque la policy de RLS solo chequeaba
+// pertenencia a la pareja, no a la fila especifica.
 export async function submitResponseAction(
   sessionId: string,
   response: string
@@ -68,52 +75,30 @@ export async function submitResponseAction(
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return null
 
-  const { data: session } = await supabase
-    .from('couple_ritual_sessions')
-    .select('*')
-    .eq('id', sessionId)
-    .single()
+  const { data, error } = await supabase.rpc('submit_ritual_response', {
+    p_session_id: sessionId,
+    p_response: response,
+  })
 
-  if (!session) return null
+  if (error || !data?.ok) return null
 
-  const isUser1 = session.user1_id === user.id
-  const now = new Date().toISOString()
+  const updated = data.session as CoupleRitualSession
 
-  const updatePayload = isUser1
-    ? { user1_response: response, user1_completed_at: now }
-    : { user2_response: response, user2_completed_at: now }
-
-  const { data: updated } = await supabase
-    .from('couple_ritual_sessions')
-    .update(updatePayload)
-    .eq('id', sessionId)
-    .select('*, ritual:rituals(*)')
-    .single()
-
-  if (!updated) return null
-
-  if (updated.user1_completed_at && updated.user2_completed_at && !updated.revealed_at) {
-    const { data: revealed } = await supabase
-      .from('couple_ritual_sessions')
-      .update({ revealed_at: now })
-      .eq('id', sessionId)
-      .select('*, ritual:rituals(*)')
-      .single()
-    return revealed as CoupleRitualSession
+  // Push al partner si solo uno completó (si ya se reveló, no hace falta)
+  if (!updated.revealed_at) {
+    const isUser1 = updated.user1_id === user.id
+    const partnerId = isUser1 ? updated.user2_id : updated.user1_id
+    if (partnerId) {
+      const { data: myProfile } = await supabase
+        .from('profiles')
+        .select('display_name')
+        .eq('id', user.id)
+        .single()
+      await notifyPartnerResponded(partnerId, myProfile?.display_name ?? null)
+    }
   }
 
-  // Push al partner si solo uno completó
-  const partnerId = isUser1 ? session.user2_id : session.user1_id
-  if (partnerId) {
-    const { data: myProfile } = await supabase
-      .from('profiles')
-      .select('display_name')
-      .eq('id', user.id)
-      .single()
-    await notifyPartnerResponded(partnerId, myProfile?.display_name ?? null)
-  }
-
-  return updated as CoupleRitualSession
+  return updated
 }
 
 export async function usarComodinAction(coupleId: string): Promise<{ ok: boolean; streak?: Streak; error?: string }> {
