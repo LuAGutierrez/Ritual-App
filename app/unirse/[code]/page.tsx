@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { unirseAPareja, verificarInvitacionAction } from '@/app/actions/couple'
+import PageLoader from '@/components/PageLoader'
 
 export default function UnirsePareja() {
   const router = useRouter()
@@ -76,11 +77,7 @@ export default function UnirsePareja() {
   }
 
   if (loading) {
-    return (
-      <div className="min-h-dvh bg-ritual-bg flex items-center justify-center">
-        <div className="w-6 h-6 border-2 border-ritual-gold/40 border-t-ritual-gold rounded-full animate-spin" />
-      </div>
-    )
+    return <PageLoader />
   }
 
   return (

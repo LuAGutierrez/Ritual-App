@@ -17,6 +17,7 @@ import StreakBadge from '@/components/StreakBadge'
 import PartnerRespondedBanner from '@/components/PartnerRespondedBanner'
 import PushPermissionPrompt from '@/components/PushPermissionPrompt'
 import BottomNav from '@/components/BottomNav'
+import PageLoader from '@/components/PageLoader'
 import { getNotificationPrefsAction } from '@/app/actions/notifications'
 import { usePushNotifications } from '@/hooks/usePushNotifications'
 import { isPushPromptDismissed } from '@/lib/push/client'
@@ -225,11 +226,7 @@ export default function RitualPage() {
   })
 
   if (state === 'loading') {
-    return (
-      <div className="min-h-dvh bg-ritual-bg flex items-center justify-center">
-        <div className="w-6 h-6 border-2 border-ritual-gold/40 border-t-ritual-gold rounded-full animate-spin" />
-      </div>
-    )
+    return <PageLoader />
   }
 
   return (

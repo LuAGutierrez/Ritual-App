@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { getHistorialPageDataAction, getHistorialAction } from '@/app/actions/ritual'
 import { FREE_HISTORIAL_LIMIT } from '@/lib/plans'
 import BottomNav from '@/components/BottomNav'
+import PageLoader from '@/components/PageLoader'
 import type { CoupleRitualSession, UserContext, RitualCategory } from '@/types'
 
 const CATEGORIAS: { id: string; label: string }[] = [
@@ -120,11 +121,7 @@ export default function HistorialPage() {
   const headerCount = categoria === 'todos' ? totalCompletedAll : totalCompleted
 
   if (loading) {
-    return (
-      <div className="min-h-dvh bg-ritual-bg flex items-center justify-center">
-        <div className="w-6 h-6 border-2 border-ritual-gold/40 border-t-ritual-gold rounded-full animate-spin" />
-      </div>
-    )
+    return <PageLoader />
   }
 
   return (

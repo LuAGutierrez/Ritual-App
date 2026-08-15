@@ -6,6 +6,7 @@ import { getPerfilAction, updatePerfilAction } from '@/app/actions/perfil'
 import type { PerfilData } from '@/app/actions/perfil'
 import NotificationPrefsSection from '@/components/NotificationPrefsSection'
 import BottomNav from '@/components/BottomNav'
+import PageLoader from '@/components/PageLoader'
 import { createClient } from '@/lib/supabase/client'
 
 const AVATARS = [
@@ -63,11 +64,7 @@ export default function PerfilPage() {
   }
 
   if (loading) {
-    return (
-      <div className="min-h-dvh bg-ritual-bg flex items-center justify-center">
-        <div className="w-6 h-6 border-2 border-ritual-gold/40 border-t-ritual-gold rounded-full animate-spin" />
-      </div>
-    )
+    return <PageLoader />
   }
 
   const streak = data?.streak
