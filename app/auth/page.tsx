@@ -183,7 +183,7 @@ function AuthForm() {
     setLoading(true)
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: `${window.location.origin}/auth/callback` },
+      options: { redirectTo: `${window.location.origin}/auth/callback?redirect=${encodeURIComponent(redirect)}` },
     })
     if (error) {
       setError('No se pudo iniciar sesión con Google. Intentá de nuevo.')
