@@ -71,9 +71,13 @@ export default function OnboardingPage() {
 
   async function copyLink() {
     if (!inviteLink) return
-    await navigator.clipboard.writeText(inviteLink)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
+    try {
+      await navigator.clipboard.writeText(inviteLink)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch {
+      setError('No se pudo copiar. Copiá el link manualmente.')
+    }
   }
 
   async function continuar() {
@@ -174,6 +178,10 @@ export default function OnboardingPage() {
                 {inviteLink}
               </p>
             </div>
+
+            {error && (
+              <p className="text-red-400/80 text-sm font-body text-center mb-4">{error}</p>
+            )}
 
             <div className="space-y-3">
               <button
