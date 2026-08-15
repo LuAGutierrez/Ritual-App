@@ -300,24 +300,55 @@ export async function getHistorialAction(
   return { sessions, hasMore, isPremium, totalCompleted, totalCompletedAll }
 }
 
-// Igual que getRitualPageDataAction: junta contexto + primer pagina de
-// historial en un solo round-trip para la carga inicial de /historial.
-// handleCategoria/handleLoadMore siguen llamando a getHistorialAction directo
-// porque ahi ya se conoce el coupleId, no hace falta repetir el contexto.
-export async function getHistorialPageDataAction(categoria = 'todos'): Promise<{
+// Version RPC: junta contexto + primera pagina de historial en una sola
+// consulta a Postgres (ver migracion 016_historial_page_rpc.sql), en vez
+// de encadenar ~7-8 round trips server->Supabase (auth.getUser, profile,
+// membership, couple, partner, isPremium x3, counts, datos). El JOIN pasa
+// a resolverse adentro de la base, que es rapido; lo caro era la cantidad
+// de idas y vueltas de red, no el trabajo de cada query en si.
+//
+// handleCategoria/handleLoadMore en la pagina siguen llamando a
+// getHistorialAction directo porque ahi ya se conoce el coupleId.
+type HistorialPageData = {
   context: UserContext
   sessions: CoupleRitualSession[]
   hasMore: boolean
   isPremium: boolean
   totalCompleted: number
   totalCompletedAll: number
-} | { context: UserContext } | null> {
-  const context = await getUserContextAction()
-  if (!context) return null
-  if (!context.couple) return { context }
+} | { context: UserContext } | null
 
-  const historial = await getHistorialAction(context.couple.id, categoria)
-  return { context, ...historial }
+export async function getHistorialPageDataAction(categoria = 'todos'): Promise<HistorialPageData> {
+  const supabase = await createClient()
+
+  const { data, error } = await supabase.rpc('get_historial_page_data', {
+    p_categoria: categoria,
+    p_offset: 0,
+    p_limit: HISTORIAL_PAGE_SIZE,
+  })
+
+  if (error || !data) return null
+
+  const result = data as {
+    context: UserContext | null
+    sessions?: CoupleRitualSession[]
+    hasMore?: boolean
+    isPremium?: boolean
+    totalCompleted?: number
+    totalCompletedAll?: number
+  }
+
+  if (!result.context) return null
+  if (result.sessions === undefined) return { context: result.context }
+
+  return {
+    context: result.context,
+    sessions: result.sessions,
+    hasMore: result.hasMore ?? false,
+    isPremium: result.isPremium ?? false,
+    totalCompleted: result.totalCompleted ?? 0,
+    totalCompletedAll: result.totalCompletedAll ?? 0,
+  }
 }
 
 export async function updateStreakAction(coupleId: string): Promise<Streak | null> {
