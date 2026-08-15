@@ -2,19 +2,22 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { ELECCION_PROMPTS } from '@/lib/juegos'
-import type { EleccionRound } from '@/types'
+import type { EleccionRound, UserContext } from '@/types'
 
-export async function getActiveEleccionRoundAction(coupleId: string): Promise<EleccionRound | null> {
+// Junta contexto + ronda activa en un solo round-trip (ver
+// get_eleccion_page_data() en la migracion 018), mismo enfoque que
+// /ritual y /historial -- antes eran dos llamadas en fila
+// (getUserContextAction + getActiveEleccionRoundAction).
+export async function getEleccionPageDataAction(): Promise<{
+  context: UserContext
+  round: EleccionRound | null
+} | null> {
   const supabase = await createClient()
-  const { data } = await supabase
-    .from('couple_eleccion_rounds')
-    .select('*')
-    .eq('couple_id', coupleId)
-    .order('created_at', { ascending: false })
-    .limit(1)
-    .maybeSingle()
+  const { data, error } = await supabase.rpc('get_eleccion_page_data')
 
-  return data as EleccionRound | null
+  if (error || !data) return null
+
+  return data as { context: UserContext; round: EleccionRound | null }
 }
 
 export async function startEleccionRoundAction(coupleId: string): Promise<EleccionRound | null> {

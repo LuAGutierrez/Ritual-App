@@ -2,8 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { getUserContextAction } from '@/app/actions/ritual'
-import { isCouplePremiumAction } from '@/app/actions/subscription'
+import { getIsCouplePremiumAction } from '@/app/actions/subscription'
 import { FREE_FEATURES, PREMIUM_FEATURES, PREMIUM_PRICE } from '@/lib/plans'
 import { createClient } from '@/lib/supabase/client'
 import PageLoader from '@/components/PageLoader'
@@ -17,10 +16,7 @@ export default function PreciosPage() {
 
   useEffect(() => {
     async function load() {
-      const ctx = await getUserContextAction()
-      if (ctx?.couple) {
-        setIsPremium(await isCouplePremiumAction(ctx.couple.id))
-      }
+      setIsPremium(await getIsCouplePremiumAction())
       setLoading(false)
     }
     load()

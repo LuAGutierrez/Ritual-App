@@ -40,3 +40,13 @@ export async function isCouplePremiumAction(coupleId: string): Promise<boolean> 
 
   return (subs?.length ?? 0) > 0
 }
+
+// Version RPC para /precios (ver get_is_couple_premium en la migracion
+// 018): reemplaza getUserContextAction + isCouplePremiumAction (dos
+// round trips en fila) por una sola llamada.
+export async function getIsCouplePremiumAction(): Promise<boolean> {
+  const supabase = await createClient()
+  const { data, error } = await supabase.rpc('get_is_couple_premium')
+  if (error) return false
+  return !!data
+}
