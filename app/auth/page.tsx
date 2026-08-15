@@ -367,6 +367,7 @@ function AuthForm() {
                 onChange={e => setName(e.target.value)}
                 placeholder="Tu nombre o apodo"
                 autoFocus
+                autoComplete="given-name"
                 className="w-full bg-ritual-bg-soft border border-white/10 rounded-xl px-4 py-3.5 text-ritual-text placeholder-ritual-muted/50 font-body text-sm focus:outline-none focus:border-ritual-gold/50 transition-colors"
               />
             </div>
@@ -382,6 +383,7 @@ function AuthForm() {
                 value={email}
                 onChange={e => setEmail(e.target.value)}
                 placeholder="tu@email.com"
+                autoComplete="email"
                 className="w-full bg-ritual-bg-soft border border-white/10 rounded-xl px-4 py-3.5 text-ritual-text placeholder-ritual-muted/50 font-body text-sm focus:outline-none focus:border-ritual-gold/50 transition-colors"
               />
             </div>
@@ -397,6 +399,7 @@ function AuthForm() {
                 value={password}
                 onChange={e => setPassword(e.target.value)}
                 placeholder="Mínimo 6 caracteres"
+                autoComplete={tab === 'registro' ? 'new-password' : 'current-password'}
                 className="w-full bg-ritual-bg-soft border border-white/10 rounded-xl px-4 py-3.5 text-ritual-text placeholder-ritual-muted/50 font-body text-sm focus:outline-none focus:border-ritual-gold/50 transition-colors"
               />
               {tab === 'login' && (
@@ -422,6 +425,7 @@ function AuthForm() {
                 onChange={e => setNewPassword(e.target.value)}
                 placeholder="Mínimo 6 caracteres"
                 autoFocus
+                autoComplete="new-password"
                 className="w-full bg-ritual-bg-soft border border-white/10 rounded-xl px-4 py-3.5 text-ritual-text placeholder-ritual-muted/50 font-body text-sm focus:outline-none focus:border-ritual-gold/50 transition-colors"
               />
             </div>
