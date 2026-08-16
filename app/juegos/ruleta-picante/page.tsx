@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { getRuletaPicanteItemsAction } from '@/app/actions/ruleta-picante'
+import { logContenidoRechazadoAction } from '@/app/actions/contenido-rechazado'
 import type { RuletaPicanteItem } from '@/types'
 
 function pickIndex(total: number, vistos: Set<number>): number {
@@ -14,7 +15,7 @@ function pickIndex(total: number, vistos: Set<number>): number {
 export default function RuletaPicantePage() {
   const router = useRouter()
   const [confirmado, setConfirmado] = useState(false)
-  const [prompt, setPrompt] = useState('')
+  const [promptItem, setPromptItem] = useState<RuletaPicanteItem | null>(null)
   const [girando, setGirando] = useState(false)
   const [vistos, setVistos] = useState<Set<number>>(new Set())
   const [items, setItems] = useState<RuletaPicanteItem[]>([])
@@ -30,11 +31,18 @@ export default function RuletaPicantePage() {
       setVistos(prev => {
         const idx = pickIndex(items.length, prev)
         const next = prev.size >= items.length - 1 ? new Set([idx]) : new Set(prev).add(idx)
-        setPrompt(items[idx].texto)
+        setPromptItem(items[idx])
         return next
       })
       setGirando(false)
     }, 350)
+  }
+
+  // Acción segura "no quiero hacer esto" -- distinta de "Girar de
+  // nuevo": deja registro de qué se rechazó y nunca rompe la partida.
+  function pasar() {
+    if (promptItem) logContenidoRechazadoAction('ruleta_picante', promptItem.id)
+    girar()
   }
 
   if (!confirmado) {
@@ -80,7 +88,7 @@ export default function RuletaPicantePage() {
       </header>
 
       <main className="flex-1 px-5 pb-28 flex flex-col justify-center max-w-md mx-auto w-full">
-        {!prompt ? (
+        {!promptItem ? (
           <div className="text-center animate-fade-up">
             <button
               onClick={girar}
@@ -98,7 +106,7 @@ export default function RuletaPicantePage() {
                 girando ? 'opacity-30' : 'opacity-100'
               }`}
             >
-              <p className="font-display text-2xl text-ritual-cream leading-snug">{prompt}</p>
+              <p className="font-display text-2xl text-ritual-cream leading-snug">{promptItem.texto}</p>
             </div>
             <button
               onClick={girar}
@@ -106,6 +114,13 @@ export default function RuletaPicantePage() {
               className="w-full bg-[#D4A5A5] text-ritual-bg font-body font-medium py-4 rounded-2xl hover:opacity-90 transition-all disabled:opacity-50"
             >
               {girando ? 'Girando...' : 'Girar de nuevo'}
+            </button>
+            <button
+              onClick={pasar}
+              disabled={girando}
+              className="w-full text-ritual-muted/70 font-body text-xs py-2 hover:text-ritual-text transition-colors disabled:opacity-40"
+            >
+              No quiero hacer esta, paso
             </button>
           </div>
         )}
