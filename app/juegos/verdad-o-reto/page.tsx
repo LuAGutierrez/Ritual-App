@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { getVerdadORetoItemsAction } from '@/app/actions/verdad-o-reto'
 import { getIsCouplePremiumAction } from '@/app/actions/subscription'
+import { logContenidoRechazadoAction } from '@/app/actions/contenido-rechazado'
 import type { VerdadORetoItem } from '@/types'
 import PicanteUpsell from '@/components/PicanteUpsell'
 import PageLoader from '@/components/PageLoader'
@@ -77,6 +78,14 @@ export default function VerdadORetoPage() {
     setModo(null)
     setMostrarUpsell(false)
     setVistos(new Set())
+  }
+
+  // Acción segura "no quiero hacer esto" -- distinta de "Siguiente":
+  // deja registro de qué se rechazó (para personalización futura) y
+  // nunca rompe la partida, solo trae la próxima.
+  function pasar() {
+    if (promptItem) logContenidoRechazadoAction('verdad_o_reto', promptItem.id)
+    siguiente()
   }
 
   // Cada 3 rondas en modo normal, si la pregunta/reto actual tiene un par
@@ -207,6 +216,13 @@ export default function VerdadORetoPage() {
                 Siguiente
               </button>
             </div>
+
+            <button
+              onClick={pasar}
+              className="w-full text-ritual-muted/70 font-body text-xs py-2 hover:text-ritual-text transition-colors"
+            >
+              No quiero hacer esta, paso
+            </button>
           </div>
         )}
       </main>
