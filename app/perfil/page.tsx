@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation'
 import { getPerfilAction, updatePerfilAction } from '@/app/actions/perfil'
 import type { PerfilData } from '@/app/actions/perfil'
 import { getCoupleMomentosAction } from '@/app/actions/momentos'
+import { getJuegosStatsSummaryAction } from '@/app/actions/juegos-stats'
+import { nivelActual } from '@/lib/niveles'
 import type { Momento } from '@/types'
 import NotificationPrefsSection from '@/components/NotificationPrefsSection'
 import BottomNav from '@/components/BottomNav'
@@ -48,6 +50,7 @@ export default function PerfilPage() {
   const router = useRouter()
   const [data, setData] = useState<PerfilData | null>(null)
   const [momentos, setMomentos] = useState<Momento[]>([])
+  const [totalJuegos, setTotalJuegos] = useState(0)
   const [loading, setLoading] = useState(true)
   const [nombre, setNombre] = useState('')
   const [avatar, setAvatar] = useState('')
@@ -64,6 +67,14 @@ export default function PerfilPage() {
       setLoading(false)
     })
     getCoupleMomentosAction().then(setMomentos)
+    getJuegosStatsSummaryAction().then(stats => {
+      if (!stats) return
+      const total =
+        (stats.eleccion?.intentos ?? 0) +
+        (stats.estoAquello?.intentos ?? 0) +
+        (stats.conoces?.intentos ?? 0)
+      setTotalJuegos(total)
+    })
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -93,6 +104,8 @@ export default function PerfilPage() {
 
   const streak = data?.streak
   const rafacha = streak?.longest_streak ?? 0
+  const totalInteracciones = (data?.ritualesCompletados ?? 0) + totalJuegos
+  const { nivel, siguiente, faltan } = nivelActual(totalInteracciones)
 
   return (
     <div className="min-h-dvh bg-ritual-bg flex flex-col">
@@ -168,6 +181,18 @@ export default function PerfilPage() {
         </form>
 
         <NotificationPrefsSection />
+
+        {/* Nivel de la pareja -- progresión emocional según cuánto jugaron juntos */}
+        <div className="text-center py-2">
+          <p className="text-5xl mb-2">{nivel.emoji}</p>
+          <p className="font-display text-2xl text-ritual-cream">{nivel.nombre}</p>
+          <p className="text-ritual-muted text-sm font-body mt-1 max-w-xs mx-auto">{nivel.descripcion}</p>
+          {siguiente && faltan !== null && (
+            <p className="text-ritual-gold text-xs font-body mt-3">
+              A {faltan} de llegar a {siguiente.emoji} {siguiente.nombre}
+            </p>
+          )}
+        </div>
 
         {/* Estadísticas */}
         <div className="pt-2">
