@@ -37,6 +37,15 @@ function IconBifurcacion() {
   )
 }
 
+function IconOjo() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M2 12c2.5-4.5 6.5-7 10-7s7.5 2.5 10 7c-2.5 4.5-6.5 7-10 7s-7.5-2.5-10-7z" />
+      <circle cx="12" cy="12" r="3" />
+    </svg>
+  )
+}
+
 function IconLlama() {
   return (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
@@ -86,6 +95,25 @@ export default function JuegosPage() {
           <p className="font-display text-3xl text-ritual-cream leading-snug mt-4">Elección</p>
           <p className="text-ritual-muted text-sm font-body mt-1.5 max-w-[85%]">
             Elijan en secreto, en tiempo real. Si coinciden, se llevan un premio.
+          </p>
+        </Link>
+
+        {/* Nuevo: ¿Cuánto me conoces? — primera pieza de la categoría "Nosotros" */}
+        <Link
+          href="/juegos/conoces"
+          prefetch
+          onClick={e => handleClick(e, '/juegos/conoces')}
+          className="group block bg-ritual-bg-soft border border-white/8 rounded-3xl px-6 py-8 transition-all duration-200 hover:border-ritual-gold/30"
+        >
+          <div className="flex items-start justify-between">
+            <span className="text-ritual-muted group-hover:text-ritual-gold transition-colors"><IconOjo /></span>
+            <span className="text-[10px] font-body uppercase tracking-wider text-ritual-muted border border-white/10 rounded-full px-2 py-0.5">
+              Nosotros
+            </span>
+          </div>
+          <p className="font-display text-3xl text-ritual-cream leading-snug mt-4">¿Cuánto me conoces?</p>
+          <p className="text-ritual-muted text-sm font-body mt-1.5 max-w-[85%]">
+            Uno responde sobre sí mismo, el otro adivina en secreto. Se turnan solos, ronda a ronda.
           </p>
         </Link>
 
