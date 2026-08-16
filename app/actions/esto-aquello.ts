@@ -1,18 +1,19 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
-import type { EstoAquelloRound, UserContext } from '@/types'
+import type { EstoAquelloRound, MatchStats, UserContext } from '@/types'
 
 export async function getEstoAquelloPageDataAction(): Promise<{
   context: UserContext
   round: EstoAquelloRound | null
+  stats: MatchStats | null
 } | null> {
   const supabase = await createClient()
   const { data, error } = await supabase.rpc('get_esto_aquello_page_data')
 
   if (error || !data) return null
 
-  return data as { context: UserContext; round: EstoAquelloRound | null }
+  return data as { context: UserContext; round: EstoAquelloRound | null; stats: MatchStats | null }
 }
 
 export async function startEstoAquelloRoundAction(

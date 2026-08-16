@@ -2,9 +2,57 @@
 
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { useTransition } from 'react'
+import { useEffect, useState, useTransition } from 'react'
 import BottomNav from '@/components/BottomNav'
 import PageLoader from '@/components/PageLoader'
+import { getJuegosStatsSummaryAction, type JuegosStatsSummary } from '@/app/actions/juegos-stats'
+
+// La lógica de QUÉ mensaje mostrar vive acá, no en la base -- la RPC
+// (get_juegos_stats_summary, migración 029) solo trae los números
+// crudos de los 3 juegos de "coincidir/adivinar". Solo muestra algo
+// cuando hay una señal real: una racha activa, o un juego donde
+// todavía coinciden poco con suficientes intentos como para que no
+// sea ruido. Si no hay señal, no se fuerza un mensaje genérico.
+function mensajeAdaptativo(stats: JuegosStatsSummary | null): string | null {
+  if (!stats) return null
+
+  const bloques = [
+    stats.eleccion && {
+      nombre: 'Elección',
+      racha: stats.eleccion.racha_actual,
+      intentos: stats.eleccion.intentos,
+      tasa: stats.eleccion.intentos > 0 ? stats.eleccion.coincidencias / stats.eleccion.intentos : 0,
+    },
+    stats.estoAquello && {
+      nombre: 'Esto o Aquello',
+      racha: stats.estoAquello.racha_actual,
+      intentos: stats.estoAquello.intentos,
+      tasa: stats.estoAquello.intentos > 0 ? stats.estoAquello.coincidencias / stats.estoAquello.intentos : 0,
+    },
+    stats.conoces && {
+      nombre: '¿Cuánto me conoces?',
+      racha: stats.conoces.racha_actual,
+      intentos: stats.conoces.intentos,
+      tasa: stats.conoces.intentos > 0 ? stats.conoces.aciertos / stats.conoces.intentos : 0,
+    },
+  ].filter((b): b is { nombre: string; racha: number; intentos: number; tasa: number } => !!b)
+
+  if (bloques.length === 0) return null
+
+  const conRacha = [...bloques].sort((a, b) => b.racha - a.racha)[0]
+  if (conRacha.racha >= 2) {
+    return `🔥 Vienen con una racha de ${conRacha.racha} en ${conRacha.nombre}. ¿La estiran hoy?`
+  }
+
+  const porDescubrir = bloques
+    .filter(b => b.intentos >= 3 && b.tasa < 0.4)
+    .sort((a, b) => a.tasa - b.tasa)[0]
+  if (porDescubrir) {
+    return `Todavía se están descubriendo en ${porDescubrir.nombre} — hoy puede ser el día.`
+  }
+
+  return null
+}
 
 function IconEleccion() {
   return (
@@ -57,6 +105,11 @@ function IconLlama() {
 export default function JuegosPage() {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
+  const [stats, setStats] = useState<JuegosStatsSummary | null>(null)
+
+  useEffect(() => {
+    getJuegosStatsSummaryAction().then(setStats)
+  }, [])
 
   function handleClick(e: React.MouseEvent, href: string) {
     e.preventDefault()
@@ -64,6 +117,8 @@ export default function JuegosPage() {
       router.push(href)
     })
   }
+
+  const mensaje = mensajeAdaptativo(stats)
 
   return (
     <div className="min-h-dvh bg-ritual-bg flex flex-col">
@@ -76,6 +131,9 @@ export default function JuegosPage() {
       <header className="px-5 pt-8 pb-4">
         <h1 className="font-display text-xl text-ritual-cream tracking-wide">Juegos</h1>
         <p className="text-ritual-muted text-xs font-body mt-0.5">Para jugar juntos, más allá del ritual de hoy</p>
+        {mensaje && (
+          <p className="text-ritual-gold text-xs font-body mt-2">{mensaje}</p>
+        )}
       </header>
 
       <main className="flex-1 px-5 pb-28 max-w-md mx-auto w-full space-y-3">
