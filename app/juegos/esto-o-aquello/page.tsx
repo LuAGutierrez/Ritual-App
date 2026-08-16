@@ -1,47 +1,127 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { ESTO_O_AQUELLO } from '@/lib/juegos'
+import { createClient } from '@/lib/supabase/client'
+import {
+  getEstoAquelloPageDataAction,
+  startEstoAquelloRoundAction,
+  submitEstoAquelloChoiceAction,
+} from '@/app/actions/esto-aquello'
+import { getIsCouplePremiumAction } from '@/app/actions/subscription'
+import type { EstoAquelloRound, UserContext } from '@/types'
+import PageLoader from '@/components/PageLoader'
+import PicanteUpsell from '@/components/PicanteUpsell'
 
-function shuffle<T>(arr: T[]): T[] {
-  const copy = [...arr]
-  for (let i = copy.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1))
-    ;[copy[i], copy[j]] = [copy[j], copy[i]]
-  }
-  return copy
-}
+type Intensidad = 'normal' | 'picante'
 
 export default function EstoOAquelloPage() {
   const router = useRouter()
-  const [orden, setOrden] = useState(ESTO_O_AQUELLO)
-  const [ronda, setRonda] = useState(0)
-  const [elegido, setElegido] = useState<'a' | 'b' | null>(null)
+  const supabase = createClient()
+  const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null)
+  const vistosRef = useRef<string[]>([])
 
-  useEffect(() => {
-    setOrden(shuffle(ESTO_O_AQUELLO))
+  const [ctx, setCtx] = useState<UserContext | null>(null)
+  const [round, setRound] = useState<EstoAquelloRound | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [starting, setStarting] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [intensidad, setIntensidad] = useState<Intensidad>('normal')
+  const [isPremium, setIsPremium] = useState(false)
+  const [picanteUsado, setPicanteUsado] = useState(false)
+  const [mostrarUpsell, setMostrarUpsell] = useState(false)
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const subscribeToRounds = useCallback((coupleId: string) => {
+    if (channelRef.current) supabase.removeChannel(channelRef.current)
+
+    const channel = supabase
+      .channel(`esto-aquello:${coupleId}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'couple_esto_aquello_rounds', filter: `couple_id=eq.${coupleId}` },
+        (payload) => {
+          if (payload.eventType === 'DELETE') return
+          setRound(payload.new as EstoAquelloRound)
+        }
+      )
+      .subscribe()
+
+    channelRef.current = channel
   }, [])
 
-  const par = orden[ronda % orden.length]
-  const terminado = ronda >= orden.length
+  useEffect(() => {
+    async function init() {
+      const pageData = await getEstoAquelloPageDataAction()
+      if (!pageData) { router.replace('/auth'); return }
+      if (!pageData.context.couple) { router.replace('/onboarding'); return }
 
-  function elegir(lado: 'a' | 'b') {
-    setElegido(lado)
-    setTimeout(() => {
-      setElegido(null)
-      setRonda(r => r + 1)
-    }, 500)
+      setCtx(pageData.context)
+      setRound(pageData.round)
+      subscribeToRounds(pageData.context.couple.id)
+      setLoading(false)
+    }
+    init()
+    getIsCouplePremiumAction().then(setIsPremium)
+
+    return () => {
+      if (channelRef.current) supabase.removeChannel(channelRef.current)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  async function handleEmpezar() {
+    if (!ctx?.couple) return
+    if (intensidad === 'picante' && !isPremium && picanteUsado) {
+      setMostrarUpsell(true)
+      return
+    }
+    setStarting(true)
+    setError(null)
+    setMostrarUpsell(false)
+    const nuevo = await startEstoAquelloRoundAction(ctx.couple.id, intensidad, vistosRef.current)
+    if (!nuevo) {
+      setError('No se pudo empezar la ronda. Intentá de nuevo.')
+    } else {
+      setRound(nuevo)
+      vistosRef.current = [...vistosRef.current, `${nuevo.option_a}|${nuevo.option_b}`]
+      if (intensidad === 'picante') setPicanteUsado(true)
+    }
+    setStarting(false)
   }
+
+  function cambiarIntensidad(ints: Intensidad) {
+    setIntensidad(ints)
+    setMostrarUpsell(false)
+  }
+
+  async function handleElegir(choice: 0 | 1) {
+    if (!round) return
+    setSubmitting(true)
+    setError(null)
+    const updated = await submitEstoAquelloChoiceAction(round.id, choice)
+    if (!updated) setError('No se pudo guardar tu elección.')
+    else setRound(updated)
+    setSubmitting(false)
+  }
+
+  if (loading) {
+    return <PageLoader />
+  }
+
+  const isUser1 = round?.user1_id === ctx?.userId
+  const miEleccion = round ? (isUser1 ? round.user1_choice : round.user2_choice) : null
+  const eleccionPartner = round ? (isUser1 ? round.user2_choice : round.user1_choice) : null
+  const revelado = !!round?.revealed_at
+  const coincidieron = revelado && round?.user1_choice === round?.user2_choice
 
   return (
     <div className="min-h-dvh bg-ritual-bg flex flex-col">
       <header className="px-5 pt-8 pb-4 flex items-center justify-between">
         <div>
           <h1 className="font-display text-xl text-ritual-cream tracking-wide">⚡ Esto o Aquello</h1>
-          <p className="text-ritual-muted text-xs font-body mt-0.5">
-            {terminado ? 'Ronda completa' : `${Math.min(ronda + 1, orden.length)} / ${orden.length}`}
-          </p>
+          <p className="text-ritual-muted text-xs font-body mt-0.5">Elijan en secreto y comparen</p>
         </div>
         <button
           onClick={() => router.push('/juegos')}
@@ -52,42 +132,103 @@ export default function EstoOAquelloPage() {
       </header>
 
       <main className="flex-1 px-5 pb-28 flex flex-col justify-center max-w-md mx-auto w-full">
-        {terminado ? (
-          <div className="text-center space-y-6 animate-fade-up">
-            <p className="text-3xl">✦</p>
-            <p className="font-display text-2xl text-ritual-cream">¡Terminaron la ronda!</p>
-            <p className="text-ritual-muted font-body text-sm">Cuéntense por qué eligieron lo que eligieron.</p>
+        {error && (
+          <div className="bg-red-500/10 border border-red-500/20 rounded-2xl p-4 mb-6">
+            <p className="text-red-400/80 text-sm font-body text-center">{error}</p>
+          </div>
+        )}
+
+        {!round && (
+          <div className="space-y-6 animate-fade-up">
+            <div className="flex bg-ritual-bg-soft rounded-2xl p-1">
+              <button
+                onClick={() => cambiarIntensidad('normal')}
+                className={`flex-1 py-2.5 rounded-xl text-sm font-body font-medium transition-all duration-300 ${
+                  intensidad === 'normal' ? 'bg-ritual-gold text-ritual-bg' : 'text-ritual-muted hover:text-ritual-text'
+                }`}
+              >
+                Normal
+              </button>
+              <button
+                onClick={() => cambiarIntensidad('picante')}
+                className={`flex-1 py-2.5 rounded-xl text-sm font-body font-medium transition-all duration-300 ${
+                  intensidad === 'picante' ? 'bg-[#D4A5A5] text-ritual-bg' : 'text-ritual-muted hover:text-ritual-text'
+                }`}
+              >
+                🔥 Picante
+              </button>
+            </div>
+
+            {mostrarUpsell ? (
+              <PicanteUpsell />
+            ) : (
+              <div className="text-center space-y-6">
+                <p className="text-3xl">✦</p>
+                <p className="font-display text-2xl text-ritual-cream">¿Se conocen tan bien?</p>
+                <p className="text-ritual-muted font-body text-sm leading-relaxed">
+                  Cada uno elige en secreto. Después ven si coincidieron.
+                </p>
+                <button
+                  onClick={handleEmpezar}
+                  disabled={starting}
+                  className="w-full bg-ritual-gold text-ritual-bg font-body font-medium py-4 rounded-2xl disabled:opacity-50"
+                >
+                  {starting ? 'Empezando...' : 'Empezar ronda'}
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {round && !revelado && miEleccion == null && (
+          <div className="space-y-4 animate-fade-up">
             <button
-              onClick={() => { setOrden(shuffle(ESTO_O_AQUELLO)); setRonda(0) }}
+              onClick={() => handleElegir(0)}
+              disabled={submitting}
+              className="w-full bg-ritual-bg-soft border border-white/10 rounded-3xl py-10 text-center hover:border-ritual-gold/40 transition-all disabled:opacity-50"
+            >
+              <span className="font-display text-2xl text-ritual-cream">{round.option_a}</span>
+            </button>
+            <p className="text-center text-ritual-muted text-xs font-body">o</p>
+            <button
+              onClick={() => handleElegir(1)}
+              disabled={submitting}
+              className="w-full bg-ritual-bg-soft border border-white/10 rounded-3xl py-10 text-center hover:border-ritual-gold/40 transition-all disabled:opacity-50"
+            >
+              <span className="font-display text-2xl text-ritual-cream">{round.option_b}</span>
+            </button>
+          </div>
+        )}
+
+        {round && !revelado && miEleccion != null && (
+          <div className="text-center space-y-5 animate-fade-up">
+            <div className="w-10 h-10 border-2 border-ritual-gold/30 border-t-ritual-gold rounded-full animate-spin mx-auto" />
+            <p className="font-display text-xl text-ritual-cream">Ya elegiste</p>
+            <p className="text-ritual-muted font-body text-sm">
+              Esperando a {ctx?.partnerProfile?.display_name ?? 'tu pareja'}...
+            </p>
+          </div>
+        )}
+
+        {round && revelado && (
+          <div className="text-center space-y-6 animate-fade-up">
+            <p className="text-4xl">{coincidieron ? '✦' : '💭'}</p>
+            <p className="font-display text-2xl text-ritual-cream">
+              {coincidieron ? '¡Eligieron lo mismo!' : 'Eligieron distinto'}
+            </p>
+            <div className="flex items-center justify-center gap-3 text-sm font-body text-ritual-muted">
+              <span className="bg-ritual-bg-soft border border-white/10 rounded-xl px-3 py-2">
+                {ctx?.profile?.display_name ?? 'Vos'}: {miEleccion === 0 ? round.option_a : round.option_b}
+              </span>
+              <span className="bg-ritual-bg-soft border border-white/10 rounded-xl px-3 py-2">
+                {ctx?.partnerProfile?.display_name ?? 'Pareja'}: {eleccionPartner === 0 ? round.option_a : round.option_b}
+              </span>
+            </div>
+            <button
+              onClick={() => setRound(null)}
               className="w-full bg-ritual-gold text-ritual-bg font-body font-medium py-4 rounded-2xl"
             >
               Jugar de nuevo
-            </button>
-          </div>
-        ) : (
-          <div className="space-y-4 animate-fade-up" key={ronda}>
-            <button
-              onClick={() => elegir('a')}
-              className={`w-full rounded-3xl py-10 text-center border transition-all duration-200 ${
-                elegido === 'a'
-                  ? 'bg-ritual-gold text-ritual-bg border-ritual-gold'
-                  : 'bg-ritual-bg-soft border-white/10 text-ritual-cream hover:border-ritual-gold/40'
-              }`}
-            >
-              <span className="font-display text-2xl">{par.a}</span>
-            </button>
-
-            <p className="text-center text-ritual-muted text-xs font-body">o</p>
-
-            <button
-              onClick={() => elegir('b')}
-              className={`w-full rounded-3xl py-10 text-center border transition-all duration-200 ${
-                elegido === 'b'
-                  ? 'bg-ritual-gold text-ritual-bg border-ritual-gold'
-                  : 'bg-ritual-bg-soft border-white/10 text-ritual-cream hover:border-ritual-gold/40'
-              }`}
-            >
-              <span className="font-display text-2xl">{par.b}</span>
             </button>
           </div>
         )}

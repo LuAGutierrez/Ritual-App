@@ -4,14 +4,10 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { RULETA_PICANTE } from '@/lib/juegos'
 
-function pickRandom(list: string[], excluir?: string): string {
-  let candidato = list[Math.floor(Math.random() * list.length)]
-  if (list.length > 1) {
-    while (candidato === excluir) {
-      candidato = list[Math.floor(Math.random() * list.length)]
-    }
-  }
-  return candidato
+function pickIndex(vistos: Set<number>): number {
+  const disponibles = RULETA_PICANTE.map((_, i) => i).filter(i => !vistos.has(i))
+  const pool = disponibles.length > 0 ? disponibles : RULETA_PICANTE.map((_, i) => i)
+  return pool[Math.floor(Math.random() * pool.length)]
 }
 
 export default function RuletaPicantePage() {
@@ -19,11 +15,17 @@ export default function RuletaPicantePage() {
   const [confirmado, setConfirmado] = useState(false)
   const [prompt, setPrompt] = useState('')
   const [girando, setGirando] = useState(false)
+  const [vistos, setVistos] = useState<Set<number>>(new Set())
 
   function girar() {
     setGirando(true)
     setTimeout(() => {
-      setPrompt(p => pickRandom(RULETA_PICANTE, p))
+      setVistos(prev => {
+        const idx = pickIndex(prev)
+        const next = prev.size >= RULETA_PICANTE.length - 1 ? new Set([idx]) : new Set(prev).add(idx)
+        setPrompt(RULETA_PICANTE[idx])
+        return next
+      })
       setGirando(false)
     }, 350)
   }

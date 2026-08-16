@@ -20,10 +20,17 @@ export async function getEleccionPageDataAction(): Promise<{
   return data as { context: UserContext; round: EleccionRound | null }
 }
 
-export async function startEleccionRoundAction(coupleId: string): Promise<EleccionRound | null> {
+export async function startEleccionRoundAction(
+  coupleId: string,
+  intensidad: 'normal' | 'picante' = 'normal',
+  excluir: string[] = []
+): Promise<EleccionRound | null> {
   const supabase = await createClient()
 
-  const prompt = ELECCION_PROMPTS[Math.floor(Math.random() * ELECCION_PROMPTS.length)]
+  const filtrados = ELECCION_PROMPTS.filter(p => (intensidad === 'picante' ? p.picante : !p.picante))
+  const disponibles = filtrados.filter(p => !excluir.includes(`${p.a}|${p.b}`))
+  const pool = disponibles.length > 0 ? disponibles : filtrados
+  const prompt = pool[Math.floor(Math.random() * pool.length)]
 
   const { data: members } = await supabase
     .from('couple_members')

@@ -1,36 +1,75 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { VERDADES, RETOS } from '@/lib/juegos'
+import { VERDADES, RETOS, type JuegoItem } from '@/lib/juegos'
+import { getIsCouplePremiumAction } from '@/app/actions/subscription'
+import PicanteUpsell from '@/components/PicanteUpsell'
 
 type Modo = 'verdad' | 'reto'
+type Intensidad = 'normal' | 'picante'
 
-function pickRandom(list: string[], excluir?: string): string {
-  let candidato = list[Math.floor(Math.random() * list.length)]
-  if (list.length > 1) {
-    while (candidato === excluir) {
-      candidato = list[Math.floor(Math.random() * list.length)]
-    }
-  }
-  return candidato
+function pickIndex(list: JuegoItem[], vistos: Set<number>): number {
+  const disponibles = list.map((_, i) => i).filter(i => !vistos.has(i))
+  const pool = disponibles.length > 0 ? disponibles : list.map((_, i) => i)
+  return pool[Math.floor(Math.random() * pool.length)]
 }
 
 export default function VerdadORetoPage() {
   const router = useRouter()
   const [modo, setModo] = useState<Modo | null>(null)
+  const [intensidad, setIntensidad] = useState<Intensidad>('normal')
   const [prompt, setPrompt] = useState('')
+  const [vistos, setVistos] = useState<Set<number>>(new Set())
+  const [isPremium, setIsPremium] = useState(false)
+  const [picanteUsado, setPicanteUsado] = useState(false)
+  const [mostrarUpsell, setMostrarUpsell] = useState(false)
+
+  useEffect(() => {
+    getIsCouplePremiumAction().then(setIsPremium)
+  }, [])
+
+  function listaFiltrada(m: Modo, ints: Intensidad): JuegoItem[] {
+    const base = m === 'verdad' ? VERDADES : RETOS
+    return base.filter(item => (ints === 'picante' ? item.picante : !item.picante))
+  }
 
   function jugar(m: Modo) {
-    const lista = m === 'verdad' ? VERDADES : RETOS
+    if (intensidad === 'picante' && !isPremium && picanteUsado) {
+      setModo(m)
+      setMostrarUpsell(true)
+      return
+    }
+    const lista = listaFiltrada(m, intensidad)
+    const idx = pickIndex(lista, new Set())
     setModo(m)
-    setPrompt(pickRandom(lista))
+    setVistos(new Set([idx]))
+    setPrompt(lista[idx].texto)
+    setMostrarUpsell(false)
+    if (intensidad === 'picante') setPicanteUsado(true)
   }
 
   function siguiente() {
     if (!modo) return
-    const lista = modo === 'verdad' ? VERDADES : RETOS
-    setPrompt(pickRandom(lista, prompt))
+    if (intensidad === 'picante' && !isPremium && picanteUsado) {
+      setMostrarUpsell(true)
+      return
+    }
+    const lista = listaFiltrada(modo, intensidad)
+    const idx = pickIndex(lista, vistos)
+    setVistos(prev => {
+      const next = prev.size >= lista.length ? new Set([idx]) : new Set(prev).add(idx)
+      return next
+    })
+    setPrompt(lista[idx].texto)
+    if (intensidad === 'picante') setPicanteUsado(true)
+  }
+
+  function cambiarIntensidad(ints: Intensidad) {
+    setIntensidad(ints)
+    setModo(null)
+    setMostrarUpsell(false)
+    setVistos(new Set())
   }
 
   return (
@@ -49,7 +88,28 @@ export default function VerdadORetoPage() {
       </header>
 
       <main className="flex-1 px-5 pb-28 flex flex-col justify-center max-w-md mx-auto w-full">
-        {!modo ? (
+        <div className="flex bg-ritual-bg-soft rounded-2xl p-1 mb-6">
+          <button
+            onClick={() => cambiarIntensidad('normal')}
+            className={`flex-1 py-2.5 rounded-xl text-sm font-body font-medium transition-all duration-300 ${
+              intensidad === 'normal' ? 'bg-ritual-gold text-ritual-bg' : 'text-ritual-muted hover:text-ritual-text'
+            }`}
+          >
+            Normal
+          </button>
+          <button
+            onClick={() => cambiarIntensidad('picante')}
+            className={`flex-1 py-2.5 rounded-xl text-sm font-body font-medium transition-all duration-300 ${
+              intensidad === 'picante' ? 'bg-[#D4A5A5] text-ritual-bg' : 'text-ritual-muted hover:text-ritual-text'
+            }`}
+          >
+            🔥 Picante
+          </button>
+        </div>
+
+        {mostrarUpsell ? (
+          <PicanteUpsell />
+        ) : !modo ? (
           <div className="grid grid-cols-2 gap-4 animate-fade-up">
             <button
               onClick={() => jugar('verdad')}

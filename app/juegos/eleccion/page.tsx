@@ -8,8 +8,12 @@ import {
   startEleccionRoundAction,
   submitEleccionChoiceAction,
 } from '@/app/actions/eleccion'
+import { getIsCouplePremiumAction } from '@/app/actions/subscription'
 import type { EleccionRound, UserContext } from '@/types'
 import PageLoader from '@/components/PageLoader'
+import PicanteUpsell from '@/components/PicanteUpsell'
+
+type Intensidad = 'normal' | 'picante'
 
 export default function EleccionPage() {
   const router = useRouter()
@@ -22,6 +26,11 @@ export default function EleccionPage() {
   const [starting, setStarting] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [intensidad, setIntensidad] = useState<Intensidad>('normal')
+  const [isPremium, setIsPremium] = useState(false)
+  const [picanteUsado, setPicanteUsado] = useState(false)
+  const [mostrarUpsell, setMostrarUpsell] = useState(false)
+  const vistosRef = useRef<string[]>([])
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const subscribeToRounds = useCallback((coupleId: string) => {
@@ -54,6 +63,7 @@ export default function EleccionPage() {
       setLoading(false)
     }
     init()
+    getIsCouplePremiumAction().then(setIsPremium)
 
     return () => {
       if (channelRef.current) supabase.removeChannel(channelRef.current)
@@ -63,12 +73,27 @@ export default function EleccionPage() {
 
   async function handleEmpezar() {
     if (!ctx?.couple) return
+    if (intensidad === 'picante' && !isPremium && picanteUsado) {
+      setMostrarUpsell(true)
+      return
+    }
     setStarting(true)
     setError(null)
-    const nuevo = await startEleccionRoundAction(ctx.couple.id)
-    if (!nuevo) setError('No se pudo empezar la ronda. Intentá de nuevo.')
-    else setRound(nuevo)
+    setMostrarUpsell(false)
+    const nuevo = await startEleccionRoundAction(ctx.couple.id, intensidad, vistosRef.current)
+    if (!nuevo) {
+      setError('No se pudo empezar la ronda. Intentá de nuevo.')
+    } else {
+      setRound(nuevo)
+      vistosRef.current = [...vistosRef.current, `${nuevo.option_a}|${nuevo.option_b}`]
+      if (intensidad === 'picante') setPicanteUsado(true)
+    }
     setStarting(false)
+  }
+
+  function cambiarIntensidad(ints: Intensidad) {
+    setIntensidad(ints)
+    setMostrarUpsell(false)
   }
 
   async function handleElegir(choice: 0 | 1) {
@@ -114,19 +139,44 @@ export default function EleccionPage() {
         )}
 
         {!round && (
-          <div className="text-center space-y-6 animate-fade-up">
-            <p className="text-3xl">✦</p>
-            <p className="font-display text-2xl text-ritual-cream">¿Coinciden?</p>
-            <p className="text-ritual-muted font-body text-sm leading-relaxed">
-              Cada uno elige en secreto. Si coinciden, se llevan un premio.
-            </p>
-            <button
-              onClick={handleEmpezar}
-              disabled={starting}
-              className="w-full bg-ritual-gold text-ritual-bg font-body font-medium py-4 rounded-2xl disabled:opacity-50"
-            >
-              {starting ? 'Empezando...' : 'Empezar ronda'}
-            </button>
+          <div className="space-y-6 animate-fade-up">
+            <div className="flex bg-ritual-bg-soft rounded-2xl p-1">
+              <button
+                onClick={() => cambiarIntensidad('normal')}
+                className={`flex-1 py-2.5 rounded-xl text-sm font-body font-medium transition-all duration-300 ${
+                  intensidad === 'normal' ? 'bg-ritual-gold text-ritual-bg' : 'text-ritual-muted hover:text-ritual-text'
+                }`}
+              >
+                Normal
+              </button>
+              <button
+                onClick={() => cambiarIntensidad('picante')}
+                className={`flex-1 py-2.5 rounded-xl text-sm font-body font-medium transition-all duration-300 ${
+                  intensidad === 'picante' ? 'bg-[#D4A5A5] text-ritual-bg' : 'text-ritual-muted hover:text-ritual-text'
+                }`}
+              >
+                🔥 Picante
+              </button>
+            </div>
+
+            {mostrarUpsell ? (
+              <PicanteUpsell />
+            ) : (
+              <div className="text-center space-y-6">
+                <p className="text-3xl">✦</p>
+                <p className="font-display text-2xl text-ritual-cream">¿Coinciden?</p>
+                <p className="text-ritual-muted font-body text-sm leading-relaxed">
+                  Cada uno elige en secreto. Si coinciden, se llevan un premio.
+                </p>
+                <button
+                  onClick={handleEmpezar}
+                  disabled={starting}
+                  className="w-full bg-ritual-gold text-ritual-bg font-body font-medium py-4 rounded-2xl disabled:opacity-50"
+                >
+                  {starting ? 'Empezando...' : 'Empezar ronda'}
+                </button>
+              </div>
+            )}
           </div>
         )}
 
@@ -180,11 +230,10 @@ export default function EleccionPage() {
               </div>
             )}
             <button
-              onClick={handleEmpezar}
-              disabled={starting}
-              className="w-full bg-ritual-gold text-ritual-bg font-body font-medium py-4 rounded-2xl disabled:opacity-50"
+              onClick={() => setRound(null)}
+              className="w-full bg-ritual-gold text-ritual-bg font-body font-medium py-4 rounded-2xl"
             >
-              {starting ? 'Empezando...' : 'Jugar de nuevo'}
+              Jugar de nuevo
             </button>
           </div>
         )}

@@ -85,6 +85,19 @@ export type EleccionRound = {
   created_at: string
 }
 
+export type EstoAquelloRound = {
+  id: string
+  couple_id: string
+  user1_id: string | null
+  user2_id: string | null
+  option_a: string
+  option_b: string
+  user1_choice: 0 | 1 | null
+  user2_choice: 0 | 1 | null
+  revealed_at: string | null
+  created_at: string
+}
+
 export type NotificationPrefs = {
   user_id: string
   push_enabled: boolean
