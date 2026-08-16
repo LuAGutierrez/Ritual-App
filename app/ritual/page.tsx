@@ -281,7 +281,7 @@ export default function RitualPage() {
         )}
 
         {/* Streak en top si hay pareja */}
-        {ctx?.couple && streak && state !== 'revealed' && (
+        {ctx?.couple && streak && state !== 'revealed' && state !== 'completed' && (
           <div className="mb-4">
             <StreakBadge streak={streak} partnerName={ctx.partnerProfile?.display_name} />
           </div>
