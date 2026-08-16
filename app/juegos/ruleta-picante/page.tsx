@@ -1,12 +1,13 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { RULETA_PICANTE } from '@/lib/juegos'
+import { getRuletaPicanteItemsAction } from '@/app/actions/ruleta-picante'
+import type { RuletaPicanteItem } from '@/types'
 
-function pickIndex(vistos: Set<number>): number {
-  const disponibles = RULETA_PICANTE.map((_, i) => i).filter(i => !vistos.has(i))
-  const pool = disponibles.length > 0 ? disponibles : RULETA_PICANTE.map((_, i) => i)
+function pickIndex(total: number, vistos: Set<number>): number {
+  const disponibles = Array.from({ length: total }, (_, i) => i).filter(i => !vistos.has(i))
+  const pool = disponibles.length > 0 ? disponibles : Array.from({ length: total }, (_, i) => i)
   return pool[Math.floor(Math.random() * pool.length)]
 }
 
@@ -16,14 +17,20 @@ export default function RuletaPicantePage() {
   const [prompt, setPrompt] = useState('')
   const [girando, setGirando] = useState(false)
   const [vistos, setVistos] = useState<Set<number>>(new Set())
+  const [items, setItems] = useState<RuletaPicanteItem[]>([])
+
+  useEffect(() => {
+    getRuletaPicanteItemsAction().then(setItems)
+  }, [])
 
   function girar() {
+    if (items.length === 0) return
     setGirando(true)
     setTimeout(() => {
       setVistos(prev => {
-        const idx = pickIndex(prev)
-        const next = prev.size >= RULETA_PICANTE.length - 1 ? new Set([idx]) : new Set(prev).add(idx)
-        setPrompt(RULETA_PICANTE[idx])
+        const idx = pickIndex(items.length, prev)
+        const next = prev.size >= items.length - 1 ? new Set([idx]) : new Set(prev).add(idx)
+        setPrompt(items[idx].texto)
         return next
       })
       setGirando(false)
@@ -77,7 +84,8 @@ export default function RuletaPicantePage() {
           <div className="text-center animate-fade-up">
             <button
               onClick={girar}
-              className="w-full bg-[#D4A5A5]/10 border border-[#D4A5A5]/30 rounded-3xl py-16 hover:border-[#D4A5A5]/50 transition-all"
+              disabled={items.length === 0}
+              className="w-full bg-[#D4A5A5]/10 border border-[#D4A5A5]/30 rounded-3xl py-16 hover:border-[#D4A5A5]/50 transition-all disabled:opacity-50"
             >
               <span className="text-4xl">🎡</span>
               <p className="font-display text-xl text-ritual-cream mt-4">Tocá para girar</p>

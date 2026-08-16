@@ -2,14 +2,16 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { VERDADES, RETOS, type JuegoItem } from '@/lib/juegos'
+import { getVerdadORetoItemsAction } from '@/app/actions/verdad-o-reto'
 import { getIsCouplePremiumAction } from '@/app/actions/subscription'
+import type { VerdadORetoItem } from '@/types'
 import PicanteUpsell from '@/components/PicanteUpsell'
+import PageLoader from '@/components/PageLoader'
 
 type Modo = 'verdad' | 'reto'
 type Intensidad = 'normal' | 'picante'
 
-function pickIndex(list: JuegoItem[], vistos: Set<number>): number {
+function pickIndex(list: VerdadORetoItem[], vistos: Set<number>): number {
   const disponibles = list.map((_, i) => i).filter(i => !vistos.has(i))
   const pool = disponibles.length > 0 ? disponibles : list.map((_, i) => i)
   return pool[Math.floor(Math.random() * pool.length)]
@@ -24,14 +26,19 @@ export default function VerdadORetoPage() {
   const [isPremium, setIsPremium] = useState(false)
   const [picanteUsado, setPicanteUsado] = useState(false)
   const [mostrarUpsell, setMostrarUpsell] = useState(false)
+  const [items, setItems] = useState<VerdadORetoItem[]>([])
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     getIsCouplePremiumAction().then(setIsPremium)
+    getVerdadORetoItemsAction().then(data => {
+      setItems(data)
+      setLoading(false)
+    })
   }, [])
 
-  function listaFiltrada(m: Modo, ints: Intensidad): JuegoItem[] {
-    const base = m === 'verdad' ? VERDADES : RETOS
-    return base.filter(item => (ints === 'picante' ? item.picante : !item.picante))
+  function listaFiltrada(m: Modo, ints: Intensidad): VerdadORetoItem[] {
+    return items.filter(item => item.modo === m && (ints === 'picante' ? item.picante : !item.picante))
   }
 
   function jugar(m: Modo) {
@@ -70,6 +77,10 @@ export default function VerdadORetoPage() {
     setModo(null)
     setMostrarUpsell(false)
     setVistos(new Set())
+  }
+
+  if (loading) {
+    return <PageLoader />
   }
 
   return (

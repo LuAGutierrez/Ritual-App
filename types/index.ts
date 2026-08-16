@@ -98,6 +98,33 @@ export type EstoAquelloRound = {
   created_at: string
 }
 
+export type VerdadORetoItem = {
+  id: string
+  modo: 'verdad' | 'reto'
+  texto: string
+  picante: boolean
+}
+
+export type EstoAquelloItem = {
+  id: string
+  option_a: string
+  option_b: string
+  picante: boolean
+}
+
+export type EleccionPromptItem = {
+  id: string
+  option_a: string
+  option_b: string
+  premio: string
+  picante: boolean
+}
+
+export type RuletaPicanteItem = {
+  id: string
+  texto: string
+}
+
 export type NotificationPrefs = {
   user_id: string
   push_enabled: boolean

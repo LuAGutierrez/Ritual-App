@@ -1,7 +1,6 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
-import { ELECCION_PROMPTS } from '@/lib/juegos'
 import type { EleccionRound, UserContext } from '@/types'
 
 // Junta contexto + ronda activa en un solo round-trip (ver
@@ -27,8 +26,14 @@ export async function startEleccionRoundAction(
 ): Promise<EleccionRound | null> {
   const supabase = await createClient()
 
-  const filtrados = ELECCION_PROMPTS.filter(p => (intensidad === 'picante' ? p.picante : !p.picante))
-  const disponibles = filtrados.filter(p => !excluir.includes(`${p.a}|${p.b}`))
+  const { data: filtrados } = await supabase
+    .from('eleccion_prompts')
+    .select('option_a, option_b, premio')
+    .eq('picante', intensidad === 'picante')
+
+  if (!filtrados || filtrados.length === 0) return null
+
+  const disponibles = filtrados.filter(p => !excluir.includes(`${p.option_a}|${p.option_b}`))
   const pool = disponibles.length > 0 ? disponibles : filtrados
   const prompt = pool[Math.floor(Math.random() * pool.length)]
 
@@ -45,8 +50,8 @@ export async function startEleccionRoundAction(
       couple_id: coupleId,
       user1_id: user1 || null,
       user2_id: user2 || null,
-      option_a: prompt.a,
-      option_b: prompt.b,
+      option_a: prompt.option_a,
+      option_b: prompt.option_b,
       premio: prompt.premio,
     })
     .select('*')

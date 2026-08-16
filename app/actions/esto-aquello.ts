@@ -1,7 +1,6 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
-import { ESTO_O_AQUELLO } from '@/lib/juegos'
 import type { EstoAquelloRound, UserContext } from '@/types'
 
 export async function getEstoAquelloPageDataAction(): Promise<{
@@ -23,8 +22,14 @@ export async function startEstoAquelloRoundAction(
 ): Promise<EstoAquelloRound | null> {
   const supabase = await createClient()
 
-  const filtrados = ESTO_O_AQUELLO.filter(p => (intensidad === 'picante' ? p.picante : !p.picante))
-  const disponibles = filtrados.filter(p => !excluir.includes(`${p.a}|${p.b}`))
+  const { data: filtrados } = await supabase
+    .from('esto_o_aquello_items')
+    .select('option_a, option_b')
+    .eq('picante', intensidad === 'picante')
+
+  if (!filtrados || filtrados.length === 0) return null
+
+  const disponibles = filtrados.filter(p => !excluir.includes(`${p.option_a}|${p.option_b}`))
   const pool = disponibles.length > 0 ? disponibles : filtrados
   const par = pool[Math.floor(Math.random() * pool.length)]
 
@@ -41,8 +46,8 @@ export async function startEstoAquelloRoundAction(
       couple_id: coupleId,
       user1_id: user1 || null,
       user2_id: user2 || null,
-      option_a: par.a,
-      option_b: par.b,
+      option_a: par.option_a,
+      option_b: par.option_b,
     })
     .select('*')
     .single()

@@ -56,7 +56,8 @@ Ya rompió el build una vez: se sacaron categorías de `CATEGORY_COLORS`/`CATEGO
 - No comentarios explicando el QUÉ (los nombres ya lo dicen). Solo el PORQUÉ cuando no sea obvio
   (constraint oculto, workaround, bug histórico como los de este archivo).
 - Contenido/copy nuevo (rituales, juegos, prompts) va en español rioplatense con voseo, tono consistente
-  con lo existente en `lib/juegos.ts` y las migraciones de `rituals` — no genérico ni traducido.
+  con lo existente en las tablas `rituals`, `verdad_o_reto_items`, `esto_o_aquello_items`, `eleccion_prompts`
+  y `ruleta_picante_items` (seed en las migraciones `006` y `026`) — no genérico ni traducido.
 
 ## 6. Diseño: no la primera idea genérica
 
