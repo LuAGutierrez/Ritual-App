@@ -126,6 +126,37 @@ export type RuletaPicanteItem = {
   texto: string
 }
 
+export type ConocesRound = {
+  id: string
+  couple_id: string
+  user1_id: string | null
+  user2_id: string | null
+  subject_user_id: string
+  pregunta: string
+  opciones: string[]
+  subject_choice: number | null
+  guesser_choice: number | null
+  revealed_at: string | null
+  created_at: string
+}
+
+export type ConocesStats = {
+  couple_id: string
+  aciertos: number
+  intentos: number
+  racha_actual: number
+  racha_maxima: number
+  updated_at: string
+}
+
+export type ConocesItem = {
+  id: string
+  pregunta: string
+  opciones: string[]
+  categoria: string
+  picante: boolean
+}
+
 export type NotificationPrefs = {
   user_id: string
   push_enabled: boolean
