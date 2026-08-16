@@ -21,7 +21,7 @@ export default function VerdadORetoPage() {
   const router = useRouter()
   const [modo, setModo] = useState<Modo | null>(null)
   const [intensidad, setIntensidad] = useState<Intensidad>('normal')
-  const [prompt, setPrompt] = useState('')
+  const [promptItem, setPromptItem] = useState<VerdadORetoItem | null>(null)
   const [vistos, setVistos] = useState<Set<number>>(new Set())
   const [isPremium, setIsPremium] = useState(false)
   const [picanteUsado, setPicanteUsado] = useState(false)
@@ -51,7 +51,7 @@ export default function VerdadORetoPage() {
     const idx = pickIndex(lista, new Set())
     setModo(m)
     setVistos(new Set([idx]))
-    setPrompt(lista[idx].texto)
+    setPromptItem(lista[idx])
     setMostrarUpsell(false)
     if (intensidad === 'picante') setPicanteUsado(true)
   }
@@ -68,7 +68,7 @@ export default function VerdadORetoPage() {
       const next = prev.size >= lista.length ? new Set([idx]) : new Set(prev).add(idx)
       return next
     })
-    setPrompt(lista[idx].texto)
+    setPromptItem(lista[idx])
     if (intensidad === 'picante') setPicanteUsado(true)
   }
 
@@ -77,6 +77,34 @@ export default function VerdadORetoPage() {
     setModo(null)
     setMostrarUpsell(false)
     setVistos(new Set())
+  }
+
+  // Cada 3 rondas en modo normal, si la pregunta/reto actual tiene un par
+  // picante definido (migración 027), se muestra un preview -- borroso si
+  // la pareja no es premium, entero si ya lo es -- en vez de un upsell
+  // genérico.
+  const parPicante = promptItem?.par_picante_id
+    ? items.find(i => i.id === promptItem.par_picante_id)
+    : undefined
+  const mostrarHintPicante = intensidad === 'normal' && vistos.size % 3 === 0 && !!parPicante
+
+  function verPicante() {
+    if (!parPicante) return
+    const lista = listaFiltrada(parPicante.modo, 'picante')
+    const idx = lista.findIndex(i => i.id === parPicante.id)
+    setIntensidad('picante')
+    setModo(parPicante.modo)
+    setPromptItem(parPicante)
+    setVistos(new Set(idx >= 0 ? [idx] : []))
+    setMostrarUpsell(false)
+  }
+
+  function handleHintClick() {
+    if (!isPremium) {
+      router.push('/precios')
+      return
+    }
+    verPicante()
   }
 
   if (loading) {
@@ -143,8 +171,28 @@ export default function VerdadORetoPage() {
               {modo === 'verdad' ? 'Verdad' : 'Reto'}
             </p>
             <div className="bg-ritual-bg-soft border border-white/8 rounded-3xl px-6 py-10 text-center">
-              <p className="font-display text-2xl text-ritual-cream leading-snug">{prompt}</p>
+              <p className="font-display text-2xl text-ritual-cream leading-snug">{promptItem?.texto}</p>
             </div>
+
+            {mostrarHintPicante && parPicante && (
+              <button
+                onClick={handleHintClick}
+                className="w-full bg-[#D4A5A5]/8 border border-[#D4A5A5]/25 rounded-2xl p-4 text-left space-y-1.5 hover:border-[#D4A5A5]/40 transition-all"
+              >
+                <p className="text-[#D4A5A5] text-[10px] font-body uppercase tracking-wider">🔥 Versión picante</p>
+                <p
+                  className={`font-body text-sm text-ritual-cream leading-snug ${
+                    isPremium ? '' : 'blur-[3px] select-none'
+                  }`}
+                >
+                  {parPicante.texto}
+                </p>
+                {!isPremium && (
+                  <p className="text-[#D4A5A5] text-xs font-body pt-0.5">Desbloqueá con Premium →</p>
+                )}
+              </button>
+            )}
+
             <div className="grid grid-cols-2 gap-3">
               <button
                 onClick={() => setModo(null)}
