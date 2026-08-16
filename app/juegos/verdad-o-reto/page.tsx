@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { getVerdadORetoItemsAction } from '@/app/actions/verdad-o-reto'
 import { getIsCouplePremiumAction } from '@/app/actions/subscription'
-import { logContenidoRechazadoAction } from '@/app/actions/contenido-rechazado'
+import { logContenidoRechazadoAction, getRechazadosAction } from '@/app/actions/contenido-rechazado'
 import type { VerdadORetoItem } from '@/types'
 import PicanteUpsell from '@/components/PicanteUpsell'
 import PageLoader from '@/components/PageLoader'
@@ -29,6 +29,7 @@ export default function VerdadORetoPage() {
   const [mostrarUpsell, setMostrarUpsell] = useState(false)
   const [items, setItems] = useState<VerdadORetoItem[]>([])
   const [loading, setLoading] = useState(true)
+  const [rechazados, setRechazados] = useState<Set<string>>(new Set())
 
   useEffect(() => {
     getIsCouplePremiumAction().then(setIsPremium)
@@ -36,10 +37,16 @@ export default function VerdadORetoPage() {
       setItems(data)
       setLoading(false)
     })
+    getRechazadosAction('verdad_o_reto').then(ids => setRechazados(new Set(ids)))
   }, [])
 
+  // Evita repetir lo que ya pasaron -- pero si eso deja muy pocas
+  // opciones (pool chico, ~8-12 por modo/intensidad), se prioriza
+  // variedad y se vuelve a la lista completa.
   function listaFiltrada(m: Modo, ints: Intensidad): VerdadORetoItem[] {
-    return items.filter(item => item.modo === m && (ints === 'picante' ? item.picante : !item.picante))
+    const base = items.filter(item => item.modo === m && (ints === 'picante' ? item.picante : !item.picante))
+    const sinRechazados = base.filter(item => !rechazados.has(item.id))
+    return sinRechazados.length >= 3 ? sinRechazados : base
   }
 
   function jugar(m: Modo) {
@@ -84,7 +91,10 @@ export default function VerdadORetoPage() {
   // deja registro de qué se rechazó (para personalización futura) y
   // nunca rompe la partida, solo trae la próxima.
   function pasar() {
-    if (promptItem) logContenidoRechazadoAction('verdad_o_reto', promptItem.id)
+    if (promptItem) {
+      logContenidoRechazadoAction('verdad_o_reto', promptItem.id)
+      setRechazados(prev => new Set(prev).add(promptItem.id))
+    }
     siguiente()
   }
 
