@@ -6,6 +6,8 @@ import { useEffect, useState, useTransition } from 'react'
 import BottomNav from '@/components/BottomNav'
 import PageLoader from '@/components/PageLoader'
 import { getJuegosStatsSummaryAction, type JuegosStatsSummary } from '@/app/actions/juegos-stats'
+import { JUEGOS } from '@/lib/juegos'
+import { IconLlama } from '@/components/icons/juegos'
 
 // La lógica de QUÉ mensaje mostrar vive acá, no en la base -- la RPC
 // (get_juegos_stats_summary, migración 029) solo trae los números
@@ -54,54 +56,6 @@ function mensajeAdaptativo(stats: JuegosStatsSummary | null): string | null {
   return null
 }
 
-function IconEleccion() {
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="9" cy="12" r="6" />
-      <circle cx="15" cy="12" r="6" />
-    </svg>
-  )
-}
-
-function IconDado() {
-  return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
-      <rect x="4" y="4" width="16" height="16" rx="3" />
-      <circle cx="8.5" cy="8.5" r="0.9" fill="currentColor" stroke="none" />
-      <circle cx="15.5" cy="8.5" r="0.9" fill="currentColor" stroke="none" />
-      <circle cx="12" cy="12" r="0.9" fill="currentColor" stroke="none" />
-      <circle cx="8.5" cy="15.5" r="0.9" fill="currentColor" stroke="none" />
-      <circle cx="15.5" cy="15.5" r="0.9" fill="currentColor" stroke="none" />
-    </svg>
-  )
-}
-
-function IconBifurcacion() {
-  return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
-      <path d="M5 5c3 0 3 6 6 6s3-6 6-6" />
-      <path d="M5 19c3 0 3-6 6-6s3 6 6 6" />
-    </svg>
-  )
-}
-
-function IconOjo() {
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
-      <path d="M2 12c2.5-4.5 6.5-7 10-7s7.5 2.5 10 7c-2.5 4.5-6.5 7-10 7s-7.5-2.5-10-7z" />
-      <circle cx="12" cy="12" r="3" />
-    </svg>
-  )
-}
-
-function IconLlama() {
-  return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
-      <path d="M12 3c1.5 3-3 4.5-3 9a5 5 0 0 0 10 0c0-2.5-1.5-3.5-2-5.5C16.3 8.5 16 10 15 10c-1.5 0-.5-3.5-3-7z" />
-    </svg>
-  )
-}
-
 export default function JuegosPage() {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
@@ -119,6 +73,9 @@ export default function JuegosPage() {
   }
 
   const mensaje = mensajeAdaptativo(stats)
+  const destacados = JUEGOS.filter(j => j.variante === 'destacado')
+  const compactos = JUEGOS.filter(j => j.variante === 'compacto')
+  const especiales = JUEGOS.filter(j => j.variante === 'especial')
 
   return (
     <div className="min-h-dvh bg-ritual-bg flex flex-col">
@@ -137,93 +94,78 @@ export default function JuegosPage() {
       </header>
 
       <main className="flex-1 px-5 pb-28 max-w-md mx-auto w-full space-y-3">
-        {/* Destacado: Elección — el único con reveal sincronizado */}
-        <Link
-          href="/juegos/eleccion"
-          prefetch
-          onClick={e => handleClick(e, '/juegos/eleccion')}
-          className="group block bg-ritual-bg-soft border border-white/8 rounded-3xl px-6 py-8 transition-all duration-200 hover:border-ritual-gold/30"
-        >
-          <div className="flex items-start justify-between">
-            <span className="text-ritual-muted group-hover:text-ritual-gold transition-colors"><IconEleccion /></span>
-            <span className="text-[10px] font-body uppercase tracking-wider text-ritual-muted border border-white/10 rounded-full px-2 py-0.5 flex items-center gap-1">
-              <IconLlama /> también picante
-            </span>
-          </div>
-          <p className="font-display text-3xl text-ritual-cream leading-snug mt-4">Elección</p>
-          <p className="text-ritual-muted text-sm font-body mt-1.5 max-w-[85%]">
-            Elijan en secreto, en tiempo real. Si coinciden, se llevan un premio.
-          </p>
-        </Link>
+        {/* Destacados: cards grandes, un juego por fila */}
+        {destacados.map(juego => (
+          <Link
+            key={juego.id}
+            href={juego.href}
+            prefetch
+            onClick={e => handleClick(e, juego.href)}
+            className="group block bg-ritual-bg-soft border border-white/8 rounded-3xl px-6 py-8 transition-all duration-200 hover:border-ritual-gold/30"
+          >
+            <div className="flex items-start justify-between">
+              <span className="text-ritual-muted group-hover:text-ritual-gold transition-colors"><juego.Icono /></span>
+              {juego.badge && (
+                <span
+                  className={`text-[10px] font-body uppercase tracking-wider text-ritual-muted border border-white/10 rounded-full px-2 py-0.5 ${
+                    juego.badge.conLlama ? 'flex items-center gap-1' : ''
+                  }`}
+                >
+                  {juego.badge.conLlama && <IconLlama />}
+                  {juego.badge.texto}
+                </span>
+              )}
+            </div>
+            <p className="font-display text-3xl text-ritual-cream leading-snug mt-4">{juego.titulo}</p>
+            <p className="text-ritual-muted text-sm font-body mt-1.5 max-w-[85%]">{juego.descripcion}</p>
+          </Link>
+        ))}
 
-        {/* Nuevo: ¿Cuánto me conoces? — primera pieza de la categoría "Nosotros" */}
-        <Link
-          href="/juegos/conoces"
-          prefetch
-          onClick={e => handleClick(e, '/juegos/conoces')}
-          className="group block bg-ritual-bg-soft border border-white/8 rounded-3xl px-6 py-8 transition-all duration-200 hover:border-ritual-gold/30"
-        >
-          <div className="flex items-start justify-between">
-            <span className="text-ritual-muted group-hover:text-ritual-gold transition-colors"><IconOjo /></span>
-            <span className="text-[10px] font-body uppercase tracking-wider text-ritual-muted border border-white/10 rounded-full px-2 py-0.5">
-              Nosotros
-            </span>
-          </div>
-          <p className="font-display text-3xl text-ritual-cream leading-snug mt-4">¿Cuánto me conoces?</p>
-          <p className="text-ritual-muted text-sm font-body mt-1.5 max-w-[85%]">
-            Uno responde sobre sí mismo, el otro adivina en secreto. Se turnan solos, ronda a ronda.
-          </p>
-        </Link>
-
-        {/* Par: Verdad o Reto + Esto o Aquello */}
+        {/* Compactos: par en grid */}
         <div className="grid grid-cols-2 gap-3">
-          <Link
-            href="/juegos/verdad-o-reto"
-            prefetch
-            onClick={e => handleClick(e, '/juegos/verdad-o-reto')}
-            className="group bg-ritual-bg-soft border border-white/8 rounded-2xl px-4 py-5 flex flex-col justify-between h-40 transition-all duration-200 hover:border-white/20"
-          >
-            <span className="text-ritual-muted group-hover:text-ritual-cream transition-colors"><IconDado /></span>
-            <div>
-              <p className="font-display text-xl text-ritual-cream leading-tight">Verdad o Reto</p>
-              <p className="text-ritual-muted text-[11px] font-body mt-1 flex items-center gap-1">
-                <IconLlama /> también picante
-              </p>
-            </div>
-          </Link>
-
-          <Link
-            href="/juegos/esto-o-aquello"
-            prefetch
-            onClick={e => handleClick(e, '/juegos/esto-o-aquello')}
-            className="group bg-ritual-bg-soft border border-white/8 rounded-2xl px-4 py-5 flex flex-col justify-between h-40 transition-all duration-200 hover:border-white/20"
-          >
-            <span className="text-ritual-muted group-hover:text-ritual-cream transition-colors"><IconBifurcacion /></span>
-            <div>
-              <p className="font-display text-xl text-ritual-cream leading-tight">Esto o Aquello</p>
-              <p className="text-ritual-muted text-[11px] font-body mt-1 flex items-center gap-1">
-                <IconLlama /> también picante
-              </p>
-            </div>
-          </Link>
+          {compactos.map(juego => (
+            <Link
+              key={juego.id}
+              href={juego.href}
+              prefetch
+              onClick={e => handleClick(e, juego.href)}
+              className="group bg-ritual-bg-soft border border-white/8 rounded-2xl px-4 py-5 flex flex-col justify-between h-40 transition-all duration-200 hover:border-white/20"
+            >
+              <span className="text-ritual-muted group-hover:text-ritual-cream transition-colors"><juego.Icono /></span>
+              <div>
+                <p className="font-display text-xl text-ritual-cream leading-tight">{juego.titulo}</p>
+                {juego.badge && (
+                  <p className="text-ritual-muted text-[11px] font-body mt-1 flex items-center gap-1">
+                    {juego.badge.conLlama && <IconLlama />}
+                    {juego.badge.texto}
+                  </p>
+                )}
+              </div>
+            </Link>
+          ))}
         </div>
 
-        {/* Ruleta Picante — el único 100% +18, tratamiento propio */}
-        <Link
-          href="/juegos/ruleta-picante"
-          prefetch
-          onClick={e => handleClick(e, '/juegos/ruleta-picante')}
-          className="group flex items-center gap-4 bg-[#D4A5A5]/8 border border-[#D4A5A5]/25 rounded-2xl px-5 py-5 transition-all duration-200 hover:border-[#D4A5A5]/45"
-        >
-          <span className="text-[#D4A5A5]"><IconLlama /></span>
-          <div className="flex-1 min-w-0">
-            <p className="font-display text-xl text-ritual-cream leading-tight">Ruleta Picante</p>
-            <p className="text-ritual-muted text-xs font-body mt-0.5">Solo para parejas que se animan</p>
-          </div>
-          <span className="text-[10px] font-body uppercase tracking-wider text-[#D4A5A5] border border-[#D4A5A5]/30 rounded-full px-2 py-0.5 flex-shrink-0">
-            +18
-          </span>
-        </Link>
+        {/* Especiales: tratamiento propio (hoy: Ruleta Picante, +18) */}
+        {especiales.map(juego => (
+          <Link
+            key={juego.id}
+            href={juego.href}
+            prefetch
+            onClick={e => handleClick(e, juego.href)}
+            className="group flex items-center gap-4 bg-[#D4A5A5]/8 border border-[#D4A5A5]/25 rounded-2xl px-5 py-5 transition-all duration-200 hover:border-[#D4A5A5]/45"
+          >
+            <span className="text-[#D4A5A5]"><juego.Icono /></span>
+            <div className="flex-1 min-w-0">
+              <p className="font-display text-xl text-ritual-cream leading-tight">{juego.titulo}</p>
+              <p className="text-ritual-muted text-xs font-body mt-0.5">{juego.descripcion}</p>
+            </div>
+            {juego.badge && (
+              <span className="text-[10px] font-body uppercase tracking-wider text-[#D4A5A5] border border-[#D4A5A5]/30 rounded-full px-2 py-0.5 flex-shrink-0">
+                {juego.badge.texto}
+              </span>
+            )}
+          </Link>
+        ))}
       </main>
 
       <BottomNav />
