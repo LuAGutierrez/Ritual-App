@@ -135,6 +135,14 @@ export type MatchStats = {
   updated_at: string
 }
 
+export type Momento = {
+  id: string
+  couple_id: string
+  juego: 'eleccion' | 'esto_aquello' | 'conoces'
+  tipo: 'primera_partida' | 'primera_coincidencia' | 'racha_5'
+  created_at: string
+}
+
 export type ConocesRound = {
   id: string
   couple_id: string

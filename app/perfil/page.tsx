@@ -4,10 +4,32 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { getPerfilAction, updatePerfilAction } from '@/app/actions/perfil'
 import type { PerfilData } from '@/app/actions/perfil'
+import { getCoupleMomentosAction } from '@/app/actions/momentos'
+import type { Momento } from '@/types'
 import NotificationPrefsSection from '@/components/NotificationPrefsSection'
 import BottomNav from '@/components/BottomNav'
 import PageLoader from '@/components/PageLoader'
 import { createClient } from '@/lib/supabase/client'
+
+// El texto/emoji de cada momento vive acá, no en la base -- la RPC
+// (get_couple_momentos, migración 031) solo devuelve juego+tipo.
+const MOMENTO_COPY: Record<Momento['juego'], Record<Momento['tipo'], { emoji: string; texto: string }>> = {
+  eleccion: {
+    primera_partida: { emoji: '💫', texto: 'Primera vez que jugaron a Elección' },
+    primera_coincidencia: { emoji: '🔥', texto: 'Primera vez que coincidieron en Elección' },
+    racha_5: { emoji: '🔥', texto: '5 coincidencias seguidas en Elección' },
+  },
+  esto_aquello: {
+    primera_partida: { emoji: '⚡', texto: 'Primera vez que jugaron a Esto o Aquello' },
+    primera_coincidencia: { emoji: '⚡', texto: 'Primera vez que eligieron lo mismo en Esto o Aquello' },
+    racha_5: { emoji: '⚡', texto: '5 coincidencias seguidas en Esto o Aquello' },
+  },
+  conoces: {
+    primera_partida: { emoji: '👁️', texto: 'Primera vez que jugaron a ¿Cuánto me conoces?' },
+    primera_coincidencia: { emoji: '🎯', texto: 'Primera vez que acertaste qué respondió tu pareja' },
+    racha_5: { emoji: '🎯', texto: '5 aciertos seguidos en ¿Cuánto me conoces?' },
+  },
+}
 
 const AVATARS = [
   '🌙', '✨', '🌿', '🦋', '🌸', '🔥', '💫', '🌊',
@@ -25,6 +47,7 @@ const CATEGORY_LABELS: Record<string, string> = {
 export default function PerfilPage() {
   const router = useRouter()
   const [data, setData] = useState<PerfilData | null>(null)
+  const [momentos, setMomentos] = useState<Momento[]>([])
   const [loading, setLoading] = useState(true)
   const [nombre, setNombre] = useState('')
   const [avatar, setAvatar] = useState('')
@@ -40,6 +63,7 @@ export default function PerfilPage() {
       setAvatar(d.profile.avatar ?? '🌙')
       setLoading(false)
     })
+    getCoupleMomentosAction().then(setMomentos)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -201,6 +225,35 @@ export default function PerfilPage() {
             </div>
           )}
         </div>
+
+        {/* Momentos -- hitos de los juegos, no solo del ritual */}
+        {momentos.length > 0 && (
+          <div className="pt-2">
+            <h2 className="text-ritual-muted text-xs font-body uppercase tracking-wider mb-4">
+              Momentos
+            </h2>
+            <div className="space-y-2">
+              {momentos.map(m => {
+                const copy = MOMENTO_COPY[m.juego]?.[m.tipo]
+                if (!copy) return null
+                return (
+                  <div
+                    key={m.id}
+                    className="flex items-center gap-3 bg-ritual-bg-soft border border-white/8 rounded-2xl px-4 py-3"
+                  >
+                    <span className="text-xl">{copy.emoji}</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-ritual-cream font-body text-sm">{copy.texto}</p>
+                      <p className="text-ritual-muted text-[11px] font-body mt-0.5">
+                        {new Date(m.created_at).toLocaleDateString('es-AR', { day: 'numeric', month: 'long' })}
+                      </p>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
 
         {/* Link al historial */}
         <button
