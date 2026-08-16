@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { getRuletaPicanteItemsAction } from '@/app/actions/ruleta-picante'
-import { logContenidoRechazadoAction } from '@/app/actions/contenido-rechazado'
+import { logContenidoRechazadoAction, getRechazadosAction } from '@/app/actions/contenido-rechazado'
 import type { RuletaPicanteItem } from '@/types'
 
 function pickIndex(total: number, vistos: Set<number>): number {
@@ -19,19 +19,29 @@ export default function RuletaPicantePage() {
   const [girando, setGirando] = useState(false)
   const [vistos, setVistos] = useState<Set<number>>(new Set())
   const [items, setItems] = useState<RuletaPicanteItem[]>([])
+  const [rechazados, setRechazados] = useState<Set<string>>(new Set())
 
   useEffect(() => {
     getRuletaPicanteItemsAction().then(setItems)
+    getRechazadosAction('ruleta_picante').then(ids => setRechazados(new Set(ids)))
   }, [])
 
+  // Evita repetir lo que ya pasaron -- pero si eso deja muy pocas
+  // opciones (el pool es chico, 12 en total), se prioriza variedad y
+  // se gira sobre la lista completa.
+  const itemsDisponibles = (() => {
+    const sinRechazados = items.filter(item => !rechazados.has(item.id))
+    return sinRechazados.length >= 3 ? sinRechazados : items
+  })()
+
   function girar() {
-    if (items.length === 0) return
+    if (itemsDisponibles.length === 0) return
     setGirando(true)
     setTimeout(() => {
       setVistos(prev => {
-        const idx = pickIndex(items.length, prev)
-        const next = prev.size >= items.length - 1 ? new Set([idx]) : new Set(prev).add(idx)
-        setPromptItem(items[idx])
+        const idx = pickIndex(itemsDisponibles.length, prev)
+        const next = prev.size >= itemsDisponibles.length - 1 ? new Set([idx]) : new Set(prev).add(idx)
+        setPromptItem(itemsDisponibles[idx])
         return next
       })
       setGirando(false)
@@ -41,7 +51,10 @@ export default function RuletaPicantePage() {
   // Acción segura "no quiero hacer esto" -- distinta de "Girar de
   // nuevo": deja registro de qué se rechazó y nunca rompe la partida.
   function pasar() {
-    if (promptItem) logContenidoRechazadoAction('ruleta_picante', promptItem.id)
+    if (promptItem) {
+      logContenidoRechazadoAction('ruleta_picante', promptItem.id)
+      setRechazados(prev => new Set(prev).add(promptItem.id))
+    }
     girar()
   }
 
