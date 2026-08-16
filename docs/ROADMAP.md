@@ -110,13 +110,13 @@ Además del ritual diario, se agregó una sección `/juegos` para engagement fue
 
 - [x] Hub `/juegos` con las 4 opciones
 - [x] Elección — match sincronizado por Realtime (`couple_eleccion_rounds`, migración `015`), portado del legacy `eleccion-remoto` pero sin sistema de salas (usa `couple_id` directo)
-- [x] Verdad o Reto — contenido estático, un solo dispositivo
+- [x] Verdad o Reto — un solo dispositivo
 - [x] Esto o Aquello — rondas rápidas tipo icebreaker, un solo dispositivo
 - [x] Ruleta Picante — contenido +18, con pantalla de aviso previo
 - [x] Tab "Juegos" en la nav bar inferior
+- [x] Contenido dinámico desde DB en vez de arrays estáticos (migración `026`: tablas `verdad_o_reto_items`, `esto_o_aquello_items`, `eleccion_prompts`, `ruleta_picante_items`, mismo patrón que `rituals`)
 - [ ] Variantes de Elección con consecuencia/doble apuesta (specs ya escritas en `docs/archivo-anterior/ELECCION-OPCIONES-2-Y-3.md`)
 - [ ] Gating premium para Ruleta Picante (hoy es libre para todos)
-- [ ] Contenido dinámico desde DB en vez de arrays estáticos en `lib/juegos.ts` (permitiría admin/IA generar más adelante)
 
 ---
 
