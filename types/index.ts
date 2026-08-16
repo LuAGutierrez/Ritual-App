@@ -126,6 +126,15 @@ export type RuletaPicanteItem = {
   texto: string
 }
 
+export type MatchStats = {
+  couple_id: string
+  coincidencias: number
+  intentos: number
+  racha_actual: number
+  racha_maxima: number
+  updated_at: string
+}
+
 export type ConocesRound = {
   id: string
   couple_id: string

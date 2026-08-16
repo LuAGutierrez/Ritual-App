@@ -9,7 +9,7 @@ import {
   submitEleccionChoiceAction,
 } from '@/app/actions/eleccion'
 import { getIsCouplePremiumAction } from '@/app/actions/subscription'
-import type { EleccionRound, UserContext } from '@/types'
+import type { EleccionRound, MatchStats, UserContext } from '@/types'
 import PageLoader from '@/components/PageLoader'
 import PicanteUpsell from '@/components/PicanteUpsell'
 
@@ -22,6 +22,7 @@ export default function EleccionPage() {
 
   const [ctx, setCtx] = useState<UserContext | null>(null)
   const [round, setRound] = useState<EleccionRound | null>(null)
+  const [stats, setStats] = useState<MatchStats | null>(null)
   const [loading, setLoading] = useState(true)
   const [starting, setStarting] = useState(false)
   const [submitting, setSubmitting] = useState(false)
@@ -46,6 +47,14 @@ export default function EleccionPage() {
           setRound(payload.new as EleccionRound)
         }
       )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'couple_eleccion_stats', filter: `couple_id=eq.${coupleId}` },
+        (payload) => {
+          if (payload.eventType === 'DELETE') return
+          setStats(payload.new as MatchStats)
+        }
+      )
       .subscribe()
 
     channelRef.current = channel
@@ -59,6 +68,7 @@ export default function EleccionPage() {
 
       setCtx(pageData.context)
       setRound(pageData.round)
+      setStats(pageData.stats)
       subscribeToRounds(pageData.context.couple.id)
       setLoading(false)
     }
@@ -163,6 +173,21 @@ export default function EleccionPage() {
               <PicanteUpsell />
             ) : (
               <div className="text-center space-y-6">
+                {stats && stats.intentos > 0 && (
+                  <div className="flex items-center justify-center gap-8">
+                    <div>
+                      <p className="font-display text-4xl text-ritual-cream">{stats.racha_actual}</p>
+                      <p className="text-ritual-muted text-[11px] font-body uppercase tracking-wider mt-1">racha actual</p>
+                    </div>
+                    <div className="w-px h-10 bg-white/10" />
+                    <div>
+                      <p className="font-display text-4xl text-ritual-cream">
+                        {Math.round((stats.coincidencias / stats.intentos) * 100)}%
+                      </p>
+                      <p className="text-ritual-muted text-[11px] font-body uppercase tracking-wider mt-1">coincidencias</p>
+                    </div>
+                  </div>
+                )}
                 <p className="text-3xl">✦</p>
                 <p className="font-display text-2xl text-ritual-cream">¿Coinciden?</p>
                 <p className="text-ritual-muted font-body text-sm leading-relaxed">

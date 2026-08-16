@@ -1,22 +1,23 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
-import type { EleccionRound, UserContext } from '@/types'
+import type { EleccionRound, MatchStats, UserContext } from '@/types'
 
-// Junta contexto + ronda activa en un solo round-trip (ver
-// get_eleccion_page_data() en la migracion 018), mismo enfoque que
-// /ritual y /historial -- antes eran dos llamadas en fila
-// (getUserContextAction + getActiveEleccionRoundAction).
+// Junta contexto + ronda activa + stats en un solo round-trip (ver
+// get_eleccion_page_data() en la migracion 018, stats agregadas en la
+// 029), mismo enfoque que /ritual y /historial -- antes eran dos
+// llamadas en fila (getUserContextAction + getActiveEleccionRoundAction).
 export async function getEleccionPageDataAction(): Promise<{
   context: UserContext
   round: EleccionRound | null
+  stats: MatchStats | null
 } | null> {
   const supabase = await createClient()
   const { data, error } = await supabase.rpc('get_eleccion_page_data')
 
   if (error || !data) return null
 
-  return data as { context: UserContext; round: EleccionRound | null }
+  return data as { context: UserContext; round: EleccionRound | null; stats: MatchStats | null }
 }
 
 export async function startEleccionRoundAction(
