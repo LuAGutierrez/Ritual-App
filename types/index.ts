@@ -103,6 +103,7 @@ export type VerdadORetoItem = {
   modo: 'verdad' | 'reto'
   texto: string
   picante: boolean
+  par_picante_id: string | null
 }
 
 export type EstoAquelloItem = {
