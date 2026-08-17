@@ -122,6 +122,20 @@ function AuthForm() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab])
 
+  // Si el usuario toca "Continuar con Google" y después vuelve atrás sin
+  // terminar el login (ej. cancela en la pantalla de cuentas de Google),
+  // el navegador puede restaurar esta página desde el back/forward cache
+  // tal cual quedó al irse -- con loading=true congelado para siempre,
+  // porque signInWithOAuth asume que la página nunca vuelve. pageshow con
+  // persisted=true detecta exactamente ese caso y libera los botones.
+  useEffect(() => {
+    function handlePageShow(e: PageTransitionEvent) {
+      if (e.persisted) setLoading(false)
+    }
+    window.addEventListener('pageshow', handlePageShow)
+    return () => window.removeEventListener('pageshow', handlePageShow)
+  }, [])
+
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event: AuthChangeEvent) => {
       if (event === 'PASSWORD_RECOVERY') {
