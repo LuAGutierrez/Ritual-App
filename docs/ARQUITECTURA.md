@@ -149,6 +149,8 @@ supabase/
     040_rondas_jugadas.sql  <- couple_rondas_jugadas (VoR/Ruleta Picante, alimenta niveles y variedad)
     041/042_momento_primera_partida_*.sql <- Momento "primera partida" para VoR y Ruleta Picante
     043_historial_juegos.sql <- get_historial_juegos(): historial combinado de los 6 juegos
+    044_display_name_en_trigger_signup.sql <- Fix: handle_new_user() ahora guarda display_name
+                             desde raw_user_meta_data (antes solo copiaba id/email)
 
 middleware.ts               <- Protección de rutas autenticadas
 vercel.json                 <- Cron schedule
