@@ -181,6 +181,25 @@ hace falta un botón de "olvidar preferencia" más que el `✕` que ya limpia el
 **Explícitamente descartado**: persistirla entre dispositivos/sesiones. Igual que el resto del estado
 de variedad (última categoría jugada, `ultimaCategoriaRef`), queda intencionalmente efímera.
 
+**Reversión (17/08)**: se sacaron los chips de la UI en `/juegos`. Motivo del usuario: darle al
+cliente la posibilidad explícita de elegir categoría hace que se concentre únicamente en esa, en
+contra del espíritu de variedad/descubrimiento que se buscaba con la selección automática de
+contenido. Se evaluó sacar el mecanismo completo, pero se decidió dejarlo (`lib/categoriaPreferida.ts`
+y el parámetro `categoriaPreferida` en los 6 `app/actions/*` de juegos) por si se quiere reactivar
+más adelante con otro diseño — por ejemplo, controlado por el sistema en vez de por elección manual
+del usuario. Sin UI que llame a `setCategoriaPreferida`, `getCategoriaPreferida()` siempre devuelve
+`null`, así que hoy es código sin efecto: la cadena de selección de contenido queda funcionando solo
+con techo de intensidad + variedad automática.
+
+**Hallazgo de contenido relacionado** (post-mortem, no motivó la reversión pero quedó documentado):
+al revisar cuánto contenido hay por categoría, la categoría "Reto" no tiene ningún ítem en ninguno de
+los 6 juegos, y "¿Cuánto me conoces?"/"¿Quién de los dos?" usan categorías internas ("nosotros",
+"comparación") que no son ninguna de las 7 seleccionables — para esos dos juegos en modo normal, el
+filtro de categoría preferida nunca podía matchear nada. Además, casi todo el contenido picante de
+los 6 juegos está categorizado como "Fantasías" — elegir cualquier otra categoría no tenía efecto
+real sobre el modo picante de ningún juego. Si en el futuro se reactiva el mecanismo, conviene
+revisar/ampliar el contenido por categoría antes.
+
 ---
 
 ## Sin modelo formal de turnos
