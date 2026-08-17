@@ -37,6 +37,20 @@ export async function logRondaJugadaAction(
     item_id: itemId,
     categoria,
   })
+
+  // "primera_partida" para Verdad o Reto: el único Momento de este
+  // juego que se detecta acá en vez de en un _resolve_*_stats
+  // server-side (no tiene reveal). La policy + índice único (migración
+  // 041) lo hacen seguro pedir en cada ronda -- después de la primera,
+  // el INSERT falla en silencio por la constraint, no hace falta
+  // chequear el error acá (mismo criterio que registrarRetoDobleCompletadoAction).
+  if (juego === 'verdad_o_reto') {
+    await supabase.from('couple_momentos').insert({
+      couple_id: coupleId,
+      juego: 'verdad_o_reto',
+      tipo: 'primera_partida',
+    })
+  }
 }
 
 export async function getUltimaCategoriaRondaAction(juego: JuegoSimple): Promise<string | null> {
