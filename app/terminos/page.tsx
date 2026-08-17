@@ -115,8 +115,8 @@ export default function TerminosPage() {
         <section className="space-y-2">
           <h2 className="font-display text-lg text-ritual-cream">12. Contacto</h2>
           <p className="text-ritual-text font-body text-sm leading-relaxed">
-            <a href="mailto:hola@rituales.app" className="text-ritual-gold hover:text-ritual-cream transition-colors">
-              hola@rituales.app
+            <a href="mailto:ritual.platform@gmail.com" className="text-ritual-gold hover:text-ritual-cream transition-colors">
+              ritual.platform@gmail.com
             </a>
           </p>
         </section>
