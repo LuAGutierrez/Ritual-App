@@ -13,11 +13,16 @@
   → Si requiere confirmación: mensaje "revisá tu email"
   → Email confirmado → /auth/callback?token_hash=... → /ritual
 
-/onboarding (si no tiene display_name en profiles)
+/onboarding (si no tiene display_name en profiles -- primera vez)
   paso 1: ingresar nombre → supabase profiles.update({ display_name })
   paso 2: "Crear pareja e invitar" → crearPareja() → link /unirse/[code]
     (único camino -- se sacó el botón "Explorar solo": /ritual no soporta
     responder sin pareja, get_ritual_page_data() no crea sesión sin couple_id)
+
+/ritual, estado no_couple (ya tiene nombre, pero no pareja)
+  → botón "Vincular pareja" llama crearPareja() directo ahí mismo, sin pasar
+    por /onboarding (esa pantalla intermedia no aportaba nada para alguien
+    que ya tiene nombre guardado) → muestra el link de invitación inline
 
 /unirse/[code] (invitado)
   → verificarInvitacionAction(code) → supabase.rpc('check_invite_code')

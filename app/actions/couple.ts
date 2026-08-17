@@ -28,6 +28,7 @@ export async function crearPareja() {
   }
 
   revalidatePath('/onboarding')
+  revalidatePath('/ritual')
   return { inviteCode: couple.invite_code as string }
 }
 
