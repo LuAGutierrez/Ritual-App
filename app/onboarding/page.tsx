@@ -1,9 +1,10 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { crearPareja } from '@/app/actions/couple'
+import PageLoader from '@/components/PageLoader'
 
 type Step = 'nombre' | 'opciones' | 'esperando'
 
@@ -18,6 +19,7 @@ export default function OnboardingPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
+  const [isPending, startTransition] = useTransition()
 
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data: { user } }) => {
@@ -80,12 +82,20 @@ export default function OnboardingPage() {
     }
   }
 
-  async function continuar() {
-    router.push('/ritual')
+  function continuar() {
+    startTransition(() => {
+      router.push('/ritual')
+    })
   }
 
   return (
     <div className="min-h-dvh bg-ritual-bg flex flex-col items-center justify-center px-6 py-12">
+      {isPending && (
+        <div className="fixed inset-0 z-50">
+          <PageLoader />
+        </div>
+      )}
+
       <div className="w-full max-w-sm">
 
         {/* PASO 1: Nombre */}
