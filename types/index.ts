@@ -138,8 +138,8 @@ export type MatchStats = {
 export type Momento = {
   id: string
   couple_id: string
-  juego: 'eleccion' | 'esto_aquello' | 'conoces' | 'quien_de_los_dos'
-  tipo: 'primera_partida' | 'primera_coincidencia' | 'racha_5' | 'sorpresa'
+  juego: 'eleccion' | 'esto_aquello' | 'conoces' | 'quien_de_los_dos' | 'verdad_o_reto'
+  tipo: 'primera_partida' | 'primera_coincidencia' | 'racha_5' | 'sorpresa' | 'reto_doble'
   created_at: string
 }
 

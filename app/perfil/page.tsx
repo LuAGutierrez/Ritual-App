@@ -21,24 +21,35 @@ const MOMENTO_COPY: Record<Momento['juego'], Record<Momento['tipo'], { emoji: st
     primera_coincidencia: { emoji: '🔥', texto: 'Primera vez que coincidieron en Elección' },
     racha_5: { emoji: '🔥', texto: '5 coincidencias seguidas en Elección' },
     sorpresa: { emoji: '✨', texto: 'Un momento sorpresa en Elección' },
+    reto_doble: { emoji: '🔥', texto: 'Reto doble completado' },
   },
   esto_aquello: {
     primera_partida: { emoji: '⚡', texto: 'Primera vez que jugaron a Esto o Aquello' },
     primera_coincidencia: { emoji: '⚡', texto: 'Primera vez que eligieron lo mismo en Esto o Aquello' },
     racha_5: { emoji: '⚡', texto: '5 coincidencias seguidas en Esto o Aquello' },
     sorpresa: { emoji: '✨', texto: 'Un momento sorpresa en Esto o Aquello' },
+    reto_doble: { emoji: '🔥', texto: 'Reto doble completado' },
   },
   conoces: {
     primera_partida: { emoji: '👁️', texto: 'Primera vez que jugaron a ¿Cuánto me conoces?' },
     primera_coincidencia: { emoji: '🎯', texto: 'Primera vez que acertaste qué respondió tu pareja' },
     racha_5: { emoji: '🎯', texto: '5 aciertos seguidos en ¿Cuánto me conoces?' },
     sorpresa: { emoji: '✨', texto: 'Un momento sorpresa en ¿Cuánto me conoces?' },
+    reto_doble: { emoji: '🔥', texto: 'Reto doble completado' },
   },
   quien_de_los_dos: {
     primera_partida: { emoji: '⚖️', texto: 'Primera vez que jugaron a ¿Quién de los dos?' },
     primera_coincidencia: { emoji: '⚖️', texto: 'Primera vez que coincidieron en ¿Quién de los dos?' },
     racha_5: { emoji: '⚖️', texto: '5 coincidencias seguidas en ¿Quién de los dos?' },
     sorpresa: { emoji: '✨', texto: 'Un momento sorpresa en ¿Quién de los dos?' },
+    reto_doble: { emoji: '🔥', texto: 'Reto doble completado' },
+  },
+  verdad_o_reto: {
+    primera_partida: { emoji: '🎲', texto: 'Primera vez que jugaron a Verdad o Reto' },
+    primera_coincidencia: { emoji: '🎲', texto: 'Primera vez que jugaron a Verdad o Reto' },
+    racha_5: { emoji: '🎲', texto: 'Primera vez que jugaron a Verdad o Reto' },
+    sorpresa: { emoji: '✨', texto: 'Un momento sorpresa en Verdad o Reto' },
+    reto_doble: { emoji: '🔥', texto: 'Primer Reto Doble completado' },
   },
 }
 
