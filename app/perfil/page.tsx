@@ -59,6 +59,14 @@ const MOMENTO_COPY: Record<Momento['juego'], Record<Momento['tipo'], { emoji: st
     reto_doble: { emoji: '🔥', texto: 'Primer Reto Doble completado' },
     primer_desacuerdo: { emoji: '💭', texto: 'Primera vez que jugaron a Verdad o Reto' },
   },
+  ruleta_picante: {
+    primera_partida: { emoji: '🔥', texto: 'Primera vez que jugaron a Ruleta Picante' },
+    primera_coincidencia: { emoji: '🔥', texto: 'Primera vez que jugaron a Ruleta Picante' },
+    racha_5: { emoji: '🔥', texto: 'Primera vez que jugaron a Ruleta Picante' },
+    sorpresa: { emoji: '✨', texto: 'Un momento sorpresa en Ruleta Picante' },
+    reto_doble: { emoji: '🔥', texto: 'Primera vez que jugaron a Ruleta Picante' },
+    primer_desacuerdo: { emoji: '💭', texto: 'Primera vez que jugaron a Ruleta Picante' },
+  },
 }
 
 const AVATARS = [
