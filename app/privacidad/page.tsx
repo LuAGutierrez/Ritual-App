@@ -74,8 +74,8 @@ export default function PrivacidadPage() {
           <p className="text-ritual-text font-body text-sm leading-relaxed">
             Podés pedirnos en cualquier momento acceder a tus datos, corregirlos o eliminar tu cuenta.
             Escribinos a{' '}
-            <a href="mailto:hola@rituales.app" className="text-ritual-gold hover:text-ritual-cream transition-colors">
-              hola@rituales.app
+            <a href="mailto:ritual.platform@gmail.com" className="text-ritual-gold hover:text-ritual-cream transition-colors">
+              ritual.platform@gmail.com
             </a>.
           </p>
         </section>
@@ -98,8 +98,8 @@ export default function PrivacidadPage() {
         <section className="space-y-2">
           <h2 className="font-display text-lg text-ritual-cream">9. Contacto</h2>
           <p className="text-ritual-text font-body text-sm leading-relaxed">
-            <a href="mailto:hola@rituales.app" className="text-ritual-gold hover:text-ritual-cream transition-colors">
-              hola@rituales.app
+            <a href="mailto:ritual.platform@gmail.com" className="text-ritual-gold hover:text-ritual-cream transition-colors">
+              ritual.platform@gmail.com
             </a>
           </p>
         </section>
