@@ -493,7 +493,9 @@ function AuthForm() {
           <>
             <div className="flex items-center gap-3 my-6">
               <div className="h-px flex-1 bg-white/10" />
-              <span className="text-ritual-muted text-xs font-body">o</span>
+              <span className="text-ritual-muted text-xs font-body">
+                {tab === 'login' ? 'o iniciá con' : 'o registrate con'}
+              </span>
               <div className="h-px flex-1 bg-white/10" />
             </div>
 
