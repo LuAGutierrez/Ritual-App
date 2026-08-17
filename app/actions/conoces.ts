@@ -17,10 +17,16 @@ export async function getConocesPageDataAction(): Promise<{
   return data as { context: UserContext; round: ConocesRound | null; stats: ConocesStats | null }
 }
 
+// Probabilidad del evento especial "Cambio de Roles": en vez de
+// alternar como siempre, el mismo que fue sujeto la última vez vuelve
+// a serlo esta ronda. Baja a propósito -- si pasara seguido, dejaría
+// de sentirse como una sorpresa y empezaría a sentirse injusto.
+const PROBABILIDAD_CAMBIO_DE_ROLES = 0.2
+
 // Elige un item al azar (evitando repetir preguntas vistas en la sesión,
 // igual que startEleccionRoundAction) y decide subject_user_id con
 // siguienteTurno() -- robusto a rondas abandonadas sin reveal, porque
-// cuentan igual para la paridad.
+// mira el actor real de la última ronda, no un conteo.
 export async function startConocesRoundAction(
   coupleId: string,
   excluir: string[] = []
@@ -38,7 +44,8 @@ export async function startConocesRoundAction(
   const pool = disponibles.length > 0 ? disponibles : items
   const item = pool[Math.floor(Math.random() * pool.length)]
 
-  const turno = await siguienteTurno(supabase, coupleId, 'couple_conoces_rounds')
+  const cambioDeRoles = Math.random() < PROBABILIDAD_CAMBIO_DE_ROLES
+  const turno = await siguienteTurno(supabase, coupleId, 'couple_conoces_rounds', 'subject_user_id', cambioDeRoles)
   if (!turno) return null
   const { user1, user2, actorId: subjectUserId } = turno
 

@@ -139,7 +139,7 @@ export type Momento = {
   id: string
   couple_id: string
   juego: 'eleccion' | 'esto_aquello' | 'conoces'
-  tipo: 'primera_partida' | 'primera_coincidencia' | 'racha_5'
+  tipo: 'primera_partida' | 'primera_coincidencia' | 'racha_5' | 'sorpresa'
   created_at: string
 }
 
