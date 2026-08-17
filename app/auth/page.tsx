@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useLayoutEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import type { AuthChangeEvent } from '@supabase/supabase-js'
 
@@ -531,6 +532,18 @@ function AuthForm() {
               </button>
             </>
           )}
+        </p>
+
+        <p className="text-center text-ritual-muted/60 text-[11px] font-body mt-8 leading-relaxed">
+          Al continuar aceptás los{' '}
+          <Link href="/terminos" className="underline hover:text-ritual-muted transition-colors">
+            Términos de Servicio
+          </Link>{' '}
+          y la{' '}
+          <Link href="/privacidad" className="underline hover:text-ritual-muted transition-colors">
+            Política de Privacidad
+          </Link>
+          .
         </p>
       </div>
     </div>
