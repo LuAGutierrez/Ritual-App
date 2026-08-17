@@ -1,6 +1,6 @@
 # Deuda técnica y oportunidades de mejora — Rituales
 
-Última actualización: julio 2026
+Última actualización: 17 de agosto de 2026
 
 > Este documento registra problemas conocidos, deuda técnica y oportunidades de simplificación/refactorización.
 > NO modificar código sin primero entender el impacto. Ver FLUJO.md y ARQUITECTURA.md.
@@ -147,3 +147,31 @@ El algoritmo `dayOfYear % rituals.length` hace que los rituales se repitan anual
 
 ### Pareja de exactamente 2 personas
 El modelo `user1_id / user2_id` en `couple_ritual_sessions` asume exactamente 2 miembros. El ROADMAP menciona "grupos pequeños" como expansión futura — requeriría refactor significativo del modelo de sesiones.
+
+### Las 4 tablas de ronda con reveal no guardan `item_id`/`categoria`/`intensidad` propia
+**Archivos**: `couple_eleccion_rounds`, `couple_esto_aquello_rounds`, `couple_conoces_rounds`, `couple_quien_de_los_dos_rounds`.
+**Problema**: solo guardan el texto ya copiado (`option_a`/`option_b`/`pregunta`), no el `item_id` del contenido original ni su `categoria`/`intensidad`. La tab "Juegos" de `/historial` (`get_historial_juegos`, migración `043`) puede mostrar qué se jugó y el resultado para estos 4 juegos, pero no la categoría — sí puede para Verdad o Reto/Ruleta Picante, que sí persisten `categoria` vía `couple_rondas_jugadas` + join a su tabla de contenido.
+**Solución** (no hecha, deliberadamente fuera de la pasada de agosto 2026): ampliar las 4 tablas con `item_id`/`categoria`, tocando los 4 `submit_*_choice` (`SECURITY DEFINER`) + backfill. Beneficio marginal frente al costo, se dejó documentado como límite conocido.
+
+### Sin tracking de intensidad por ronda jugada
+No existe ningún lugar que registre qué intensidad tuvo cada ronda individual (solo el techo máximo configurado por la pareja, `couples.intensidad_maxima`). "Sugerir subir el techo" en `/perfil` usa una señal más simple ya disponible (`totalJuegos >= 10` con techo en `liviana`) en vez de "cuántas rondas jugaron ya en Liviana", que requeriría este tracking.
+
+### Momento "nueva categoría descubierta" no implementado
+De los tipos de Momento posibles, se implementaron sorpresa, reto doble, gran desacuerdo y primera partida (VoR/Ruleta Picante) — un Momento por "la pareja probó una categoría que nunca había jugado" quedó deliberadamente fuera, sin fecha planeada.
+
+---
+
+## Resuelto (agosto 2026, sesión del 17/08)
+
+Tres bloqueos de producción, todos relacionados con no tener un dominio propio verificado:
+
+- **Google Sign-In mostraba la URL cruda de Supabase** en vez de "Rituales" en el selector de cuenta.
+  No era un problema de dominio custom pago de Supabase (como se pensó al principio) sino de **Google
+  Brand Verification** (gratuita) — requería que `app/AuthHashRedirect.tsx` mostrara contenido real
+  (no solo un spinner) para que el crawler de verificación pudiera leer de qué trata la app.
+- **Registro con email/contraseña roto para cualquiera que no fuera el dueño de la cuenta** — Resend
+  en modo sandbox sin dominio verificado. Se resolvió al verificarse `mail.rituales.site`.
+- **Mercado Pago rechazaba el checkout en producción** por `back_url` en `*.vercel.app`. Se resolvió
+  actualizando `MP_BACK_URL` a `https://www.rituales.site/precios`. Al probar el fix se descubrió que
+  `MP_ACCESS_TOKEN` **ya era un token de producción** (no cambiado en esta sesión) — el checkout de
+  `/precios` puede procesar cobros reales desde ahora.

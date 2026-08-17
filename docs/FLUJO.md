@@ -1,6 +1,6 @@
 # Flujos de usuario — Rituales
 
-Última actualización: julio 2026
+Última actualización: 17 de agosto de 2026
 
 ---
 
@@ -163,4 +163,71 @@ Fallback para links legacy (hash-based):
 middleware.ts:
   → rutas protegidas: /ritual, /onboarding, /historial, /perfil, /precios
   → !user → redirect /auth?redirect=pathname
+```
+
+---
+
+## 8. Juegos: cadena de selección de contenido (los 6 juegos)
+
+```
+Se repite igual en Elección, Esto o Aquello, ¿Cuánto me conoces?, ¿Quién de los dos?,
+Verdad o Reto y Ruleta Picante — solo cambia dónde vive el filtro (server action para los primeros 4,
+client-side para VoR/Ruleta que ya cargan su lista completa):
+
+  1. Techo de intensidad: descarta items con intensidad > couples.intensidad_maxima
+     (lib/intensidad.ts) — si el filtro deja 0 opciones, se relaja (no debería pasar salvo
+     catálogo muy chico)
+  2. Variedad: descarta la última categoría jugada en la sesión (ultimaCategoriaRef /
+     sessionStorage) — SOLO si quedan >= 3 opciones después de descartar; si no, se ignora
+     este filtro (evita quedarse sin contenido)
+  3. Categoría preferida "pegajosa": si getCategoriaPreferida() (lib/categoriaPreferida.ts,
+     sessionStorage) tiene un valor, preferir items de esa categoría entre lo que sobrevivió
+     los pasos 1-2 — mismo criterio de fallback si deja <3 opciones
+  4. Excluir contenido ya rechazado por la pareja (contenido-rechazado.ts, "no me gusta")
+  5. Elegir al azar entre lo que sobrevive la cadena
+
+Verdad o Reto y Ruleta Picante, además, registran la ronda jugada server-side
+(app/actions/rondas-jugadas.ts → couple_rondas_jugadas) — es la única fuente que trackea
+categoría por ronda individual, usada para: variedad entre sesiones (no solo dentro de la
+sesión actual), niveles de progresión (lib/niveles.ts) y el tab "Juegos" de /historial.
+```
+
+---
+
+## 9. Detección de Momentos
+
+```
+app/actions/momentos.ts centraliza la detección — se llama desde el submit de cada juego
+relevante, después de confirmar el resultado de la ronda:
+
+  sorpresa                          → condición ad-hoc en el submit de la ronda
+  reto_doble                        → dos "reto" seguidos en Verdad o Reto
+  gran_desacuerdo                   → discrepancia marcada en ¿Quién de los dos? / Conoces
+  primera_partida_verdad_o_reto     → primera fila en couple_rondas_jugadas para ese juego/pareja
+  primera_partida_ruleta_picante    → ídem para Ruleta Picante
+
+Cada Momento detectado se INSERTa en couple_momentos y se muestra en /perfil (MOMENTO_COPY,
+mapa de copy por tipo, vive en el componente — igual criterio que el copy de juegos).
+Sin Realtime: se ven la próxima vez que /perfil carga, no hay notificación push por Momento.
+```
+
+---
+
+## 10. Historial de juegos (tab "Juegos" en /historial)
+
+```
+/historial (tab "Juegos", carga lazy — solo al tocar el tab, no en la carga inicial)
+  getHistorialJuegosAction(juego, offset)
+    → RPC get_historial_juegos(p_juego, p_limit, p_offset) (SECURITY INVOKER, resuelve
+      couple_id vía auth.uid() igual que get_juegos_stats_summary)
+    → UNION ALL de las 6 fuentes:
+        Elección / Esto o Aquello / ¿Quién de los dos? → resultado = coincidieron | no_coincidieron
+          (comparando user1_choice vs user2_choice), categoria = NULL (no se guarda por ronda)
+        ¿Cuánto me conoces? → resultado = acierto | no_acierto, categoria = NULL
+        Verdad o Reto / Ruleta Picante → desde couple_rondas_jugadas + JOIN a su tabla de
+          contenido (la ronda solo guarda item_id), resultado = NULL, categoria disponible
+    → filtro revealed_at IS NOT NULL (solo rondas completas)
+    → pide limit+1 filas para hasMore, mismo truco que el historial de rituales
+
+  Filtro por juego (chips, "Todos" + los 6), sin paywall.
 ```
