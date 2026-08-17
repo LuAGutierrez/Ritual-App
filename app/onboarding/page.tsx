@@ -129,7 +129,7 @@ export default function OnboardingPage() {
                 Hola, {nombre}
               </h2>
               <p className="text-ritual-muted font-body text-sm leading-relaxed">
-                ¿Querés empezar el ritual<br />o invitar a tu pareja primero?
+                El ritual se hace de a dos.<br />Invitá a tu pareja para empezar.
               </p>
             </div>
 
@@ -137,22 +137,13 @@ export default function OnboardingPage() {
               <p className="text-red-400/80 text-sm font-body text-center mb-4">{error}</p>
             )}
 
-            <div className="space-y-3">
-              <button
-                onClick={handleCrearPareja}
-                disabled={loading}
-                className="w-full bg-ritual-gold text-ritual-bg font-body font-medium py-4 rounded-2xl transition-all duration-300 hover:bg-ritual-cream active:scale-[0.98] disabled:opacity-40"
-              >
-                {loading ? 'Creando...' : 'Crear pareja e invitar'}
-              </button>
-
-              <button
-                onClick={() => router.push('/ritual')}
-                className="w-full bg-transparent border border-white/10 text-ritual-muted font-body text-sm py-4 rounded-2xl hover:border-white/20 hover:text-ritual-text transition-all duration-300"
-              >
-                Explorar solo por ahora
-              </button>
-            </div>
+            <button
+              onClick={handleCrearPareja}
+              disabled={loading}
+              className="w-full bg-ritual-gold text-ritual-bg font-body font-medium py-4 rounded-2xl transition-all duration-300 hover:bg-ritual-cream active:scale-[0.98] disabled:opacity-40"
+            >
+              {loading ? 'Creando...' : 'Crear pareja e invitar'}
+            </button>
           </div>
         )}
 

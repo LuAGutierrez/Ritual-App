@@ -257,19 +257,12 @@ export default function RitualPage() {
             <p className="text-ritual-muted font-body text-sm leading-relaxed">
               El ritual se completa cuando ambos participan.
             </p>
-            <div className="space-y-3">
-              <button
-                onClick={() => router.push('/onboarding')}
-                className="w-full bg-ritual-gold text-ritual-bg font-body font-medium py-4 rounded-2xl"
-              >
-                Vincular pareja
-              </button>
-              {session && (
-                <p className="text-ritual-muted text-xs font-body">
-                  Podés responder solo y el reveal se activa cuando se unan.
-                </p>
-              )}
-            </div>
+            <button
+              onClick={() => router.push('/onboarding')}
+              className="w-full bg-ritual-gold text-ritual-bg font-body font-medium py-4 rounded-2xl"
+            >
+              Vincular pareja
+            </button>
           </div>
         )}
 
@@ -380,19 +373,6 @@ export default function RitualPage() {
           </div>
         )}
 
-        {/* Pareja no vinculada y tiene ritual disponible */}
-        {state === 'no_couple' && session?.ritual && (
-          <div className="mt-8">
-            <div className="bg-ritual-bg-soft border border-white/8 rounded-3xl px-6 py-8 text-center opacity-50">
-              <p className="font-display text-xl text-ritual-cream leading-snug">
-                {session.ritual.prompt}
-              </p>
-              <p className="text-ritual-muted text-xs font-body mt-4">
-                Vinculá tu pareja para desbloquear el reveal
-              </p>
-            </div>
-          </div>
-        )}
       </main>
 
       {showPushPrompt && (

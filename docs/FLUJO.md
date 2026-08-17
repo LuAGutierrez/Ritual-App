@@ -15,9 +15,9 @@
 
 /onboarding (si no tiene display_name en profiles)
   paso 1: ingresar nombre → supabase profiles.update({ display_name })
-  paso 2: opciones
-    → "Crear pareja e invitar" → crearPareja() → link /unirse/[code]
-    → "Explorar solo" → /ritual
+  paso 2: "Crear pareja e invitar" → crearPareja() → link /unirse/[code]
+    (único camino -- se sacó el botón "Explorar solo": /ritual no soporta
+    responder sin pareja, get_ritual_page_data() no crea sesión sin couple_id)
 
 /unirse/[code] (invitado)
   → verificarInvitacionAction(code) → supabase.rpc('check_invite_code')
