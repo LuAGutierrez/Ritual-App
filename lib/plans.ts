@@ -9,7 +9,7 @@ export const FREE_FEATURES = [
 ] as const
 
 export const PREMIUM_FEATURES = [
-  'Modo picante en Elección, Verdad o Reto y Esto o Aquello',
+  'Modo picante en Elección, Verdad o Reto, Esto o Aquello y Ruleta Picante',
   'Todas las categorías exclusivas',
   'Historial completo sin límite',
   'Rituales de aniversario y hitos',
