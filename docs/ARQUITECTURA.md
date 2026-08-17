@@ -151,6 +151,8 @@ supabase/
     043_historial_juegos.sql <- get_historial_juegos(): historial combinado de los 6 juegos
     044_display_name_en_trigger_signup.sql <- Fix: handle_new_user() ahora guarda display_name
                              desde raw_user_meta_data (antes solo copiaba id/email)
+    045_invite_code_en_perfil.sql <- get_perfil_page_data() ahora expone inviteCode cuando la
+                             pareja tiene un solo miembro, para poder recuperar el link
 
 middleware.ts               <- Protección de rutas autenticadas
 vercel.json                 <- Cron schedule

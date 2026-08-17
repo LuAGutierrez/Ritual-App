@@ -181,3 +181,8 @@ Tres bloqueos de producción, todos relacionados con no tener un dominio propio 
   confirmación de email obligatoria (estado actual) eso nunca pasa. Consecuencia: `/onboarding`
   repreguntaba el nombre a todos los registros por email/contraseña. Corregido en la migración `044`
   para que el trigger lea `raw_user_meta_data->>'display_name'`. Ver `docs/DECISIONES.md`.
+- **El link de invitación se perdía si no lo copiabas en el momento.** Solo se mostraba una vez, al
+  crear la pareja (`/onboarding` o `/ritual`); si el usuario navegaba a otro lado sin copiarlo, no
+  había forma de recuperarlo desde la app — el `invite_code` seguía vivo en `couples` pero ningún
+  otro lugar lo mostraba. Corregido en la migración `045`: `/perfil` ahora lo muestra (con botón de
+  copiar) siempre que la pareja tenga un solo miembro.

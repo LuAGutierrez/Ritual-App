@@ -10,6 +10,7 @@ export type PerfilData = {
   categoriaFavorita: string | null
   partnerName: string | null
   isPremium: boolean
+  inviteCode: string | null
 }
 
 // El codigo TS anterior encadenaba hasta 9-10 round trips secuenciales
