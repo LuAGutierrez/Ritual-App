@@ -26,7 +26,24 @@ export default function ConocesPage() {
   const [starting, setStarting] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [copiedInvite, setCopiedInvite] = useState(false)
   const vistosRef = useRef<string[]>([])
+
+  // Pareja creada pero sin unir a nadie: startConocesRoundAction fallaba con
+  // un error generico ("No se pudo empezar la ronda") porque siguienteTurno()
+  // (lib/turnos.ts) necesita 2 miembros y devuelve null con uno solo. Mismo
+  // patron que /ritual y /perfil: mostrar el link de invitacion en vez de
+  // dejar que la falla se disfrace de "intentá de nuevo".
+  async function copyInviteLink() {
+    if (!ctx?.couple) return
+    try {
+      await navigator.clipboard.writeText(`${window.location.origin}/unirse/${ctx.couple.invite_code}`)
+      setCopiedInvite(true)
+      setTimeout(() => setCopiedInvite(false), 2000)
+    } catch {
+      setError('No se pudo copiar. Copiá el link manualmente.')
+    }
+  }
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const subscribeToCouple = useCallback((coupleId: string) => {
@@ -124,6 +141,46 @@ export default function ConocesPage() {
   }, [round?.id])
 
   if (loading) return <PageLoader />
+
+  if (ctx?.couple && !ctx.partnerProfile) {
+    return (
+      <div className="min-h-dvh bg-ritual-bg flex flex-col">
+        <header className="px-5 pt-8 pb-4 flex items-center justify-between">
+          <div>
+            <h1 className="font-display text-xl text-ritual-cream tracking-wide">¿Cuánto me conoces?</h1>
+            <p className="text-ritual-muted text-xs font-body mt-0.5">Uno responde sobre sí, el otro adivina</p>
+          </div>
+          <button
+            onClick={() => router.push('/juegos')}
+            className="text-ritual-muted text-xs font-body hover:text-ritual-text transition-colors py-2 px-2"
+          >
+            ← Juegos
+          </button>
+        </header>
+
+        <main className="flex-1 px-5 pb-28 flex flex-col justify-center max-w-md mx-auto w-full">
+          <div className="text-center space-y-6 animate-fade-up">
+            <p className="font-display text-2xl text-ritual-cream">Todavía no se unió nadie</p>
+            <p className="text-ritual-muted font-body text-sm leading-relaxed">
+              Este juego se juega de a dos. Compartí el link para que tu pareja se una.
+            </p>
+            <div className="bg-ritual-bg-soft border border-white/10 rounded-2xl p-4 text-left">
+              <p className="text-ritual-muted text-xs font-body mb-2">Link de invitación</p>
+              <p className="text-ritual-cream font-body text-sm break-all leading-relaxed">
+                {`${window.location.origin}/unirse/${ctx.couple.invite_code}`}
+              </p>
+            </div>
+            <button
+              onClick={copyInviteLink}
+              className="w-full bg-ritual-gold text-ritual-bg font-body font-medium py-4 rounded-2xl transition-all duration-300 hover:bg-ritual-cream active:scale-[0.98]"
+            >
+              {copiedInvite ? '¡Copiado!' : 'Copiar link'}
+            </button>
+          </div>
+        </main>
+      </div>
+    )
+  }
 
   const isSubject = round?.subject_user_id === ctx?.userId
   const miNombre = ctx?.profile?.display_name ?? 'Vos'

@@ -251,6 +251,25 @@ camino para quien recién se registra y todavía no tiene nombre.
 
 ---
 
+## "¿Cuánto me conoces?" avisa si nadie se unió, en vez de un error genérico
+
+**Decisión**: `app/juegos/conoces/page.tsx` ahora chequea `ctx.couple && !ctx.partnerProfile` apenas
+carga la página, y muestra "Todavía no se unió nadie" + el link de invitación (mismo patrón que
+`/ritual` y `/perfil`) en vez de dejar que el usuario toque "Empezar ronda" y se encuentre con un
+error.
+
+**Motivación**: de los 6 juegos, Conoces es el único que usa `lib/turnos.ts` (`siguienteTurno()`)
+para decidir quién es el sujeto de la ronda — esa función necesita 2 miembros en `couple_members` y
+devuelve `null` con uno solo, así que `startConocesRoundAction` fallaba y el usuario veía "No se pudo
+empezar la ronda. Intentá de nuevo." — un mensaje que suena a falla transitoria cuando en realidad
+nunca iba a funcionar sin que alguien se una. Los otros 5 juegos arman `user1_id`/`user2_id` directo
+desde `couple_members` sin exigir el segundo miembro, así que no tienen este problema puntual (aunque
+podrían compartir el "esperando genérico sin nombre real" que ya se corrigió en `/ritual` — no
+verificado todavía juego por juego). Probado en local con cuenta real: pareja creada sin unir a
+nadie, entrar a `/juegos/conoces` ya no ofrece "Empezar ronda" en absoluto.
+
+---
+
 ## Refrescar ctx.partnerProfile cuando llega el reveal por Realtime
 
 **Decisión**: en el callback de `postgres_changes` de `/ritual`, si `ctxRef.current?.partnerProfile`
