@@ -11,6 +11,17 @@ import {
 import type { QuienDeLosDosRound, MatchStats, UserContext } from '@/types'
 import PageLoader from '@/components/PageLoader'
 
+// Evento especial "Todos los Ojos": puro encuadre, sin cambiar la
+// mecánica (que ya es "ambos eligen y se revela junto"). Se deriva
+// del round.id -- un dato que ambos clientes ya reciben igual vía
+// fetch/Realtime -- así los dos lados de la pareja llegan al mismo
+// resultado sin guardar ningún flag nuevo en la base.
+function hashProbabilidad(id: string): number {
+  let hash = 0
+  for (let i = 0; i < id.length; i++) hash = (hash * 31 + id.charCodeAt(i)) >>> 0
+  return (hash % 100) / 100
+}
+
 export default function QuienDeLosDosPage() {
   const router = useRouter()
   const supabase = createClient()
@@ -107,6 +118,7 @@ export default function QuienDeLosDosPage() {
   const eleccionPartner = round ? (isUser1 ? round.user2_choice : round.user1_choice) : null
   const revelado = !!round?.revealed_at
   const coincidieron = revelado && round?.user1_choice === round?.user2_choice
+  const esTodosLosOjos = round ? hashProbabilidad(round.id) < 0.15 : false
 
   return (
     <div className="min-h-dvh bg-ritual-bg flex flex-col">
@@ -164,6 +176,11 @@ export default function QuienDeLosDosPage() {
 
         {round && !revelado && miEleccion == null && (
           <div className="space-y-5 animate-fade-up">
+            {esTodosLosOjos && (
+              <p className="text-center text-ritual-gold text-[11px] font-body uppercase tracking-widest">
+                👀 Todos los ojos: respondan los dos ¡ya, sin pensarlo mucho!
+              </p>
+            )}
             <p className="font-display text-2xl text-ritual-cream text-center leading-snug">{round.pregunta}</p>
             <div className="space-y-3">
               <button
