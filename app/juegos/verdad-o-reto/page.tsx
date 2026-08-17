@@ -4,9 +4,11 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { getVerdadORetoItemsAction } from '@/app/actions/verdad-o-reto'
 import { getIsCouplePremiumAction } from '@/app/actions/subscription'
+import { getPicanteHabilitadoAction, habilitarPicanteAction } from '@/app/actions/picante-consent'
 import { logContenidoRechazadoAction, getRechazadosAction } from '@/app/actions/contenido-rechazado'
 import type { VerdadORetoItem } from '@/types'
 import PicanteUpsell from '@/components/PicanteUpsell'
+import PicanteConsentGate from '@/components/PicanteConsentGate'
 import PageLoader from '@/components/PageLoader'
 
 type Modo = 'verdad' | 'reto'
@@ -30,9 +32,13 @@ export default function VerdadORetoPage() {
   const [items, setItems] = useState<VerdadORetoItem[]>([])
   const [loading, setLoading] = useState(true)
   const [rechazados, setRechazados] = useState<Set<string>>(new Set())
+  const [picanteHabilitado, setPicanteHabilitado] = useState(false)
+  const [mostrarConsentimiento, setMostrarConsentimiento] = useState(false)
+  const [retoDobleExtra, setRetoDobleExtra] = useState<VerdadORetoItem | null>(null)
 
   useEffect(() => {
     getIsCouplePremiumAction().then(setIsPremium)
+    getPicanteHabilitadoAction().then(setPicanteHabilitado)
     getVerdadORetoItemsAction().then(data => {
       setItems(data)
       setLoading(false)
@@ -49,6 +55,26 @@ export default function VerdadORetoPage() {
     return sinRechazados.length >= 3 ? sinRechazados : base
   }
 
+  // Evento especial "Reto Doble" (solo modo reto, solo intensidad
+  // normal): con probabilidad baja, además del reto principal se
+  // elige un segundo reto distinto, sin repetir ninguno de los dos
+  // vistos recientes. Devuelve el ítem extra (o null) y el set de
+  // vistos ya actualizado con su índice si corresponde.
+  function elegirRetoDoble(
+    m: Modo,
+    ints: Intensidad,
+    lista: VerdadORetoItem[],
+    vistosConPrimario: Set<number>
+  ): { extra: VerdadORetoItem | null; vistos: Set<number> } {
+    if (m !== 'reto' || ints !== 'normal' || Math.random() >= 0.2) {
+      return { extra: null, vistos: vistosConPrimario }
+    }
+    const disponibles = lista.map((_, i) => i).filter(i => !vistosConPrimario.has(i))
+    if (disponibles.length === 0) return { extra: null, vistos: vistosConPrimario }
+    const idx2 = disponibles[Math.floor(Math.random() * disponibles.length)]
+    return { extra: lista[idx2], vistos: new Set(vistosConPrimario).add(idx2) }
+  }
+
   function jugar(m: Modo) {
     if (intensidad === 'picante' && !isPremium && picanteUsado) {
       setModo(m)
@@ -57,9 +83,11 @@ export default function VerdadORetoPage() {
     }
     const lista = listaFiltrada(m, intensidad)
     const idx = pickIndex(lista, new Set())
+    const { extra, vistos: nuevosVistos } = elegirRetoDoble(m, intensidad, lista, new Set([idx]))
     setModo(m)
-    setVistos(new Set([idx]))
+    setVistos(nuevosVistos)
     setPromptItem(lista[idx])
+    setRetoDobleExtra(extra)
     setMostrarUpsell(false)
     if (intensidad === 'picante') setPicanteUsado(true)
   }
@@ -72,18 +100,34 @@ export default function VerdadORetoPage() {
     }
     const lista = listaFiltrada(modo, intensidad)
     const idx = pickIndex(lista, vistos)
-    setVistos(prev => {
-      const next = prev.size >= lista.length ? new Set([idx]) : new Set(prev).add(idx)
-      return next
-    })
+    const vistosConPrimario = vistos.size >= lista.length ? new Set([idx]) : new Set(vistos).add(idx)
+    const { extra, vistos: nuevosVistos } = elegirRetoDoble(modo, intensidad, lista, vistosConPrimario)
+    setVistos(nuevosVistos)
     setPromptItem(lista[idx])
+    setRetoDobleExtra(extra)
     if (intensidad === 'picante') setPicanteUsado(true)
   }
 
   function cambiarIntensidad(ints: Intensidad) {
+    if (ints === 'picante' && !picanteHabilitado) {
+      setMostrarConsentimiento(true)
+      return
+    }
     setIntensidad(ints)
     setModo(null)
     setMostrarUpsell(false)
+    setRetoDobleExtra(null)
+    setVistos(new Set())
+  }
+
+  async function confirmarPicante() {
+    await habilitarPicanteAction()
+    setPicanteHabilitado(true)
+    setMostrarConsentimiento(false)
+    setIntensidad('picante')
+    setModo(null)
+    setMostrarUpsell(false)
+    setRetoDobleExtra(null)
     setVistos(new Set())
   }
 
@@ -114,6 +158,7 @@ export default function VerdadORetoPage() {
     setIntensidad('picante')
     setModo(parPicante.modo)
     setPromptItem(parPicante)
+    setRetoDobleExtra(null)
     setVistos(new Set(idx >= 0 ? [idx] : []))
     setMostrarUpsell(false)
   }
@@ -121,6 +166,10 @@ export default function VerdadORetoPage() {
   function handleHintClick() {
     if (!isPremium) {
       router.push('/precios')
+      return
+    }
+    if (!picanteHabilitado) {
+      setMostrarConsentimiento(true)
       return
     }
     verPicante()
@@ -165,7 +214,12 @@ export default function VerdadORetoPage() {
           </button>
         </div>
 
-        {mostrarUpsell ? (
+        {mostrarConsentimiento ? (
+          <PicanteConsentGate
+            onConfirmar={confirmarPicante}
+            onCancelar={() => setMostrarConsentimiento(false)}
+          />
+        ) : mostrarUpsell ? (
           <PicanteUpsell />
         ) : !modo ? (
           <div className="grid grid-cols-2 gap-4 animate-fade-up">
@@ -192,6 +246,17 @@ export default function VerdadORetoPage() {
             <div className="bg-ritual-bg-soft border border-white/8 rounded-3xl px-6 py-10 text-center">
               <p className="font-display text-2xl text-ritual-cream leading-snug">{promptItem?.texto}</p>
             </div>
+
+            {retoDobleExtra && (
+              <div className="space-y-2">
+                <p className="text-[#D4A5A5] text-[10px] font-body uppercase tracking-wider text-center">
+                  🔥 Reto doble
+                </p>
+                <div className="bg-ritual-bg-soft border border-[#D4A5A5]/25 rounded-3xl px-6 py-10 text-center">
+                  <p className="font-display text-2xl text-ritual-cream leading-snug">{retoDobleExtra.texto}</p>
+                </div>
+              </div>
+            )}
 
             {mostrarHintPicante && parPicante && (
               <button
@@ -223,7 +288,7 @@ export default function VerdadORetoPage() {
                 onClick={siguiente}
                 className="bg-ritual-gold text-ritual-bg font-body font-medium text-sm py-4 rounded-2xl hover:bg-ritual-cream transition-all"
               >
-                Siguiente
+                {retoDobleExtra ? 'Hecho, los dos' : 'Siguiente'}
               </button>
             </div>
 

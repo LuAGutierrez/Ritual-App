@@ -9,10 +9,12 @@ import {
   submitEleccionChoiceAction,
 } from '@/app/actions/eleccion'
 import { getIsCouplePremiumAction } from '@/app/actions/subscription'
+import { getPicanteHabilitadoAction, habilitarPicanteAction } from '@/app/actions/picante-consent'
 import { useDobleONada } from '@/lib/hooks/useDobleONada'
 import type { EleccionRound, MatchStats, UserContext } from '@/types'
 import PageLoader from '@/components/PageLoader'
 import PicanteUpsell from '@/components/PicanteUpsell'
+import PicanteConsentGate from '@/components/PicanteConsentGate'
 
 type Intensidad = 'normal' | 'picante'
 
@@ -32,6 +34,8 @@ export default function EleccionPage() {
   const [isPremium, setIsPremium] = useState(false)
   const [picanteUsado, setPicanteUsado] = useState(false)
   const [mostrarUpsell, setMostrarUpsell] = useState(false)
+  const [picanteHabilitado, setPicanteHabilitado] = useState(false)
+  const [mostrarConsentimiento, setMostrarConsentimiento] = useState(false)
   const vistosRef = useRef<string[]>([])
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -75,6 +79,7 @@ export default function EleccionPage() {
     }
     init()
     getIsCouplePremiumAction().then(setIsPremium)
+    getPicanteHabilitadoAction().then(setPicanteHabilitado)
 
     return () => {
       if (channelRef.current) supabase.removeChannel(channelRef.current)
@@ -105,7 +110,19 @@ export default function EleccionPage() {
   }
 
   function cambiarIntensidad(ints: Intensidad) {
+    if (ints === 'picante' && !picanteHabilitado) {
+      setMostrarConsentimiento(true)
+      return
+    }
     setIntensidad(ints)
+    setMostrarUpsell(false)
+  }
+
+  async function confirmarPicante() {
+    await habilitarPicanteAction()
+    setPicanteHabilitado(true)
+    setMostrarConsentimiento(false)
+    setIntensidad('picante')
     setMostrarUpsell(false)
   }
 
@@ -174,7 +191,12 @@ export default function EleccionPage() {
               </button>
             </div>
 
-            {mostrarUpsell ? (
+            {mostrarConsentimiento ? (
+              <PicanteConsentGate
+                onConfirmar={confirmarPicante}
+                onCancelar={() => setMostrarConsentimiento(false)}
+              />
+            ) : mostrarUpsell ? (
               <PicanteUpsell />
             ) : (
               <div className="text-center space-y-6">
