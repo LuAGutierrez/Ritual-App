@@ -6,6 +6,7 @@ import dynamic from 'next/dynamic'
 import { createClient } from '@/lib/supabase/client'
 import {
   getRitualPageDataAction,
+  getUserContextAction,
   submitResponseAction,
   updateStreakAction,
   usarComodinAction,
@@ -58,6 +59,11 @@ export default function RitualPage() {
   const [copied, setCopied] = useState(false)
   const [copiedPending, setCopiedPending] = useState(false)
   const { subscribe, loading: pushLoading, isSupported } = usePushNotifications()
+  const ctxRef = useRef<UserContext | null>(null)
+
+  useEffect(() => {
+    ctxRef.current = ctx
+  }, [ctx])
 
   // ─── Vincular pareja directo desde acá, sin pasar por /onboarding ──
   // (esa pantalla intermedia no aportaba nada para alguien que ya tiene
@@ -159,6 +165,17 @@ export default function RitualPage() {
           })
           const newState = resolveState(updated, userId)
           setState(newState)
+
+          // Si la pareja se unió después de que cargamos la página, ctx
+          // quedó con partnerProfile en null -- sin este refetch, el
+          // reveal en vivo (vía este mismo Realtime) mostraría "Tu pareja"
+          // en vez del nombre real, porque nunca se volvió a pedir el
+          // contexto. Solo se pide de nuevo si todavía no lo tenemos.
+          if (!ctxRef.current?.partnerProfile) {
+            getUserContextAction().then(freshCtx => {
+              if (freshCtx?.partnerProfile) setCtx(freshCtx)
+            })
+          }
 
           if (newState === 'revealed' && coupleId) {
             handleStreakUpdate(coupleId)
