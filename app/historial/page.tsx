@@ -3,10 +3,32 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { getHistorialPageDataAction, getHistorialAction } from '@/app/actions/ritual'
+import { getHistorialJuegosAction } from '@/app/actions/historial-juegos'
 import { FREE_HISTORIAL_LIMIT } from '@/lib/plans'
 import BottomNav from '@/components/BottomNav'
 import PageLoader from '@/components/PageLoader'
-import type { CoupleRitualSession, UserContext, RitualCategory } from '@/types'
+import type { CoupleRitualSession, UserContext, RitualCategory, HistorialJuegoEntry } from '@/types'
+
+const JUEGO_FILTROS: { id: string; label: string; emoji: string }[] = [
+  { id: 'todos', label: 'Todos', emoji: '' },
+  { id: 'eleccion', label: 'Elección', emoji: '💫' },
+  { id: 'esto_aquello', label: 'Esto o Aquello', emoji: '⚡' },
+  { id: 'conoces', label: '¿Cuánto me conoces?', emoji: '👁️' },
+  { id: 'quien_de_los_dos', label: '¿Quién de los dos?', emoji: '⚖️' },
+  { id: 'verdad_o_reto', label: 'Verdad o Reto', emoji: '🎲' },
+  { id: 'ruleta_picante', label: 'Ruleta Picante', emoji: '🔥' },
+]
+
+const RESULTADO_COPY: Record<NonNullable<HistorialJuegoEntry['resultado']>, string> = {
+  coincidieron: '✓ Coincidieron',
+  no_coincidieron: '✗ No coincidieron',
+  acierto: '🎯 Acierto',
+  no_acierto: '— No acertó',
+}
+
+function formatFechaHora(dateStr: string) {
+  return new Date(dateStr).toLocaleDateString('es', { weekday: 'long', day: 'numeric', month: 'long' })
+}
 
 const CATEGORIAS: { id: string; label: string }[] = [
   { id: 'todos', label: 'Todos' },
@@ -54,6 +76,14 @@ export default function HistorialPage() {
   const [totalCompletedAll, setTotalCompletedAll] = useState(0)
   const [error, setError] = useState<string | null>(null)
   const [expanded, setExpanded] = useState<string | null>(null)
+
+  const [tab, setTab] = useState<'rituales' | 'juegos'>('rituales')
+  const [juegoEntries, setJuegoEntries] = useState<HistorialJuegoEntry[]>([])
+  const [juegoFiltro, setJuegoFiltro] = useState('todos')
+  const [juegoHasMore, setJuegoHasMore] = useState(false)
+  const [juegoLoading, setJuegoLoading] = useState(false)
+  const [juegoLoadingMore, setJuegoLoadingMore] = useState(false)
+  const [juegoLoaded, setJuegoLoaded] = useState(false)
 
   function applyHistorial(result: { sessions: CoupleRitualSession[]; hasMore: boolean; isPremium: boolean; totalCompleted: number; totalCompletedAll: number }, append = false) {
     setSessions(prev => append ? [...prev, ...result.sessions] : result.sessions)
@@ -106,6 +136,43 @@ export default function HistorialPage() {
     setLoadingMore(false)
   }
 
+  async function loadJuegos(filtro: string, offset = 0, append = false) {
+    try {
+      const result = await getHistorialJuegosAction(filtro, offset)
+      setJuegoEntries(prev => append ? [...prev, ...result.entradas] : result.entradas)
+      setJuegoHasMore(result.hasMore)
+    } catch {
+      setError('No se pudo cargar el historial de juegos. Intentá de nuevo.')
+    }
+  }
+
+  async function handleTab(t: 'rituales' | 'juegos') {
+    setTab(t)
+    setError(null)
+    // Carga lazy: los datos de "Juegos" solo se piden la primera vez
+    // que se toca ese tab, no en la carga inicial de la página.
+    if (t === 'juegos' && !juegoLoaded) {
+      setJuegoLoading(true)
+      await loadJuegos(juegoFiltro)
+      setJuegoLoaded(true)
+      setJuegoLoading(false)
+    }
+  }
+
+  async function handleJuegoFiltro(filtro: string) {
+    setJuegoFiltro(filtro)
+    setJuegoLoading(true)
+    await loadJuegos(filtro)
+    setJuegoLoading(false)
+  }
+
+  async function handleJuegoLoadMore() {
+    if (juegoLoadingMore || !juegoHasMore) return
+    setJuegoLoadingMore(true)
+    await loadJuegos(juegoFiltro, juegoEntries.length, true)
+    setJuegoLoadingMore(false)
+  }
+
   function getMyResponse(s: CoupleRitualSession): string {
     if (!ctx) return ''
     return ctx.userId === s.user1_id ? (s.user1_response ?? '') : (s.user2_response ?? '')
@@ -136,22 +203,65 @@ export default function HistorialPage() {
         </p>
       </header>
 
-      {/* Filtro de categorías */}
-      <div className="px-5 pb-4 flex gap-2 overflow-x-auto scrollbar-none">
-        {CATEGORIAS.map(c => (
+      {/* Rituales / Juegos */}
+      <div className="px-5 pb-4">
+        <div className="flex bg-ritual-bg-soft rounded-2xl p-1">
           <button
-            key={c.id}
-            onClick={() => handleCategoria(c.id)}
-            className={`flex-shrink-0 px-4 py-1.5 rounded-full border font-body text-xs transition-all duration-200 ${
-              categoria === c.id
-                ? 'bg-ritual-gold text-ritual-bg border-ritual-gold'
-                : 'bg-transparent border-white/15 text-ritual-muted hover:border-white/25'
+            onClick={() => handleTab('rituales')}
+            className={`flex-1 py-2.5 rounded-xl text-sm font-body font-medium transition-all duration-300 ${
+              tab === 'rituales' ? 'bg-ritual-gold text-ritual-bg' : 'text-ritual-muted hover:text-ritual-text'
             }`}
           >
-            {c.label}
+            Rituales
           </button>
-        ))}
+          <button
+            onClick={() => handleTab('juegos')}
+            className={`flex-1 py-2.5 rounded-xl text-sm font-body font-medium transition-all duration-300 ${
+              tab === 'juegos' ? 'bg-ritual-gold text-ritual-bg' : 'text-ritual-muted hover:text-ritual-text'
+            }`}
+          >
+            Juegos
+          </button>
+        </div>
       </div>
+
+      {/* Filtro de categorías (rituales) */}
+      {tab === 'rituales' && (
+        <div className="px-5 pb-4 flex gap-2 overflow-x-auto scrollbar-none">
+          {CATEGORIAS.map(c => (
+            <button
+              key={c.id}
+              onClick={() => handleCategoria(c.id)}
+              className={`flex-shrink-0 px-4 py-1.5 rounded-full border font-body text-xs transition-all duration-200 ${
+                categoria === c.id
+                  ? 'bg-ritual-gold text-ritual-bg border-ritual-gold'
+                  : 'bg-transparent border-white/15 text-ritual-muted hover:border-white/25'
+              }`}
+            >
+              {c.label}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Filtro por juego (juegos) */}
+      {tab === 'juegos' && (
+        <div className="px-5 pb-4 flex gap-2 overflow-x-auto scrollbar-none">
+          {JUEGO_FILTROS.map(j => (
+            <button
+              key={j.id}
+              onClick={() => handleJuegoFiltro(j.id)}
+              className={`flex-shrink-0 px-4 py-1.5 rounded-full border font-body text-xs transition-all duration-200 ${
+                juegoFiltro === j.id
+                  ? 'bg-ritual-gold text-ritual-bg border-ritual-gold'
+                  : 'bg-transparent border-white/15 text-ritual-muted hover:border-white/25'
+              }`}
+            >
+              {j.emoji ? `${j.emoji} ${j.label}` : j.label}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Lista */}
       <main className="flex-1 px-5 pb-28 max-w-md mx-auto w-full">
@@ -160,7 +270,7 @@ export default function HistorialPage() {
             <p className="text-red-300 font-body text-sm">{error}</p>
           </div>
         )}
-        {sessions.length === 0 && !error ? (
+        {tab === 'rituales' && (sessions.length === 0 && !error ? (
           <div className="text-center py-16">
             <p className="font-display text-2xl text-ritual-cream mb-3">
               Todavía no hay rituales aquí
@@ -267,7 +377,62 @@ export default function HistorialPage() {
               </div>
             )}
           </div>
-        )}
+        ))}
+
+        {tab === 'juegos' && (juegoLoading ? (
+          <PageLoader />
+        ) : juegoEntries.length === 0 && !error ? (
+          <div className="text-center py-16">
+            <p className="font-display text-2xl text-ritual-cream mb-3">
+              Todavía no hay rondas aquí
+            </p>
+            <p className="text-ritual-muted font-body text-sm leading-relaxed">
+              {juegoFiltro === 'todos'
+                ? 'Cuando jueguen su primera ronda juntos, aparecerá acá.'
+                : `No jugaron a ${JUEGO_FILTROS.find(j => j.id === juegoFiltro)?.label} todavía.`}
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {juegoEntries.map((entry, idx) => {
+              const juegoInfo = JUEGO_FILTROS.find(j => j.id === entry.juego)
+              return (
+                <div
+                  key={`${entry.juego}-${entry.created_at}-${idx}`}
+                  className="bg-ritual-bg-soft border border-white/8 rounded-2xl px-5 py-4"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-ritual-muted text-[10px] font-body uppercase tracking-wider mb-2">
+                        {juegoInfo?.emoji} {juegoInfo?.label}
+                      </p>
+                      <p className="font-display text-ritual-cream text-base leading-snug line-clamp-2">
+                        {entry.resumen}
+                      </p>
+                      <p className="text-ritual-muted text-xs font-body mt-1 capitalize">
+                        {formatFechaHora(entry.created_at)}
+                      </p>
+                    </div>
+                    {entry.resultado && (
+                      <span className="flex-shrink-0 text-ritual-gold text-[10px] font-body mt-1">
+                        {RESULTADO_COPY[entry.resultado]}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              )
+            })}
+            {juegoHasMore && (
+              <button
+                onClick={handleJuegoLoadMore}
+                disabled={juegoLoadingMore}
+                className="w-full bg-white/5 border border-white/10 text-ritual-muted font-body text-sm py-4 rounded-2xl hover:border-white/20 hover:text-ritual-text transition-all duration-300 disabled:opacity-40"
+              >
+                {juegoLoadingMore ? 'Cargando...' : 'Cargar más'}
+              </button>
+            )}
+          </div>
+        ))}
       </main>
 
       <BottomNav />

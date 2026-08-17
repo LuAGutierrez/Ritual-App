@@ -151,6 +151,14 @@ export type Momento = {
   created_at: string
 }
 
+export type HistorialJuegoEntry = {
+  juego: 'eleccion' | 'esto_aquello' | 'conoces' | 'quien_de_los_dos' | 'verdad_o_reto' | 'ruleta_picante'
+  resumen: string
+  resultado: 'coincidieron' | 'no_coincidieron' | 'acierto' | 'no_acierto' | null
+  categoria: string | null
+  created_at: string
+}
+
 export type ConocesRound = {
   id: string
   couple_id: string

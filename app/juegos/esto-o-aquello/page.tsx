@@ -11,6 +11,7 @@ import {
 import { getIsCouplePremiumAction } from '@/app/actions/subscription'
 import { getPicanteHabilitadoAction, habilitarPicanteAction } from '@/app/actions/picante-consent'
 import { useDobleONada } from '@/lib/hooks/useDobleONada'
+import { getCategoriaPreferida } from '@/lib/categoriaPreferida'
 import type { EstoAquelloRound, MatchStats, UserContext } from '@/types'
 import PageLoader from '@/components/PageLoader'
 import PicanteUpsell from '@/components/PicanteUpsell'
@@ -96,7 +97,7 @@ export default function EstoOAquelloPage() {
     setStarting(true)
     setError(null)
     setMostrarUpsell(false)
-    const nuevo = await startEstoAquelloRoundAction(ctx.couple.id, intensidad, vistosRef.current)
+    const nuevo = await startEstoAquelloRoundAction(ctx.couple.id, intensidad, vistosRef.current, getCategoriaPreferida())
     if (!nuevo) {
       setError('No se pudo empezar la ronda. Intentá de nuevo.')
     } else {

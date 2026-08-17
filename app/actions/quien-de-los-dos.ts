@@ -22,7 +22,8 @@ export async function getQuienDeLosDosPageDataAction(): Promise<{
 export async function startQuienDeLosDosRoundAction(
   coupleId: string,
   intensidad: 'normal' | 'picante' = 'normal',
-  excluir: string[] = []
+  excluir: string[] = [],
+  categoriaPreferida: string | null = null
 ): Promise<QuienDeLosDosRound | null> {
   const supabase = await createClient()
 
@@ -59,6 +60,11 @@ export async function startQuienDeLosDosRoundAction(
       const variados = porRechazo.filter(i => i.categoria !== ultimaCategoria)
       if (variados.length >= 3) pool = variados
     }
+  }
+
+  if (categoriaPreferida) {
+    const preferidos = pool.filter(i => i.categoria === categoriaPreferida)
+    if (preferidos.length >= 3) pool = preferidos
   }
 
   const item = pool[Math.floor(Math.random() * pool.length)]

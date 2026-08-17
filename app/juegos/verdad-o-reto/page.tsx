@@ -9,6 +9,7 @@ import { getIntensidadMaximaAction } from '@/app/actions/perfil-preferencias'
 import { logContenidoRechazadoAction, getRechazadosAction } from '@/app/actions/contenido-rechazado'
 import { logRondaJugadaAction, getUltimaCategoriaRondaAction } from '@/app/actions/rondas-jugadas'
 import { registrarRetoDobleCompletadoAction } from '@/app/actions/momentos'
+import { getCategoriaPreferida } from '@/lib/categoriaPreferida'
 import { dentroDelTecho, type Intensidad as Techo } from '@/lib/intensidad'
 import type { VerdadORetoItem } from '@/types'
 import PicanteUpsell from '@/components/PicanteUpsell'
@@ -65,9 +66,16 @@ export default function VerdadORetoPage() {
     const porRechazo = sinRechazados.length >= 3 ? sinRechazados : base
     const porTecho = porRechazo.filter(item => dentroDelTecho(item.intensidad as Techo, intensidadMaxima))
     const porTechoFinal = porTecho.length >= 3 ? porTecho : porRechazo
-    if (!ultimaCategoriaRef.current) return porTechoFinal
-    const variados = porTechoFinal.filter(item => item.categoria !== ultimaCategoriaRef.current)
-    return variados.length >= 3 ? variados : porTechoFinal
+    const porVariedad = ultimaCategoriaRef.current
+      ? (() => {
+          const variados = porTechoFinal.filter(item => item.categoria !== ultimaCategoriaRef.current)
+          return variados.length >= 3 ? variados : porTechoFinal
+        })()
+      : porTechoFinal
+    const categoriaPreferida = getCategoriaPreferida()
+    if (!categoriaPreferida) return porVariedad
+    const preferidos = porVariedad.filter(item => item.categoria === categoriaPreferida)
+    return preferidos.length >= 3 ? preferidos : porVariedad
   }
 
   // Evento especial "Reto Doble" (solo modo reto, solo intensidad

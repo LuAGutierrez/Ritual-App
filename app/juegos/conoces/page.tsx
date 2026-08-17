@@ -10,6 +10,7 @@ import {
   submitConocesGuessAction,
 } from '@/app/actions/conoces'
 import { useDobleONada } from '@/lib/hooks/useDobleONada'
+import { getCategoriaPreferida } from '@/lib/categoriaPreferida'
 import type { ConocesRound, ConocesStats, UserContext } from '@/types'
 import PageLoader from '@/components/PageLoader'
 
@@ -78,7 +79,7 @@ export default function ConocesPage() {
     if (!ctx?.couple) return
     setStarting(true)
     setError(null)
-    const nuevo = await startConocesRoundAction(ctx.couple.id, vistosRef.current)
+    const nuevo = await startConocesRoundAction(ctx.couple.id, vistosRef.current, getCategoriaPreferida())
     if (!nuevo) {
       setError('No se pudo empezar la ronda. Intentá de nuevo.')
     } else {

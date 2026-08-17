@@ -10,6 +10,7 @@ import {
 } from '@/app/actions/quien-de-los-dos'
 import { getIsCouplePremiumAction } from '@/app/actions/subscription'
 import { getPicanteHabilitadoAction, habilitarPicanteAction } from '@/app/actions/picante-consent'
+import { getCategoriaPreferida } from '@/lib/categoriaPreferida'
 import type { QuienDeLosDosRound, MatchStats, UserContext } from '@/types'
 import PageLoader from '@/components/PageLoader'
 import PicanteUpsell from '@/components/PicanteUpsell'
@@ -106,7 +107,7 @@ export default function QuienDeLosDosPage() {
     setStarting(true)
     setError(null)
     setMostrarUpsell(false)
-    const nuevo = await startQuienDeLosDosRoundAction(ctx.couple.id, intensidad, vistosRef.current)
+    const nuevo = await startQuienDeLosDosRoundAction(ctx.couple.id, intensidad, vistosRef.current, getCategoriaPreferida())
     if (!nuevo) {
       setError('No se pudo empezar la ronda. Intentá de nuevo.')
     } else {
