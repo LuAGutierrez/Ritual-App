@@ -9,6 +9,7 @@ import {
   submitEleccionChoiceAction,
 } from '@/app/actions/eleccion'
 import { getIsCouplePremiumAction } from '@/app/actions/subscription'
+import { useDobleONada } from '@/lib/hooks/useDobleONada'
 import type { EleccionRound, MatchStats, UserContext } from '@/types'
 import PageLoader from '@/components/PageLoader'
 import PicanteUpsell from '@/components/PicanteUpsell'
@@ -81,7 +82,7 @@ export default function EleccionPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  async function handleEmpezar() {
+  async function empezarRonda(esDobleONada: boolean) {
     if (!ctx?.couple) return
     if (intensidad === 'picante' && !isPremium && picanteUsado) {
       setMostrarUpsell(true)
@@ -97,6 +98,8 @@ export default function EleccionPage() {
       setRound(nuevo)
       vistosRef.current = [...vistosRef.current, `${nuevo.option_a}|${nuevo.option_b}`]
       if (intensidad === 'picante') setPicanteUsado(true)
+      if (esDobleONada) doble.aceptar()
+      else doble.reset()
     }
     setStarting(false)
   }
@@ -116,6 +119,10 @@ export default function EleccionPage() {
     setSubmitting(false)
   }
 
+  const revelado = !!round?.revealed_at
+  const coincidieron = revelado && round?.user1_choice === round?.user2_choice
+  const doble = useDobleONada(revelado, coincidieron, round?.id)
+
   if (loading) {
     return <PageLoader />
   }
@@ -123,8 +130,6 @@ export default function EleccionPage() {
   const isUser1 = round?.user1_id === ctx?.userId
   const misElecciones = round ? (isUser1 ? round.user1_choice : round.user2_choice) : null
   const eleccionPartner = round ? (isUser1 ? round.user2_choice : round.user1_choice) : null
-  const revelado = !!round?.revealed_at
-  const coincidieron = revelado && round?.user1_choice === round?.user2_choice
 
   return (
     <div className="min-h-dvh bg-ritual-bg flex flex-col">
@@ -194,7 +199,7 @@ export default function EleccionPage() {
                   Cada uno elige en secreto. Si coinciden, se llevan un premio.
                 </p>
                 <button
-                  onClick={handleEmpezar}
+                  onClick={() => empezarRonda(false)}
                   disabled={starting}
                   className="w-full bg-ritual-gold text-ritual-bg font-body font-medium py-4 rounded-2xl disabled:opacity-50"
                 >
@@ -237,9 +242,11 @@ export default function EleccionPage() {
 
         {round && revelado && (
           <div className="text-center space-y-6 animate-fade-up">
-            <p className="text-4xl">{coincidieron ? '🔥' : '💭'}</p>
+            <p className="text-4xl">{doble.enJuego && coincidieron ? '🎉' : coincidieron ? '🔥' : '💭'}</p>
             <p className="font-display text-2xl text-ritual-cream">
-              {coincidieron ? '¡Coincidieron!' : 'No coincidieron esta vez'}
+              {doble.enJuego
+                ? coincidieron ? '¡Ganaron el Doble o Nada!' : 'Esta vez no salió'
+                : coincidieron ? '¡Coincidieron!' : 'No coincidieron esta vez'}
             </p>
             <div className="flex items-center justify-center gap-3 text-sm font-body text-ritual-muted">
               <span className="bg-ritual-bg-soft border border-white/10 rounded-xl px-3 py-2">
@@ -254,8 +261,16 @@ export default function EleccionPage() {
                 <p className="text-ritual-cream font-body text-sm">{round.premio}</p>
               </div>
             )}
+            {doble.ofrecer && (
+              <button
+                onClick={() => empezarRonda(true)}
+                className="w-full bg-ritual-gold/15 border border-ritual-gold/40 text-ritual-gold font-body font-medium py-4 rounded-2xl hover:bg-ritual-gold/20 transition-all"
+              >
+                ¿Van doble o nada?
+              </button>
+            )}
             <button
-              onClick={() => setRound(null)}
+              onClick={() => { doble.reset(); setRound(null) }}
               className="w-full bg-ritual-gold text-ritual-bg font-body font-medium py-4 rounded-2xl"
             >
               Jugar de nuevo

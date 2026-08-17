@@ -9,6 +9,7 @@ import {
   submitConocesSubjectChoiceAction,
   submitConocesGuessAction,
 } from '@/app/actions/conoces'
+import { useDobleONada } from '@/lib/hooks/useDobleONada'
 import type { ConocesRound, ConocesStats, UserContext } from '@/types'
 import PageLoader from '@/components/PageLoader'
 
@@ -73,7 +74,7 @@ export default function ConocesPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  async function handleEmpezar() {
+  async function empezarRonda(esDobleONada: boolean) {
     if (!ctx?.couple) return
     setStarting(true)
     setError(null)
@@ -83,6 +84,8 @@ export default function ConocesPage() {
     } else {
       setRound(nuevo)
       vistosRef.current = [...vistosRef.current, nuevo.pregunta]
+      if (esDobleONada) doble.aceptar()
+      else doble.reset()
     }
     setStarting(false)
   }
@@ -100,6 +103,25 @@ export default function ConocesPage() {
     setSubmitting(false)
   }
 
+  const revelado = !!round?.revealed_at
+  const acerto = revelado && round?.subject_choice === round?.guesser_choice
+  const doble = useDobleONada(revelado, acerto, round?.id)
+
+  // Evento especial "Cambio de Roles": si el sujeto de esta ronda es
+  // el mismo que el de la anterior, siguienteTurno() (lib/turnos.ts)
+  // decidió romper la alternancia esta vez. Se detecta comparando
+  // contra la ronda anterior en vez de leerlo del backend porque
+  // aplica igual para quien arrancó la ronda y para quien la recibe
+  // por Realtime.
+  const anteriorSujetoRef = useRef<string | null>(null)
+  const [huboCambioDeRoles, setHuboCambioDeRoles] = useState(false)
+  useEffect(() => {
+    if (!round) return
+    setHuboCambioDeRoles(!!anteriorSujetoRef.current && anteriorSujetoRef.current === round.subject_user_id)
+    anteriorSujetoRef.current = round.subject_user_id
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [round?.id])
+
   if (loading) return <PageLoader />
 
   const isSubject = round?.subject_user_id === ctx?.userId
@@ -109,8 +131,6 @@ export default function ConocesPage() {
   const guesserNombre = isSubject ? parejaNombre : miNombre
 
   const miRespuesta = round ? (isSubject ? round.subject_choice : round.guesser_choice) : null
-  const revelado = !!round?.revealed_at
-  const acerto = revelado && round?.subject_choice === round?.guesser_choice
   const porcentaje = stats && stats.intentos > 0 ? Math.round((stats.aciertos / stats.intentos) * 100) : null
 
   return (
@@ -157,7 +177,7 @@ export default function ConocesPage() {
               </p>
             </div>
             <button
-              onClick={handleEmpezar}
+              onClick={() => empezarRonda(false)}
               disabled={starting}
               className="w-full bg-ritual-gold text-ritual-bg font-body font-medium py-4 rounded-2xl disabled:opacity-50"
             >
@@ -168,6 +188,11 @@ export default function ConocesPage() {
 
         {round && !revelado && miRespuesta == null && (
           <div className="space-y-5 animate-fade-up">
+            {huboCambioDeRoles && (
+              <p className="text-center text-ritual-gold text-[11px] font-body uppercase tracking-widest">
+                🔁 Cambio de roles: le toca de nuevo a {subjectNombre}
+              </p>
+            )}
             <p className="text-center text-ritual-muted text-xs font-body uppercase tracking-widest">
               {isSubject ? 'Respondé sobre vos' : `Adiviná qué respondió ${parejaNombre}`}
             </p>
@@ -205,7 +230,9 @@ export default function ConocesPage() {
           <div className="text-center space-y-6 animate-fade-up">
             <div>
               <p className={`font-display text-3xl ${acerto ? 'text-ritual-gold' : 'text-ritual-muted'}`}>
-                {acerto ? 'Acertaste' : 'Esta vez no'}
+                {doble.enJuego
+                  ? acerto ? '¡Ganaron el Doble o Nada!' : 'Esta vez no salió'
+                  : acerto ? 'Acertaste' : 'Esta vez no'}
               </p>
               {stats && (
                 <p className="text-ritual-muted font-body text-xs mt-2">
@@ -224,8 +251,16 @@ export default function ConocesPage() {
                 {guesserNombre} adivinó: {round.opciones[round.guesser_choice!]}
               </span>
             </div>
+            {doble.ofrecer && (
+              <button
+                onClick={() => empezarRonda(true)}
+                className="w-full bg-ritual-gold/15 border border-ritual-gold/40 text-ritual-gold font-body font-medium py-4 rounded-2xl hover:bg-ritual-gold/20 transition-all"
+              >
+                ¿Van doble o nada?
+              </button>
+            )}
             <button
-              onClick={() => setRound(null)}
+              onClick={() => { doble.reset(); setRound(null) }}
               className="w-full bg-ritual-gold text-ritual-bg font-body font-medium py-4 rounded-2xl"
             >
               Jugar de nuevo
