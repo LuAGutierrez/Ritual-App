@@ -115,8 +115,9 @@ Además del ritual diario, se agregó una sección `/juegos` para engagement fue
 - [x] Ruleta Picante — contenido +18, con pantalla de aviso previo
 - [x] Tab "Juegos" en la nav bar inferior
 - [x] Contenido dinámico desde DB en vez de arrays estáticos (migración `026`: tablas `verdad_o_reto_items`, `esto_o_aquello_items`, `eleccion_prompts`, `ruleta_picante_items`, mismo patrón que `rituals`)
+- [x] Gating premium para Ruleta Picante
+- [x] Rondas de Verdad o Reto y Ruleta Picante registradas server-side (`couple_rondas_jugadas`, migración `040`) — antes no sumaban al nivel de progresión emocional ni persistían variedad entre sesiones
 - [ ] Variantes de Elección con consecuencia/doble apuesta (specs ya escritas en `docs/archivo-anterior/ELECCION-OPCIONES-2-Y-3.md`)
-- [ ] Gating premium para Ruleta Picante (hoy es libre para todos)
 
 ---
 

@@ -6,6 +6,7 @@ import { getPerfilAction, updatePerfilAction } from '@/app/actions/perfil'
 import type { PerfilData } from '@/app/actions/perfil'
 import { getCoupleMomentosAction } from '@/app/actions/momentos'
 import { getJuegosStatsSummaryAction } from '@/app/actions/juegos-stats'
+import { getRondasJugadasCountAction } from '@/app/actions/rondas-jugadas'
 import { getIntensidadMaximaAction, setIntensidadMaximaAction } from '@/app/actions/perfil-preferencias'
 import { nivelActual } from '@/lib/niveles'
 import type { Intensidad } from '@/lib/intensidad'
@@ -96,13 +97,14 @@ export default function PerfilPage() {
     })
     getCoupleMomentosAction().then(setMomentos)
     getIntensidadMaximaAction().then(setIntensidadMaximaState)
-    getJuegosStatsSummaryAction().then(stats => {
-      if (!stats) return
+    Promise.all([getJuegosStatsSummaryAction(), getRondasJugadasCountAction()]).then(([stats, rondas]) => {
       const total =
-        (stats.eleccion?.intentos ?? 0) +
-        (stats.estoAquello?.intentos ?? 0) +
-        (stats.conoces?.intentos ?? 0) +
-        (stats.quienDeLosDos?.intentos ?? 0)
+        (stats?.eleccion?.intentos ?? 0) +
+        (stats?.estoAquello?.intentos ?? 0) +
+        (stats?.conoces?.intentos ?? 0) +
+        (stats?.quienDeLosDos?.intentos ?? 0) +
+        rondas.verdadORetoRondas +
+        rondas.ruletaPicanteRondas
       setTotalJuegos(total)
     })
   // eslint-disable-next-line react-hooks/exhaustive-deps

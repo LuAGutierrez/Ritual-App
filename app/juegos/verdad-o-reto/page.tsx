@@ -7,6 +7,7 @@ import { getIsCouplePremiumAction } from '@/app/actions/subscription'
 import { getPicanteHabilitadoAction, habilitarPicanteAction } from '@/app/actions/picante-consent'
 import { getIntensidadMaximaAction } from '@/app/actions/perfil-preferencias'
 import { logContenidoRechazadoAction, getRechazadosAction } from '@/app/actions/contenido-rechazado'
+import { logRondaJugadaAction, getUltimaCategoriaRondaAction } from '@/app/actions/rondas-jugadas'
 import { registrarRetoDobleCompletadoAction } from '@/app/actions/momentos'
 import { dentroDelTecho, type Intensidad as Techo } from '@/lib/intensidad'
 import type { VerdadORetoItem } from '@/types'
@@ -50,6 +51,7 @@ export default function VerdadORetoPage() {
       setLoading(false)
     })
     getRechazadosAction('verdad_o_reto').then(ids => setRechazados(new Set(ids)))
+    getUltimaCategoriaRondaAction('verdad_o_reto').then(c => { ultimaCategoriaRef.current = c })
   }, [])
 
   // Evita repetir lo que ya pasaron, respeta el techo de intensidad
@@ -101,6 +103,7 @@ export default function VerdadORetoPage() {
     setVistos(nuevosVistos)
     setPromptItem(lista[idx])
     ultimaCategoriaRef.current = lista[idx].categoria
+    logRondaJugadaAction('verdad_o_reto', lista[idx].id, lista[idx].categoria)
     setRetoDobleExtra(extra)
     setMostrarUpsell(false)
     if (intensidad === 'picante') setPicanteUsado(true)
@@ -119,6 +122,7 @@ export default function VerdadORetoPage() {
     setVistos(nuevosVistos)
     setPromptItem(lista[idx])
     ultimaCategoriaRef.current = lista[idx].categoria
+    logRondaJugadaAction('verdad_o_reto', lista[idx].id, lista[idx].categoria)
     setRetoDobleExtra(extra)
     if (intensidad === 'picante') setPicanteUsado(true)
   }
@@ -182,6 +186,7 @@ export default function VerdadORetoPage() {
     setModo(parPicante.modo)
     setPromptItem(parPicante)
     ultimaCategoriaRef.current = parPicante.categoria
+    logRondaJugadaAction('verdad_o_reto', parPicante.id, parPicante.categoria)
     setRetoDobleExtra(null)
     setVistos(new Set(idx >= 0 ? [idx] : []))
     setMostrarUpsell(false)
