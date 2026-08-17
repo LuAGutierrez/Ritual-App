@@ -6,6 +6,7 @@ import { getVerdadORetoItemsAction } from '@/app/actions/verdad-o-reto'
 import { getIsCouplePremiumAction } from '@/app/actions/subscription'
 import { getPicanteHabilitadoAction, habilitarPicanteAction } from '@/app/actions/picante-consent'
 import { logContenidoRechazadoAction, getRechazadosAction } from '@/app/actions/contenido-rechazado'
+import { registrarRetoDobleCompletadoAction } from '@/app/actions/momentos'
 import type { VerdadORetoItem } from '@/types'
 import PicanteUpsell from '@/components/PicanteUpsell'
 import PicanteConsentGate from '@/components/PicanteConsentGate'
@@ -106,6 +107,14 @@ export default function VerdadORetoPage() {
     setPromptItem(lista[idx])
     setRetoDobleExtra(extra)
     if (intensidad === 'picante') setPicanteUsado(true)
+  }
+
+  // Distinto de "Siguiente" normal y de "Paso": solo se llama desde el
+  // botón "Hecho, los dos", así que solo cuenta como completado un
+  // Reto Doble que de verdad se hizo, no uno que se rechazó.
+  function completarRetoDoble() {
+    registrarRetoDobleCompletadoAction()
+    siguiente()
   }
 
   function cambiarIntensidad(ints: Intensidad) {
@@ -285,7 +294,7 @@ export default function VerdadORetoPage() {
                 Cambiar modo
               </button>
               <button
-                onClick={siguiente}
+                onClick={retoDobleExtra ? completarRetoDoble : siguiente}
                 className="bg-ritual-gold text-ritual-bg font-body font-medium text-sm py-4 rounded-2xl hover:bg-ritual-cream transition-all"
               >
                 {retoDobleExtra ? 'Hecho, los dos' : 'Siguiente'}
