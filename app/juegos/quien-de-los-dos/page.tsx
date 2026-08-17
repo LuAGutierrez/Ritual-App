@@ -8,8 +8,14 @@ import {
   startQuienDeLosDosRoundAction,
   submitQuienDeLosDosChoiceAction,
 } from '@/app/actions/quien-de-los-dos'
+import { getIsCouplePremiumAction } from '@/app/actions/subscription'
+import { getPicanteHabilitadoAction, habilitarPicanteAction } from '@/app/actions/picante-consent'
 import type { QuienDeLosDosRound, MatchStats, UserContext } from '@/types'
 import PageLoader from '@/components/PageLoader'
+import PicanteUpsell from '@/components/PicanteUpsell'
+import PicanteConsentGate from '@/components/PicanteConsentGate'
+
+type Intensidad = 'normal' | 'picante'
 
 // Evento especial "Todos los Ojos": puro encuadre, sin cambiar la
 // mecánica (que ya es "ambos eligen y se revela junto"). Se deriva
@@ -35,6 +41,12 @@ export default function QuienDeLosDosPage() {
   const [starting, setStarting] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [intensidad, setIntensidad] = useState<Intensidad>('normal')
+  const [isPremium, setIsPremium] = useState(false)
+  const [picanteUsado, setPicanteUsado] = useState(false)
+  const [mostrarUpsell, setMostrarUpsell] = useState(false)
+  const [picanteHabilitado, setPicanteHabilitado] = useState(false)
+  const [mostrarConsentimiento, setMostrarConsentimiento] = useState(false)
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const subscribeToRounds = useCallback((coupleId: string) => {
@@ -76,6 +88,8 @@ export default function QuienDeLosDosPage() {
       setLoading(false)
     }
     init()
+    getIsCouplePremiumAction().then(setIsPremium)
+    getPicanteHabilitadoAction().then(setPicanteHabilitado)
 
     return () => {
       if (channelRef.current) supabase.removeChannel(channelRef.current)
@@ -83,18 +97,41 @@ export default function QuienDeLosDosPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  async function handleEmpezar() {
+  async function empezarRonda() {
     if (!ctx?.couple) return
+    if (intensidad === 'picante' && !isPremium && picanteUsado) {
+      setMostrarUpsell(true)
+      return
+    }
     setStarting(true)
     setError(null)
-    const nuevo = await startQuienDeLosDosRoundAction(ctx.couple.id, vistosRef.current)
+    setMostrarUpsell(false)
+    const nuevo = await startQuienDeLosDosRoundAction(ctx.couple.id, intensidad, vistosRef.current)
     if (!nuevo) {
       setError('No se pudo empezar la ronda. Intentá de nuevo.')
     } else {
       setRound(nuevo)
       vistosRef.current = [...vistosRef.current, nuevo.pregunta]
+      if (intensidad === 'picante') setPicanteUsado(true)
     }
     setStarting(false)
+  }
+
+  function cambiarIntensidad(ints: Intensidad) {
+    if (ints === 'picante' && !picanteHabilitado) {
+      setMostrarConsentimiento(true)
+      return
+    }
+    setIntensidad(ints)
+    setMostrarUpsell(false)
+  }
+
+  async function confirmarPicante() {
+    await habilitarPicanteAction()
+    setPicanteHabilitado(true)
+    setMostrarConsentimiento(false)
+    setIntensidad('picante')
+    setMostrarUpsell(false)
   }
 
   async function handleElegir(choice: 0 | 1) {
@@ -143,34 +180,64 @@ export default function QuienDeLosDosPage() {
         )}
 
         {!round && (
-          <div className="text-center space-y-6 animate-fade-up">
-            {stats && stats.intentos > 0 && (
-              <div className="flex items-center justify-center gap-8">
-                <div>
-                  <p className="font-display text-4xl text-ritual-cream">{stats.racha_actual}</p>
-                  <p className="text-ritual-muted text-[11px] font-body uppercase tracking-wider mt-1">racha actual</p>
-                </div>
-                <div className="w-px h-10 bg-white/10" />
-                <div>
-                  <p className="font-display text-4xl text-ritual-cream">
-                    {Math.round((stats.coincidencias / stats.intentos) * 100)}%
-                  </p>
-                  <p className="text-ritual-muted text-[11px] font-body uppercase tracking-wider mt-1">coincidencias</p>
-                </div>
+          <div className="space-y-6 animate-fade-up">
+            <div className="flex bg-ritual-bg-soft rounded-2xl p-1">
+              <button
+                onClick={() => cambiarIntensidad('normal')}
+                className={`flex-1 py-2.5 rounded-xl text-sm font-body font-medium transition-all duration-300 ${
+                  intensidad === 'normal' ? 'bg-ritual-gold text-ritual-bg' : 'text-ritual-muted hover:text-ritual-text'
+                }`}
+              >
+                Normal
+              </button>
+              <button
+                onClick={() => cambiarIntensidad('picante')}
+                className={`flex-1 py-2.5 rounded-xl text-sm font-body font-medium transition-all duration-300 ${
+                  intensidad === 'picante' ? 'bg-[#D4A5A5] text-ritual-bg' : 'text-ritual-muted hover:text-ritual-text'
+                }`}
+              >
+                🔥 Picante
+              </button>
+            </div>
+
+            {mostrarConsentimiento ? (
+              <PicanteConsentGate
+                onConfirmar={confirmarPicante}
+                onCancelar={() => setMostrarConsentimiento(false)}
+              />
+            ) : mostrarUpsell ? (
+              <PicanteUpsell />
+            ) : (
+              <div className="text-center space-y-6">
+                {stats && stats.intentos > 0 && (
+                  <div className="flex items-center justify-center gap-8">
+                    <div>
+                      <p className="font-display text-4xl text-ritual-cream">{stats.racha_actual}</p>
+                      <p className="text-ritual-muted text-[11px] font-body uppercase tracking-wider mt-1">racha actual</p>
+                    </div>
+                    <div className="w-px h-10 bg-white/10" />
+                    <div>
+                      <p className="font-display text-4xl text-ritual-cream">
+                        {Math.round((stats.coincidencias / stats.intentos) * 100)}%
+                      </p>
+                      <p className="text-ritual-muted text-[11px] font-body uppercase tracking-wider mt-1">coincidencias</p>
+                    </div>
+                  </div>
+                )}
+                <p className="text-3xl">⚖️</p>
+                <p className="font-display text-2xl text-ritual-cream">¿Quién de los dos?</p>
+                <p className="text-ritual-muted font-body text-sm leading-relaxed">
+                  Una pregunta comparativa. Cada uno elige en secreto quién cree que es. Si coinciden, se conocen bien.
+                </p>
+                <button
+                  onClick={empezarRonda}
+                  disabled={starting}
+                  className="w-full bg-ritual-gold text-ritual-bg font-body font-medium py-4 rounded-2xl disabled:opacity-50"
+                >
+                  {starting ? 'Empezando...' : 'Empezar ronda'}
+                </button>
               </div>
             )}
-            <p className="text-3xl">⚖️</p>
-            <p className="font-display text-2xl text-ritual-cream">¿Quién de los dos?</p>
-            <p className="text-ritual-muted font-body text-sm leading-relaxed">
-              Una pregunta comparativa. Cada uno elige en secreto quién cree que es. Si coinciden, se conocen bien.
-            </p>
-            <button
-              onClick={handleEmpezar}
-              disabled={starting}
-              className="w-full bg-ritual-gold text-ritual-bg font-body font-medium py-4 rounded-2xl disabled:opacity-50"
-            >
-              {starting ? 'Empezando...' : 'Empezar ronda'}
-            </button>
           </div>
         )}
 

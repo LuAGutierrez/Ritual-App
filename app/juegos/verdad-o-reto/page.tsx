@@ -1,12 +1,14 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { getVerdadORetoItemsAction } from '@/app/actions/verdad-o-reto'
 import { getIsCouplePremiumAction } from '@/app/actions/subscription'
 import { getPicanteHabilitadoAction, habilitarPicanteAction } from '@/app/actions/picante-consent'
+import { getIntensidadMaximaAction } from '@/app/actions/perfil-preferencias'
 import { logContenidoRechazadoAction, getRechazadosAction } from '@/app/actions/contenido-rechazado'
 import { registrarRetoDobleCompletadoAction } from '@/app/actions/momentos'
+import { dentroDelTecho, type Intensidad as Techo } from '@/lib/intensidad'
 import type { VerdadORetoItem } from '@/types'
 import PicanteUpsell from '@/components/PicanteUpsell'
 import PicanteConsentGate from '@/components/PicanteConsentGate'
@@ -36,10 +38,13 @@ export default function VerdadORetoPage() {
   const [picanteHabilitado, setPicanteHabilitado] = useState(false)
   const [mostrarConsentimiento, setMostrarConsentimiento] = useState(false)
   const [retoDobleExtra, setRetoDobleExtra] = useState<VerdadORetoItem | null>(null)
+  const [intensidadMaxima, setIntensidadMaxima] = useState<Techo>('intensa')
+  const ultimaCategoriaRef = useRef<string | null>(null)
 
   useEffect(() => {
     getIsCouplePremiumAction().then(setIsPremium)
     getPicanteHabilitadoAction().then(setPicanteHabilitado)
+    getIntensidadMaximaAction().then(setIntensidadMaxima)
     getVerdadORetoItemsAction().then(data => {
       setItems(data)
       setLoading(false)
@@ -47,13 +52,20 @@ export default function VerdadORetoPage() {
     getRechazadosAction('verdad_o_reto').then(ids => setRechazados(new Set(ids)))
   }, [])
 
-  // Evita repetir lo que ya pasaron -- pero si eso deja muy pocas
-  // opciones (pool chico, ~8-12 por modo/intensidad), se prioriza
-  // variedad y se vuelve a la lista completa.
+  // Evita repetir lo que ya pasaron, respeta el techo de intensidad
+  // elegido por la pareja (/perfil, migración 038) y prefiere variedad
+  // de categoría respecto de la última mostrada en la sesión -- en ese
+  // orden, cada filtro con el mismo criterio de fallback: si deja muy
+  // pocas opciones, se ignora y se usa el pool anterior.
   function listaFiltrada(m: Modo, ints: Intensidad): VerdadORetoItem[] {
     const base = items.filter(item => item.modo === m && (ints === 'picante' ? item.picante : !item.picante))
     const sinRechazados = base.filter(item => !rechazados.has(item.id))
-    return sinRechazados.length >= 3 ? sinRechazados : base
+    const porRechazo = sinRechazados.length >= 3 ? sinRechazados : base
+    const porTecho = porRechazo.filter(item => dentroDelTecho(item.intensidad as Techo, intensidadMaxima))
+    const porTechoFinal = porTecho.length >= 3 ? porTecho : porRechazo
+    if (!ultimaCategoriaRef.current) return porTechoFinal
+    const variados = porTechoFinal.filter(item => item.categoria !== ultimaCategoriaRef.current)
+    return variados.length >= 3 ? variados : porTechoFinal
   }
 
   // Evento especial "Reto Doble" (solo modo reto, solo intensidad
@@ -88,6 +100,7 @@ export default function VerdadORetoPage() {
     setModo(m)
     setVistos(nuevosVistos)
     setPromptItem(lista[idx])
+    ultimaCategoriaRef.current = lista[idx].categoria
     setRetoDobleExtra(extra)
     setMostrarUpsell(false)
     if (intensidad === 'picante') setPicanteUsado(true)
@@ -105,6 +118,7 @@ export default function VerdadORetoPage() {
     const { extra, vistos: nuevosVistos } = elegirRetoDoble(modo, intensidad, lista, vistosConPrimario)
     setVistos(nuevosVistos)
     setPromptItem(lista[idx])
+    ultimaCategoriaRef.current = lista[idx].categoria
     setRetoDobleExtra(extra)
     if (intensidad === 'picante') setPicanteUsado(true)
   }
@@ -167,6 +181,7 @@ export default function VerdadORetoPage() {
     setIntensidad('picante')
     setModo(parPicante.modo)
     setPromptItem(parPicante)
+    ultimaCategoriaRef.current = parPicante.categoria
     setRetoDobleExtra(null)
     setVistos(new Set(idx >= 0 ? [idx] : []))
     setMostrarUpsell(false)

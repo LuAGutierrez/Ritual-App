@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { dentroDelTecho, type Intensidad } from '@/lib/intensidad'
 import type { EstoAquelloRound, MatchStats, UserContext } from '@/types'
 
 export async function getEstoAquelloPageDataAction(): Promise<{
@@ -25,13 +26,41 @@ export async function startEstoAquelloRoundAction(
 
   const { data: filtrados } = await supabase
     .from('esto_o_aquello_items')
-    .select('option_a, option_b')
+    .select('option_a, option_b, intensidad, categoria')
     .eq('picante', intensidad === 'picante')
 
   if (!filtrados || filtrados.length === 0) return null
 
-  const disponibles = filtrados.filter(p => !excluir.includes(`${p.option_a}|${p.option_b}`))
-  const pool = disponibles.length > 0 ? disponibles : filtrados
+  const { data: couple } = await supabase
+    .from('couples')
+    .select('intensidad_maxima')
+    .eq('id', coupleId)
+    .single()
+  const techo = (couple?.intensidad_maxima as Intensidad) ?? 'intensa'
+  const dentroDeTecho = filtrados.filter(p => dentroDelTecho(p.intensidad as Intensidad, techo))
+  const porTecho = dentroDeTecho.length >= 3 ? dentroDeTecho : filtrados
+
+  const disponibles = porTecho.filter(p => !excluir.includes(`${p.option_a}|${p.option_b}`))
+  const porRechazo = disponibles.length > 0 ? disponibles : porTecho
+
+  let pool = porRechazo
+  const { data: ultimaRonda } = await supabase
+    .from('couple_esto_aquello_rounds')
+    .select('option_a, option_b')
+    .eq('couple_id', coupleId)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+  if (ultimaRonda) {
+    const ultimaCategoria = filtrados.find(
+      p => p.option_a === ultimaRonda.option_a && p.option_b === ultimaRonda.option_b
+    )?.categoria
+    if (ultimaCategoria) {
+      const variados = porRechazo.filter(p => p.categoria !== ultimaCategoria)
+      if (variados.length >= 3) pool = variados
+    }
+  }
+
   const par = pool[Math.floor(Math.random() * pool.length)]
 
   const { data: members } = await supabase

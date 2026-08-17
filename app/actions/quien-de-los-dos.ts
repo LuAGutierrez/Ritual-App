@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { dentroDelTecho, type Intensidad } from '@/lib/intensidad'
 import type { QuienDeLosDosRound, MatchStats, UserContext } from '@/types'
 
 // Junta contexto + ronda activa + stats en un solo round-trip, mismo
@@ -20,18 +21,46 @@ export async function getQuienDeLosDosPageDataAction(): Promise<{
 
 export async function startQuienDeLosDosRoundAction(
   coupleId: string,
+  intensidad: 'normal' | 'picante' = 'normal',
   excluir: string[] = []
 ): Promise<QuienDeLosDosRound | null> {
   const supabase = await createClient()
 
   const { data: items } = await supabase
     .from('quien_de_los_dos_items')
-    .select('pregunta')
+    .select('pregunta, intensidad, categoria')
+    .eq('picante', intensidad === 'picante')
 
   if (!items || items.length === 0) return null
 
-  const disponibles = items.filter(i => !excluir.includes(i.pregunta))
-  const pool = disponibles.length > 0 ? disponibles : items
+  const { data: couple } = await supabase
+    .from('couples')
+    .select('intensidad_maxima')
+    .eq('id', coupleId)
+    .single()
+  const techo = (couple?.intensidad_maxima as Intensidad) ?? 'intensa'
+  const dentroDeTecho = items.filter(i => dentroDelTecho(i.intensidad as Intensidad, techo))
+  const porTecho = dentroDeTecho.length >= 3 ? dentroDeTecho : items
+
+  const disponibles = porTecho.filter(i => !excluir.includes(i.pregunta))
+  const porRechazo = disponibles.length > 0 ? disponibles : porTecho
+
+  let pool = porRechazo
+  const { data: ultimaRonda } = await supabase
+    .from('couple_quien_de_los_dos_rounds')
+    .select('pregunta')
+    .eq('couple_id', coupleId)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+  if (ultimaRonda) {
+    const ultimaCategoria = items.find(i => i.pregunta === ultimaRonda.pregunta)?.categoria
+    if (ultimaCategoria) {
+      const variados = porRechazo.filter(i => i.categoria !== ultimaCategoria)
+      if (variados.length >= 3) pool = variados
+    }
+  }
+
   const item = pool[Math.floor(Math.random() * pool.length)]
 
   const { data: members } = await supabase
