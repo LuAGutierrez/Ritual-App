@@ -94,6 +94,7 @@ export default function PerfilPage() {
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [intensidadMaxima, setIntensidadMaximaState] = useState<Intensidad>('intensa')
+  const [copiedInvite, setCopiedInvite] = useState(false)
 
   useEffect(() => {
     getPerfilAction().then(d => {
@@ -130,6 +131,17 @@ export default function PerfilPage() {
       setTimeout(() => setSaved(false), 2500)
     }
     setSaving(false)
+  }
+
+  async function copyInviteLink() {
+    if (!data?.inviteCode) return
+    try {
+      await navigator.clipboard.writeText(`${window.location.origin}/unirse/${data.inviteCode}`)
+      setCopiedInvite(true)
+      setTimeout(() => setCopiedInvite(false), 2000)
+    } catch {
+      setError('No se pudo copiar. Copiá el link manualmente.')
+    }
   }
 
   async function handleLogout() {
@@ -172,6 +184,26 @@ export default function PerfilPage() {
             </p>
           )}
         </div>
+
+        {/* Invitación pendiente -- pareja creada pero el otro todavía no se
+            unió. Antes este link solo se veía una vez, al crearla; si no lo
+            copiabas en ese momento no había forma de recuperarlo. */}
+        {data?.inviteCode && (
+          <div className="bg-ritual-bg-soft border border-white/10 rounded-2xl p-4 space-y-3">
+            <p className="text-ritual-cream font-body text-sm">
+              Tu pareja todavía no se unió
+            </p>
+            <p className="text-ritual-muted text-xs font-body break-all leading-relaxed">
+              {`${window.location.origin}/unirse/${data.inviteCode}`}
+            </p>
+            <button
+              onClick={copyInviteLink}
+              className="w-full bg-ritual-gold text-ritual-bg font-body text-sm font-medium py-3 rounded-xl transition-all duration-300 hover:bg-ritual-cream active:scale-[0.98]"
+            >
+              {copiedInvite ? '¡Copiado!' : 'Copiar link de invitación'}
+            </button>
+          </div>
+        )}
 
         {/* Formulario */}
         <form onSubmit={handleGuardar} className="space-y-5">

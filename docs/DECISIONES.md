@@ -251,6 +251,19 @@ camino para quien recién se registra y todavía no tiene nombre.
 
 ---
 
+## Invite link recuperable desde /perfil, no solo al crear la pareja
+
+**Decisión**: `get_perfil_page_data()` (migración `045`) devuelve `inviteCode` cuando la pareja
+existe pero tiene un solo miembro, y `/perfil` lo muestra con un botón de copiar.
+
+**Motivación**: el link de invitación solo aparecía una vez, en la pantalla que sigue a "Crear pareja
+e invitar"/"Vincular pareja". Si el usuario se iba de ahí sin copiarlo (por apuro, o por tocar
+"Ir al ritual de hoy" antes de copiar), quedaba sin forma de invitar a su pareja — el `invite_code`
+seguía existiendo en la tabla `couples`, pero ningún otro lugar de la UI lo mostraba. Reportado por
+el usuario sobre su propia cuenta real.
+
+---
+
 ## MP_BACK_URL apuntando al dominio propio, no a *.vercel.app
 
 **Decisión**: la Edge Function `create-mp-subscription` usa el secret `MP_BACK_URL` =
