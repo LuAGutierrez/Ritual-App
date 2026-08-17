@@ -1,7 +1,11 @@
 # Rituales — Instrucciones para Claude
 
-Antes de dar cualquier cambio de código o de diseño por terminado en este repo, verificá
-`.claude/skills/no-slop/SKILL.md` y aplicá su checklist. No es opcional ni depende de que el prompt lo
-mencione — corre siempre, en cada tarea de este proyecto.
+Dos skills obligatorias en toda tarea de código de este repo, no opcionales ni dependientes de que el
+prompt las mencione:
+
+- **Al planificar el cambio**, antes de tocar código: `.claude/skills/qe-triaje/SKILL.md` — clasificá el
+  alcance (🟢 Trivial / 🟡 Mediano / 🔴 Grande) para saber cuánta verificación amerita.
+- **Antes de dar el cambio por terminado**: `.claude/skills/no-slop/SKILL.md` — aplicá su checklist
+  (hidratación, timezone, RLS, migraciones SQL, etc.) según el nivel que salió del triaje.
 
 Ver `docs/INDEX.md` para el resto de la documentación del proyecto.
