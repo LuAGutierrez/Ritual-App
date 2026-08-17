@@ -30,7 +30,8 @@ const PROBABILIDAD_CAMBIO_DE_ROLES = 0.2
 // mira el actor real de la última ronda, no un conteo.
 export async function startConocesRoundAction(
   coupleId: string,
-  excluir: string[] = []
+  excluir: string[] = [],
+  categoriaPreferida: string | null = null
 ): Promise<ConocesRound | null> {
   const supabase = await createClient()
 
@@ -67,6 +68,11 @@ export async function startConocesRoundAction(
       const variados = porRechazo.filter(i => i.categoria !== ultimaCategoria)
       if (variados.length >= 3) pool = variados
     }
+  }
+
+  if (categoriaPreferida) {
+    const preferidos = pool.filter(i => i.categoria === categoriaPreferida)
+    if (preferidos.length >= 3) pool = preferidos
   }
 
   const item = pool[Math.floor(Math.random() * pool.length)]

@@ -8,6 +8,7 @@ import { logRondaJugadaAction, getUltimaCategoriaRondaAction } from '@/app/actio
 import { getIsCouplePremiumAction } from '@/app/actions/subscription'
 import { getIntensidadMaximaAction } from '@/app/actions/perfil-preferencias'
 import { dentroDelTecho, type Intensidad } from '@/lib/intensidad'
+import { getCategoriaPreferida } from '@/lib/categoriaPreferida'
 import type { RuletaPicanteItem } from '@/types'
 import PicanteUpsell from '@/components/PicanteUpsell'
 
@@ -49,9 +50,16 @@ export default function RuletaPicantePage() {
     const porRechazo = sinRechazados.length >= 3 ? sinRechazados : items
     const porTecho = porRechazo.filter(item => dentroDelTecho(item.intensidad, intensidadMaxima))
     const porTechoFinal = porTecho.length >= 3 ? porTecho : porRechazo
-    if (!ultimaCategoriaRef.current) return porTechoFinal
-    const variados = porTechoFinal.filter(item => item.categoria !== ultimaCategoriaRef.current)
-    return variados.length >= 3 ? variados : porTechoFinal
+    const porVariedad = ultimaCategoriaRef.current
+      ? (() => {
+          const variados = porTechoFinal.filter(item => item.categoria !== ultimaCategoriaRef.current)
+          return variados.length >= 3 ? variados : porTechoFinal
+        })()
+      : porTechoFinal
+    const categoriaPreferida = getCategoriaPreferida()
+    if (!categoriaPreferida) return porVariedad
+    const preferidos = porVariedad.filter(item => item.categoria === categoriaPreferida)
+    return preferidos.length >= 3 ? preferidos : porVariedad
   })()
 
   function girar() {

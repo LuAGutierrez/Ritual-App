@@ -20,7 +20,8 @@ export async function getEstoAquelloPageDataAction(): Promise<{
 export async function startEstoAquelloRoundAction(
   coupleId: string,
   intensidad: 'normal' | 'picante' = 'normal',
-  excluir: string[] = []
+  excluir: string[] = [],
+  categoriaPreferida: string | null = null
 ): Promise<EstoAquelloRound | null> {
   const supabase = await createClient()
 
@@ -59,6 +60,11 @@ export async function startEstoAquelloRoundAction(
       const variados = porRechazo.filter(p => p.categoria !== ultimaCategoria)
       if (variados.length >= 3) pool = variados
     }
+  }
+
+  if (categoriaPreferida) {
+    const preferidos = pool.filter(p => p.categoria === categoriaPreferida)
+    if (preferidos.length >= 3) pool = preferidos
   }
 
   const par = pool[Math.floor(Math.random() * pool.length)]

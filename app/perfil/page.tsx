@@ -262,6 +262,19 @@ export default function PerfilPage() {
               </button>
             ))}
           </div>
+          {intensidadMaxima === 'liviana' && totalJuegos >= 10 && (
+            <div className="mt-3 bg-ritual-bg-soft border border-white/8 rounded-2xl p-4 flex items-center justify-between gap-3">
+              <p className="text-ritual-muted text-xs font-body leading-relaxed">
+                Ya llevan varias rondas jugando en Liviana. ¿Probamos Media?
+              </p>
+              <button
+                onClick={() => cambiarIntensidadMaxima('media')}
+                className="shrink-0 bg-ritual-gold text-ritual-bg font-body text-xs font-medium py-2 px-3 rounded-xl hover:opacity-90 transition-all"
+              >
+                Probar Media
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Estadísticas */}

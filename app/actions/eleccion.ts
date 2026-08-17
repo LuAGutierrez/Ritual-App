@@ -24,7 +24,8 @@ export async function getEleccionPageDataAction(): Promise<{
 export async function startEleccionRoundAction(
   coupleId: string,
   intensidad: 'normal' | 'picante' = 'normal',
-  excluir: string[] = []
+  excluir: string[] = [],
+  categoriaPreferida: string | null = null
 ): Promise<EleccionRound | null> {
   const supabase = await createClient()
 
@@ -71,6 +72,14 @@ export async function startEleccionRoundAction(
       const variados = porRechazo.filter(p => p.categoria !== ultimaCategoria)
       if (variados.length >= 3) pool = variados
     }
+  }
+
+  // Categoría preferida elegida en el hub (pegajosa por sesión, ver
+  // lib/categoriaPreferida.ts) -- mismo criterio de fallback que el
+  // resto de la cadena.
+  if (categoriaPreferida) {
+    const preferidos = pool.filter(p => p.categoria === categoriaPreferida)
+    if (preferidos.length >= 3) pool = preferidos
   }
 
   const prompt = pool[Math.floor(Math.random() * pool.length)]
