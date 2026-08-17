@@ -236,6 +236,21 @@ hacerlo por API o en nombre de otra cuenta.
 
 ---
 
+## "Vincular pareja" en /ritual crea la pareja directo, sin pasar por /onboarding
+
+**Decisión**: el botón "Vincular pareja" que aparece en `/ritual` cuando el usuario no tiene pareja
+llama a `crearPareja()` directamente y muestra el link de invitación ahí mismo, en vez de redirigir a
+`/onboarding`.
+
+**Motivación**: `/onboarding` sigue existiendo para el primer registro (pide el nombre). Pero un
+usuario que llega a `/ritual` en estado `no_couple` **siempre** ya tiene `display_name` guardado — el
+redirect inteligente de `app/page.tsx` garantiza eso (sin nombre no se llega a `/ritual`). Mandarlo a
+`/onboarding` de nuevo solo mostraba una pantalla intermedia ("Hola, {nombre}") con el mismo botón
+"Crear pareja e invitar" — un click extra sin ningún valor. `/onboarding` sigue siendo el único
+camino para quien recién se registra y todavía no tiene nombre.
+
+---
+
 ## MP_BACK_URL apuntando al dominio propio, no a *.vercel.app
 
 **Decisión**: la Edge Function `create-mp-subscription` usa el secret `MP_BACK_URL` =

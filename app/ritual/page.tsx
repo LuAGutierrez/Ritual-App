@@ -10,6 +10,7 @@ import {
   updateStreakAction,
   usarComodinAction,
 } from '@/app/actions/ritual'
+import { crearPareja } from '@/app/actions/couple'
 import type { CoupleRitualSession, Streak, UserContext, SessionState } from '@/types'
 import RitualCard from '@/components/RitualCard'
 import WaitingState from '@/components/WaitingState'
@@ -52,7 +53,37 @@ export default function RitualPage() {
   const [comodinUsado, setComodinUsado] = useState(false)
   const [showPartnerBanner, setShowPartnerBanner] = useState(false)
   const [showPushPrompt, setShowPushPrompt] = useState(false)
+  const [creandoPareja, setCreandoPareja] = useState(false)
+  const [inviteLink, setInviteLink] = useState<string | null>(null)
+  const [copied, setCopied] = useState(false)
   const { subscribe, loading: pushLoading, isSupported } = usePushNotifications()
+
+  // ─── Vincular pareja directo desde acá, sin pasar por /onboarding ──
+  // (esa pantalla intermedia no aportaba nada para alguien que ya tiene
+  // nombre guardado -- ver DECISIONES.md)
+  async function handleVincularPareja() {
+    setCreandoPareja(true)
+    setError(null)
+    const result = await crearPareja()
+    if ('error' in result) {
+      setError(`Error al crear pareja: ${result.error}`)
+      setCreandoPareja(false)
+      return
+    }
+    setInviteLink(`${window.location.origin}/unirse/${result.inviteCode}`)
+    setCreandoPareja(false)
+  }
+
+  async function copyInviteLink() {
+    if (!inviteLink) return
+    try {
+      await navigator.clipboard.writeText(inviteLink)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch {
+      setError('No se pudo copiar. Copiá el link manualmente.')
+    }
+  }
 
   // ─── Calcular el estado de la sesión ───────────────────────────
   function resolveState(s: CoupleRitualSession, userId: string, alreadySeen = false): SessionState {
@@ -249,7 +280,7 @@ export default function RitualPage() {
       <main className="flex-1 px-5 pb-28 flex flex-col justify-center max-w-md mx-auto w-full">
 
         {/* Sin pareja */}
-        {state === 'no_couple' && (
+        {state === 'no_couple' && !inviteLink && (
           <div className="text-center space-y-6 animate-fade-up">
             <p className="font-display text-2xl text-ritual-cream">
               Invitá a tu pareja
@@ -258,10 +289,35 @@ export default function RitualPage() {
               El ritual se completa cuando ambos participan.
             </p>
             <button
-              onClick={() => router.push('/onboarding')}
+              onClick={handleVincularPareja}
+              disabled={creandoPareja}
+              className="w-full bg-ritual-gold text-ritual-bg font-body font-medium py-4 rounded-2xl disabled:opacity-40"
+            >
+              {creandoPareja ? 'Creando...' : 'Vincular pareja'}
+            </button>
+          </div>
+        )}
+
+        {/* Pareja creada -- compartir link, sin pasar por /onboarding */}
+        {state === 'no_couple' && inviteLink && (
+          <div className="text-center space-y-6 animate-fade-up">
+            <p className="font-display text-2xl text-ritual-cream">
+              Tu pareja espera
+            </p>
+            <p className="text-ritual-muted font-body text-sm leading-relaxed">
+              Compartí este link para que se unan a tus rituales
+            </p>
+            <div className="bg-ritual-bg-soft border border-white/10 rounded-2xl p-4 text-left">
+              <p className="text-ritual-muted text-xs font-body mb-2">Link de invitación</p>
+              <p className="text-ritual-cream font-body text-sm break-all leading-relaxed">
+                {inviteLink}
+              </p>
+            </div>
+            <button
+              onClick={copyInviteLink}
               className="w-full bg-ritual-gold text-ritual-bg font-body font-medium py-4 rounded-2xl"
             >
-              Vincular pareja
+              {copied ? '¡Copiado!' : 'Copiar link'}
             </button>
           </div>
         )}
