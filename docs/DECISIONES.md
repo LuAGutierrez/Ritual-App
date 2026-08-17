@@ -251,6 +251,23 @@ camino para quien recién se registra y todavía no tiene nombre.
 
 ---
 
+## Refrescar ctx.partnerProfile cuando llega el reveal por Realtime
+
+**Decisión**: en el callback de `postgres_changes` de `/ritual`, si `ctxRef.current?.partnerProfile`
+todavía es `null`, se vuelve a pedir `getUserContextAction()` y se actualiza `ctx` si ahora sí trae
+un partner.
+
+**Motivación**: si la pareja se unió *después* de que cargaste `/ritual` (estabas parado en la
+pantalla de espera cuando se unió y respondió), el reveal llegaba igual por Realtime -- pero
+`ctx.partnerProfile` había quedado en `null` desde la carga inicial de la página, así que
+`RevealCards` mostraba "Tu pareja" en vez del nombre real. Recargando la página se veía bien (porque
+ahí sí se vuelve a pedir todo), pero en vivo no. Se usa un `ctxRef` (no `ctx` directo) para no forzar
+que `subscribeToSession` se recree cada vez que cambia el contexto. Probado en local con dos cuentas
+reales: A responde y queda esperando: B se une y responde vía API (mismo camino que usaría su
+navegador) sin tocar la pestaña de A -- el nombre real aparece solo, sin recargar.
+
+---
+
 ## "Esperando pareja" distingue si nadie se unió todavía
 
 **Decisión**: en `/ritual`, cuando el estado es `waiting_partner` (ya respondiste, falta el otro
