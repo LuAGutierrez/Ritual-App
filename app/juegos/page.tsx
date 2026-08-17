@@ -8,18 +8,6 @@ import PageLoader from '@/components/PageLoader'
 import { getJuegosStatsSummaryAction, type JuegosStatsSummary } from '@/app/actions/juegos-stats'
 import { JUEGOS } from '@/lib/juegos'
 import { IconLlama } from '@/components/icons/juegos'
-import { getCategoriaPreferida, setCategoriaPreferida } from '@/lib/categoriaPreferida'
-import type { RitualCategory } from '@/types'
-
-const CATEGORIA_CHIPS: { id: RitualCategory; label: string; emoji: string }[] = [
-  { id: 'conexion', label: 'Conexión', emoji: '💞' },
-  { id: 'diversion', label: 'Diversión', emoji: '🎉' },
-  { id: 'intimidad', label: 'Intimidad', emoji: '🕊️' },
-  { id: 'reto', label: 'Reto', emoji: '🎯' },
-  { id: 'viajes', label: 'Viajes', emoji: '✈️' },
-  { id: 'planes', label: 'Planes', emoji: '📅' },
-  { id: 'fantasias', label: 'Fantasías', emoji: '✨' },
-]
 
 // La lógica de QUÉ mensaje mostrar vive acá, no en la base -- la RPC
 // (get_juegos_stats_summary, migración 029) solo trae los números
@@ -112,17 +100,10 @@ export default function JuegosPage() {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [stats, setStats] = useState<JuegosStatsSummary | null>(null)
-  const [categoriaPreferida, setCategoriaPreferidaState] = useState<RitualCategory | null>(null)
 
   useEffect(() => {
     getJuegosStatsSummaryAction().then(setStats)
-    setCategoriaPreferidaState(getCategoriaPreferida())
   }, [])
-
-  function handleCategoriaPreferida(categoria: RitualCategory | null) {
-    setCategoriaPreferidaState(categoria)
-    setCategoriaPreferida(categoria)
-  }
 
   function handleClick(e: React.MouseEvent, href: string) {
     e.preventDefault()
@@ -151,34 +132,6 @@ export default function JuegosPage() {
           <p className="text-ritual-gold text-xs font-body mt-2">{mensaje}</p>
         )}
       </header>
-
-      {/* Categoría preferida -- pegajosa por sesión, aplica a todos los
-          juegos que arranquen después hasta que la cambien */}
-      <div className="px-5 pb-4 flex gap-2 overflow-x-auto scrollbar-none">
-        <button
-          onClick={() => handleCategoriaPreferida(null)}
-          className={`flex-shrink-0 px-4 py-1.5 rounded-full border font-body text-xs transition-all duration-200 ${
-            categoriaPreferida === null
-              ? 'bg-ritual-gold text-ritual-bg border-ritual-gold'
-              : 'bg-transparent border-white/15 text-ritual-muted hover:border-white/25'
-          }`}
-        >
-          Sin preferencia
-        </button>
-        {CATEGORIA_CHIPS.map(c => (
-          <button
-            key={c.id}
-            onClick={() => handleCategoriaPreferida(c.id)}
-            className={`flex-shrink-0 px-4 py-1.5 rounded-full border font-body text-xs transition-all duration-200 ${
-              categoriaPreferida === c.id
-                ? 'bg-ritual-gold text-ritual-bg border-ritual-gold'
-                : 'bg-transparent border-white/15 text-ritual-muted hover:border-white/25'
-            }`}
-          >
-            {c.emoji} {c.label}
-          </button>
-        ))}
-      </div>
 
       <main className="flex-1 px-5 pb-28 max-w-md mx-auto w-full space-y-3">
         {/* Destacados: cards grandes, un juego por fila */}
