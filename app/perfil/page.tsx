@@ -34,6 +34,12 @@ const MOMENTO_COPY: Record<Momento['juego'], Record<Momento['tipo'], { emoji: st
     racha_5: { emoji: '🎯', texto: '5 aciertos seguidos en ¿Cuánto me conoces?' },
     sorpresa: { emoji: '✨', texto: 'Un momento sorpresa en ¿Cuánto me conoces?' },
   },
+  quien_de_los_dos: {
+    primera_partida: { emoji: '⚖️', texto: 'Primera vez que jugaron a ¿Quién de los dos?' },
+    primera_coincidencia: { emoji: '⚖️', texto: 'Primera vez que coincidieron en ¿Quién de los dos?' },
+    racha_5: { emoji: '⚖️', texto: '5 coincidencias seguidas en ¿Quién de los dos?' },
+    sorpresa: { emoji: '✨', texto: 'Un momento sorpresa en ¿Quién de los dos?' },
+  },
 }
 
 const AVATARS = [
@@ -75,7 +81,8 @@ export default function PerfilPage() {
       const total =
         (stats.eleccion?.intentos ?? 0) +
         (stats.estoAquello?.intentos ?? 0) +
-        (stats.conoces?.intentos ?? 0)
+        (stats.conoces?.intentos ?? 0) +
+        (stats.quienDeLosDos?.intentos ?? 0)
       setTotalJuegos(total)
     })
   // eslint-disable-next-line react-hooks/exhaustive-deps

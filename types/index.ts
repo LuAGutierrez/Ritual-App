@@ -138,7 +138,7 @@ export type MatchStats = {
 export type Momento = {
   id: string
   couple_id: string
-  juego: 'eleccion' | 'esto_aquello' | 'conoces'
+  juego: 'eleccion' | 'esto_aquello' | 'conoces' | 'quien_de_los_dos'
   tipo: 'primera_partida' | 'primera_coincidencia' | 'racha_5' | 'sorpresa'
   created_at: string
 }
@@ -172,6 +172,25 @@ export type ConocesItem = {
   opciones: string[]
   categoria: string
   picante: boolean
+}
+
+export type QuienDeLosDosRound = {
+  id: string
+  couple_id: string
+  user1_id: string | null
+  user2_id: string | null
+  pregunta: string
+  user1_choice: 0 | 1 | null
+  user2_choice: 0 | 1 | null
+  revealed_at: string | null
+  created_at: string
+}
+
+export type QuienDeLosDosItem = {
+  id: string
+  pregunta: string
+  intensidad: 'liviana' | 'media' | 'intensa'
+  categoria: string
 }
 
 export type NotificationPrefs = {

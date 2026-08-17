@@ -1,5 +1,5 @@
 import type { ComponentType } from 'react'
-import { IconEleccion, IconDado, IconBifurcacion, IconOjo, IconLlama } from '@/components/icons/juegos'
+import { IconEleccion, IconDado, IconBifurcacion, IconOjo, IconBalanza, IconLlama } from '@/components/icons/juegos'
 
 // Registro de juegos del hub /juegos. Agregar un juego nuevo es agregar
 // una entrada acá, no tocar JSX a mano en app/juegos/page.tsx -- la
@@ -38,6 +38,15 @@ export const JUEGOS: JuegoDef[] = [
     titulo: '¿Cuánto me conoces?',
     descripcion: 'Uno responde sobre sí mismo, el otro adivina en secreto. Se turnan solos, ronda a ronda.',
     Icono: IconOjo,
+    variante: 'destacado',
+    badge: { texto: 'Nosotros' },
+  },
+  {
+    id: 'quien-de-los-dos',
+    href: '/juegos/quien-de-los-dos',
+    titulo: '¿Quién de los dos?',
+    descripcion: 'Preguntas comparativas sobre la pareja. Elijan en secreto y vean si piensan igual.',
+    Icono: IconBalanza,
     variante: 'destacado',
     badge: { texto: 'Nosotros' },
   },

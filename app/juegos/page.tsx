@@ -37,6 +37,12 @@ function mensajeAdaptativo(stats: JuegosStatsSummary | null): string | null {
       intentos: stats.conoces.intentos,
       tasa: stats.conoces.intentos > 0 ? stats.conoces.aciertos / stats.conoces.intentos : 0,
     },
+    stats.quienDeLosDos && {
+      nombre: '¿Quién de los dos?',
+      racha: stats.quienDeLosDos.racha_actual,
+      intentos: stats.quienDeLosDos.intentos,
+      tasa: stats.quienDeLosDos.intentos > 0 ? stats.quienDeLosDos.coincidencias / stats.quienDeLosDos.intentos : 0,
+    },
   ].filter((b): b is { nombre: string; racha: number; intentos: number; tasa: number } => !!b)
 
   if (bloques.length === 0) return null

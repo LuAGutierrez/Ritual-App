@@ -7,6 +7,7 @@ export type JuegosStatsSummary = {
   eleccion: MatchStats | null
   estoAquello: MatchStats | null
   conoces: ConocesStats | null
+  quienDeLosDos: MatchStats | null
 }
 
 export async function getJuegosStatsSummaryAction(): Promise<JuegosStatsSummary | null> {
