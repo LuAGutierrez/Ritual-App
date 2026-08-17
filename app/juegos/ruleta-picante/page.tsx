@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { getRuletaPicanteItemsAction } from '@/app/actions/ruleta-picante'
 import { logContenidoRechazadoAction, getRechazadosAction } from '@/app/actions/contenido-rechazado'
+import { logRondaJugadaAction, getUltimaCategoriaRondaAction } from '@/app/actions/rondas-jugadas'
 import { getIsCouplePremiumAction } from '@/app/actions/subscription'
 import { getIntensidadMaximaAction } from '@/app/actions/perfil-preferencias'
 import { dentroDelTecho, type Intensidad } from '@/lib/intensidad'
@@ -35,6 +36,7 @@ export default function RuletaPicantePage() {
     getRechazadosAction('ruleta_picante').then(ids => setRechazados(new Set(ids)))
     getIsCouplePremiumAction().then(setIsPremium)
     getIntensidadMaximaAction().then(setIntensidadMaxima)
+    getUltimaCategoriaRondaAction('ruleta_picante').then(c => { ultimaCategoriaRef.current = c })
   }, [])
 
   // Evita repetir lo que ya pasaron -- pero si eso deja muy pocas
@@ -66,6 +68,7 @@ export default function RuletaPicantePage() {
         const next = prev.size >= itemsDisponibles.length - 1 ? new Set([idx]) : new Set(prev).add(idx)
         setPromptItem(itemsDisponibles[idx])
         ultimaCategoriaRef.current = itemsDisponibles[idx].categoria
+        logRondaJugadaAction('ruleta_picante', itemsDisponibles[idx].id, itemsDisponibles[idx].categoria)
         return next
       })
       setGirando(false)
