@@ -11,48 +11,82 @@ import { IconLlama } from '@/components/icons/juegos'
 
 // La lógica de QUÉ mensaje mostrar vive acá, no en la base -- la RPC
 // (get_juegos_stats_summary, migración 029) solo trae los números
-// crudos de los 3 juegos de "coincidir/adivinar". Solo muestra algo
-// cuando hay una señal real: una racha activa, o un juego donde
-// todavía coinciden poco con suficientes intentos como para que no
-// sea ruido. Si no hay señal, no se fuerza un mensaje genérico.
+// crudos de los 4 juegos con stats (Elección, Esto o Aquello, Conoces,
+// Quién de los dos -- Verdad o Reto y Ruleta Picante no tienen stats
+// persistidas, quedan fuera de este cálculo). Solo muestra algo cuando
+// hay una señal real. "Frecuencia" y "modo favorito" se derivan de
+// datos que ya se piden (updated_at e intentos de cada tabla de
+// stats) -- no hace falta tabla nueva ni instrumentar duración de
+// sesión (se evaluó y se descartó por poco confiable: no hay forma
+// de saber si se cerró la pestaña sin querer).
 function mensajeAdaptativo(stats: JuegosStatsSummary | null): string | null {
   if (!stats) return null
 
+  // Los 4 juegos SIEMPRE están presentes en la lista (con ceros si
+  // nunca se jugaron) -- necesario para el mensaje de "modo favorito":
+  // si un juego nunca jugado quedara afuera del todo, "menosJugado"
+  // jamás podría ser 0 y ese mensaje nunca se dispararía.
   const bloques = [
-    stats.eleccion && {
+    {
       nombre: 'Elección',
-      racha: stats.eleccion.racha_actual,
-      intentos: stats.eleccion.intentos,
-      tasa: stats.eleccion.intentos > 0 ? stats.eleccion.coincidencias / stats.eleccion.intentos : 0,
+      racha: stats.eleccion?.racha_actual ?? 0,
+      intentos: stats.eleccion?.intentos ?? 0,
+      tasa: stats.eleccion && stats.eleccion.intentos > 0 ? stats.eleccion.coincidencias / stats.eleccion.intentos : 0,
+      updatedAt: stats.eleccion?.updated_at ?? null,
     },
-    stats.estoAquello && {
+    {
       nombre: 'Esto o Aquello',
-      racha: stats.estoAquello.racha_actual,
-      intentos: stats.estoAquello.intentos,
-      tasa: stats.estoAquello.intentos > 0 ? stats.estoAquello.coincidencias / stats.estoAquello.intentos : 0,
+      racha: stats.estoAquello?.racha_actual ?? 0,
+      intentos: stats.estoAquello?.intentos ?? 0,
+      tasa: stats.estoAquello && stats.estoAquello.intentos > 0 ? stats.estoAquello.coincidencias / stats.estoAquello.intentos : 0,
+      updatedAt: stats.estoAquello?.updated_at ?? null,
     },
-    stats.conoces && {
+    {
       nombre: '¿Cuánto me conoces?',
-      racha: stats.conoces.racha_actual,
-      intentos: stats.conoces.intentos,
-      tasa: stats.conoces.intentos > 0 ? stats.conoces.aciertos / stats.conoces.intentos : 0,
+      racha: stats.conoces?.racha_actual ?? 0,
+      intentos: stats.conoces?.intentos ?? 0,
+      tasa: stats.conoces && stats.conoces.intentos > 0 ? stats.conoces.aciertos / stats.conoces.intentos : 0,
+      updatedAt: stats.conoces?.updated_at ?? null,
     },
-    stats.quienDeLosDos && {
+    {
       nombre: '¿Quién de los dos?',
-      racha: stats.quienDeLosDos.racha_actual,
-      intentos: stats.quienDeLosDos.intentos,
-      tasa: stats.quienDeLosDos.intentos > 0 ? stats.quienDeLosDos.coincidencias / stats.quienDeLosDos.intentos : 0,
+      racha: stats.quienDeLosDos?.racha_actual ?? 0,
+      intentos: stats.quienDeLosDos?.intentos ?? 0,
+      tasa: stats.quienDeLosDos && stats.quienDeLosDos.intentos > 0 ? stats.quienDeLosDos.coincidencias / stats.quienDeLosDos.intentos : 0,
+      updatedAt: stats.quienDeLosDos?.updated_at ?? null,
     },
-  ].filter((b): b is { nombre: string; racha: number; intentos: number; tasa: number } => !!b)
+  ]
 
-  if (bloques.length === 0) return null
+  const jugadosAlgunaVez = bloques.filter((b): b is typeof b & { updatedAt: string } => b.updatedAt !== null)
+  if (jugadosAlgunaVez.length === 0) return null
 
-  const conRacha = [...bloques].sort((a, b) => b.racha - a.racha)[0]
+  // 1. Frecuencia: hace más de una semana que no juegan nada -- este
+  // saludo pesa más que cualquier otra señal, cálido antes que
+  // competitivo.
+  const masReciente = [...jugadosAlgunaVez].sort(
+    (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+  )[0]
+  const diasDesdeUltima = Math.floor((Date.now() - new Date(masReciente.updatedAt).getTime()) / 86400000)
+  if (diasDesdeUltima >= 7) {
+    return `Hace ${diasDesdeUltima} días que no juegan por acá — ¿retomamos hoy?`
+  }
+
+  const conRacha = [...jugadosAlgunaVez].sort((a, b) => b.racha - a.racha)[0]
   if (conRacha.racha >= 2) {
     return `🔥 Vienen con una racha de ${conRacha.racha} en ${conRacha.nombre}. ¿La estiran hoy?`
   }
 
-  const porDescubrir = bloques
+  // 3. Modo favorito claro (5+ partidas) mientras otro sigue en cero --
+  // invita a variedad en vez de repetir siempre lo mismo. Compara
+  // contra los 4 juegos (no solo los ya jugados), porque un juego
+  // nunca tocado es justamente el caso que este mensaje quiere detectar.
+  const favorito = [...bloques].sort((a, b) => b.intentos - a.intentos)[0]
+  const menosJugado = [...bloques].sort((a, b) => a.intentos - b.intentos)[0]
+  if (favorito.intentos >= 5 && menosJugado.intentos === 0 && favorito.nombre !== menosJugado.nombre) {
+    return `${favorito.nombre} es su fuerte. ¿Se animan hoy con ${menosJugado.nombre}?`
+  }
+
+  const porDescubrir = jugadosAlgunaVez
     .filter(b => b.intentos >= 3 && b.tasa < 0.4)
     .sort((a, b) => a.tasa - b.tasa)[0]
   if (porDescubrir) {
