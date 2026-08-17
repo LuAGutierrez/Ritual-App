@@ -251,6 +251,21 @@ camino para quien recién se registra y todavía no tiene nombre.
 
 ---
 
+## "Esperando pareja" distingue si nadie se unió todavía
+
+**Decisión**: en `/ritual`, cuando el estado es `waiting_partner` (ya respondiste, falta el otro
+lado), se distingue si `ctx.partnerProfile` existe o no. Si no existe, se muestra "Todavía no se
+unió nadie" + el link de invitación (armado desde `ctx.couple.invite_code`, que siempre viaja en el
+contexto), en vez del `WaitingState` genérico ("Tu pareja aún no respondió").
+
+**Motivación**: el mensaje genérico daba a entender que la pareja ya estaba vinculada y solo faltaba
+que conteste hoy — pero si nadie se unió nunca, el reveal no depende de que "responda", depende de
+que exista alguien del otro lado. Con el mensaje viejo, un usuario podía quedar esperando
+indefinidamente sin entender por qué. Reportado por el usuario al preguntar cómo funciona el
+circuito cuando la pareja no se unió.
+
+---
+
 ## Invite link recuperable desde /perfil, no solo al crear la pareja
 
 **Decisión**: `get_perfil_page_data()` (migración `045`) devuelve `inviteCode` cuando la pareja
