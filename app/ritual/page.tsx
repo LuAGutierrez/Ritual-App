@@ -56,6 +56,7 @@ export default function RitualPage() {
   const [creandoPareja, setCreandoPareja] = useState(false)
   const [inviteLink, setInviteLink] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
+  const [copiedPending, setCopiedPending] = useState(false)
   const { subscribe, loading: pushLoading, isSupported } = usePushNotifications()
 
   // ─── Vincular pareja directo desde acá, sin pasar por /onboarding ──
@@ -80,6 +81,21 @@ export default function RitualPage() {
       await navigator.clipboard.writeText(inviteLink)
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
+    } catch {
+      setError('No se pudo copiar. Copiá el link manualmente.')
+    }
+  }
+
+  // Mismo link que arriba, pero para cuando volvés otro día y la pareja
+  // sigue sin unirse -- acá no hay `inviteLink` en memoria (esa State solo
+  // se llena justo al crear la pareja), así que se arma desde ctx.couple,
+  // que sí viaja siempre en el contexto.
+  async function copyPendingInviteLink() {
+    if (!ctx?.couple) return
+    try {
+      await navigator.clipboard.writeText(`${window.location.origin}/unirse/${ctx.couple.invite_code}`)
+      setCopiedPending(true)
+      setTimeout(() => setCopiedPending(false), 2000)
     } catch {
       setError('No se pudo copiar. Copiá el link manualmente.')
     }
@@ -383,16 +399,44 @@ export default function RitualPage() {
           />
         )}
 
-        {/* Esperando al partner */}
-        {state === 'waiting_partner' && (
+        {/* Esperando al partner -- ya respondió, falta el otro lado */}
+        {state === 'waiting_partner' && ctx?.partnerProfile && (
           <WaitingState
-            partnerName={ctx?.partnerProfile?.display_name}
+            partnerName={ctx.partnerProfile.display_name}
             myResponse={
               ctx?.userId === session?.user1_id
                 ? session?.user1_response ?? ''
                 : session?.user2_response ?? ''
             }
           />
+        )}
+
+        {/* Esperando, pero nadie se unió todavía -- distinto del caso de
+            arriba: acá el reveal no depende de que "responda", depende de
+            que exista alguien del otro lado. Mismo mensaje genérico ("aún
+            no respondió") hubiera sido engañoso -- daba a entender que la
+            pareja ya estaba vinculada. */}
+        {state === 'waiting_partner' && !ctx?.partnerProfile && ctx?.couple && (
+          <div className="text-center space-y-6 animate-fade-up">
+            <p className="font-display text-2xl text-ritual-cream">
+              Todavía no se unió nadie
+            </p>
+            <p className="text-ritual-muted font-body text-sm leading-relaxed">
+              Ya respondiste. Compartí este link para que tu pareja pueda unirse y ver el reveal.
+            </p>
+            <div className="bg-ritual-bg-soft border border-white/10 rounded-2xl p-4 text-left">
+              <p className="text-ritual-muted text-xs font-body mb-2">Link de invitación</p>
+              <p className="text-ritual-cream font-body text-sm break-all leading-relaxed">
+                {`${window.location.origin}/unirse/${ctx.couple.invite_code}`}
+              </p>
+            </div>
+            <button
+              onClick={copyPendingInviteLink}
+              className="w-full bg-ritual-gold text-ritual-bg font-body font-medium py-4 rounded-2xl transition-all duration-300 hover:bg-ritual-cream active:scale-[0.98]"
+            >
+              {copiedPending ? '¡Copiado!' : 'Copiar link'}
+            </button>
+          </div>
         )}
 
         {/* Reveal */}
