@@ -18,8 +18,16 @@
 
 Los archivos en `docs/archivo-anterior/` corresponden a la versión HTML/vanilla JS del proyecto, previa a la migración a Next.js. Se conservan como referencia histórica.
 
-## Estado actual (julio 2026)
+## Estado actual (17 de agosto de 2026)
 
 - Sprint 1 (Core) y Sprint 2 (Engagement) completados.
-- Sprint 3 (Monetización) en progreso: Mercado Pago integrado (checkout + webhook), paywall de historial activo, rituales premium con categorías exclusivas (viajes, planes, fantasías). Falta probar el flujo end-to-end en sandbox y conseguir dominio propio para producción.
+- Sprint 3 (Monetización): **Mercado Pago en producción real** (no sandbox) — `MP_BACK_URL` apunta a
+  `rituales.site`, `MP_ACCESS_TOKEN` es un token de producción, el checkout de `/precios` procesa
+  cobros reales.
+- Registro por email/contraseña y Google Sign-In con branding "Rituales" funcionando correctamente
+  para cualquier usuario (antes rotos por falta de dominio propio verificado en Resend y en Google
+  Brand Verification respectivamente — ambos resueltos esta sesión, ver `DEUDA-TECNICA.md`).
+- Juegos: 6 juegos (Elección, Esto o Aquello, ¿Cuánto me conoces?, ¿Quién de los dos?, Verdad o Reto,
+  Ruleta Picante) con metadata rica, techo de intensidad configurable, variedad y categoría preferida
+  "pegajosa", sistema de Momentos, e historial combinado dentro de `/historial`.
 - Ver `ROADMAP.md` para el detalle punto por punto.
