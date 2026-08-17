@@ -104,6 +104,8 @@ export type VerdadORetoItem = {
   texto: string
   picante: boolean
   par_picante_id: string | null
+  intensidad: 'liviana' | 'media' | 'intensa'
+  categoria: string
 }
 
 export type EstoAquelloItem = {
@@ -111,6 +113,8 @@ export type EstoAquelloItem = {
   option_a: string
   option_b: string
   picante: boolean
+  intensidad: 'liviana' | 'media' | 'intensa'
+  categoria: string
 }
 
 export type EleccionPromptItem = {
@@ -119,11 +123,15 @@ export type EleccionPromptItem = {
   option_b: string
   premio: string
   picante: boolean
+  intensidad: 'liviana' | 'media' | 'intensa'
+  categoria: string
 }
 
 export type RuletaPicanteItem = {
   id: string
   texto: string
+  intensidad: 'liviana' | 'media' | 'intensa'
+  categoria: string
 }
 
 export type MatchStats = {
@@ -139,7 +147,7 @@ export type Momento = {
   id: string
   couple_id: string
   juego: 'eleccion' | 'esto_aquello' | 'conoces' | 'quien_de_los_dos' | 'verdad_o_reto'
-  tipo: 'primera_partida' | 'primera_coincidencia' | 'racha_5' | 'sorpresa' | 'reto_doble'
+  tipo: 'primera_partida' | 'primera_coincidencia' | 'racha_5' | 'sorpresa' | 'reto_doble' | 'primer_desacuerdo'
   created_at: string
 }
 
@@ -172,6 +180,7 @@ export type ConocesItem = {
   opciones: string[]
   categoria: string
   picante: boolean
+  intensidad: 'liviana' | 'media' | 'intensa'
 }
 
 export type QuienDeLosDosRound = {
@@ -191,6 +200,7 @@ export type QuienDeLosDosItem = {
   pregunta: string
   intensidad: 'liviana' | 'media' | 'intensa'
   categoria: string
+  picante: boolean
 }
 
 export type NotificationPrefs = {

@@ -6,7 +6,9 @@ import { getPerfilAction, updatePerfilAction } from '@/app/actions/perfil'
 import type { PerfilData } from '@/app/actions/perfil'
 import { getCoupleMomentosAction } from '@/app/actions/momentos'
 import { getJuegosStatsSummaryAction } from '@/app/actions/juegos-stats'
+import { getIntensidadMaximaAction, setIntensidadMaximaAction } from '@/app/actions/perfil-preferencias'
 import { nivelActual } from '@/lib/niveles'
+import type { Intensidad } from '@/lib/intensidad'
 import type { Momento } from '@/types'
 import NotificationPrefsSection from '@/components/NotificationPrefsSection'
 import BottomNav from '@/components/BottomNav'
@@ -22,6 +24,7 @@ const MOMENTO_COPY: Record<Momento['juego'], Record<Momento['tipo'], { emoji: st
     racha_5: { emoji: '🔥', texto: '5 coincidencias seguidas en Elección' },
     sorpresa: { emoji: '✨', texto: 'Un momento sorpresa en Elección' },
     reto_doble: { emoji: '🔥', texto: 'Reto doble completado' },
+    primer_desacuerdo: { emoji: '💭', texto: 'Primera vez que no coincidieron en Elección' },
   },
   esto_aquello: {
     primera_partida: { emoji: '⚡', texto: 'Primera vez que jugaron a Esto o Aquello' },
@@ -29,6 +32,7 @@ const MOMENTO_COPY: Record<Momento['juego'], Record<Momento['tipo'], { emoji: st
     racha_5: { emoji: '⚡', texto: '5 coincidencias seguidas en Esto o Aquello' },
     sorpresa: { emoji: '✨', texto: 'Un momento sorpresa en Esto o Aquello' },
     reto_doble: { emoji: '🔥', texto: 'Reto doble completado' },
+    primer_desacuerdo: { emoji: '💭', texto: 'Primera vez que eligieron distinto en Esto o Aquello' },
   },
   conoces: {
     primera_partida: { emoji: '👁️', texto: 'Primera vez que jugaron a ¿Cuánto me conoces?' },
@@ -36,6 +40,7 @@ const MOMENTO_COPY: Record<Momento['juego'], Record<Momento['tipo'], { emoji: st
     racha_5: { emoji: '🎯', texto: '5 aciertos seguidos en ¿Cuánto me conoces?' },
     sorpresa: { emoji: '✨', texto: 'Un momento sorpresa en ¿Cuánto me conoces?' },
     reto_doble: { emoji: '🔥', texto: 'Reto doble completado' },
+    primer_desacuerdo: { emoji: '💭', texto: 'Primera vez que no acertaste en ¿Cuánto me conoces?' },
   },
   quien_de_los_dos: {
     primera_partida: { emoji: '⚖️', texto: 'Primera vez que jugaron a ¿Quién de los dos?' },
@@ -43,6 +48,7 @@ const MOMENTO_COPY: Record<Momento['juego'], Record<Momento['tipo'], { emoji: st
     racha_5: { emoji: '⚖️', texto: '5 coincidencias seguidas en ¿Quién de los dos?' },
     sorpresa: { emoji: '✨', texto: 'Un momento sorpresa en ¿Quién de los dos?' },
     reto_doble: { emoji: '🔥', texto: 'Reto doble completado' },
+    primer_desacuerdo: { emoji: '💭', texto: 'Primera vez que no coincidieron en ¿Quién de los dos?' },
   },
   verdad_o_reto: {
     primera_partida: { emoji: '🎲', texto: 'Primera vez que jugaron a Verdad o Reto' },
@@ -50,6 +56,7 @@ const MOMENTO_COPY: Record<Momento['juego'], Record<Momento['tipo'], { emoji: st
     racha_5: { emoji: '🎲', texto: 'Primera vez que jugaron a Verdad o Reto' },
     sorpresa: { emoji: '✨', texto: 'Un momento sorpresa en Verdad o Reto' },
     reto_doble: { emoji: '🔥', texto: 'Primer Reto Doble completado' },
+    primer_desacuerdo: { emoji: '💭', texto: 'Primera vez que jugaron a Verdad o Reto' },
   },
 }
 
@@ -77,6 +84,7 @@ export default function PerfilPage() {
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [intensidadMaxima, setIntensidadMaximaState] = useState<Intensidad>('intensa')
 
   useEffect(() => {
     getPerfilAction().then(d => {
@@ -87,6 +95,7 @@ export default function PerfilPage() {
       setLoading(false)
     })
     getCoupleMomentosAction().then(setMomentos)
+    getIntensidadMaximaAction().then(setIntensidadMaximaState)
     getJuegosStatsSummaryAction().then(stats => {
       if (!stats) return
       const total =
@@ -117,6 +126,11 @@ export default function PerfilPage() {
     const supabase = createClient()
     await supabase.auth.signOut()
     router.push('/auth')
+  }
+
+  async function cambiarIntensidadMaxima(intensidad: Intensidad) {
+    setIntensidadMaximaState(intensidad)
+    await setIntensidadMaximaAction(intensidad)
   }
 
   if (loading) {
@@ -213,6 +227,31 @@ export default function PerfilPage() {
               A {faltan} de llegar a {siguiente.emoji} {siguiente.nombre}
             </p>
           )}
+        </div>
+
+        {/* Techo de intensidad -- qué tan a fondo van los juegos, aparte
+            del gate de picante que ya existe */}
+        <div className="pt-2">
+          <h2 className="text-ritual-muted text-xs font-body uppercase tracking-wider mb-3">
+            Intensidad de los juegos
+          </h2>
+          <div className="flex bg-ritual-bg-soft rounded-2xl p-1">
+            {([
+              { valor: 'liviana', emoji: '🌱', label: 'Liviana' },
+              { valor: 'media', emoji: '❤️', label: 'Media' },
+              { valor: 'intensa', emoji: '🔥', label: 'Intensa' },
+            ] as const).map(({ valor, emoji, label }) => (
+              <button
+                key={valor}
+                onClick={() => cambiarIntensidadMaxima(valor)}
+                className={`flex-1 py-2.5 rounded-xl text-sm font-body font-medium transition-all duration-300 ${
+                  intensidadMaxima === valor ? 'bg-ritual-gold text-ritual-bg' : 'text-ritual-muted hover:text-ritual-text'
+                }`}
+              >
+                {emoji} {label}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Estadísticas */}

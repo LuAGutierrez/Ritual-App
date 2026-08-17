@@ -1,10 +1,12 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { getRuletaPicanteItemsAction } from '@/app/actions/ruleta-picante'
 import { logContenidoRechazadoAction, getRechazadosAction } from '@/app/actions/contenido-rechazado'
 import { getIsCouplePremiumAction } from '@/app/actions/subscription'
+import { getIntensidadMaximaAction } from '@/app/actions/perfil-preferencias'
+import { dentroDelTecho, type Intensidad } from '@/lib/intensidad'
 import type { RuletaPicanteItem } from '@/types'
 import PicanteUpsell from '@/components/PicanteUpsell'
 
@@ -25,19 +27,29 @@ export default function RuletaPicantePage() {
   const [isPremium, setIsPremium] = useState(false)
   const [picanteUsado, setPicanteUsado] = useState(false)
   const [mostrarUpsell, setMostrarUpsell] = useState(false)
+  const [intensidadMaxima, setIntensidadMaxima] = useState<Intensidad>('intensa')
+  const ultimaCategoriaRef = useRef<string | null>(null)
 
   useEffect(() => {
     getRuletaPicanteItemsAction().then(setItems)
     getRechazadosAction('ruleta_picante').then(ids => setRechazados(new Set(ids)))
     getIsCouplePremiumAction().then(setIsPremium)
+    getIntensidadMaximaAction().then(setIntensidadMaxima)
   }, [])
 
   // Evita repetir lo que ya pasaron -- pero si eso deja muy pocas
   // opciones (el pool es chico, 12 en total), se prioriza variedad y
-  // se gira sobre la lista completa.
+  // se gira sobre la lista completa. Después aplica el techo de
+  // intensidad de la pareja y evita repetir la categoría del último
+  // giro, con el mismo criterio de fallback si quedan pocas opciones.
   const itemsDisponibles = (() => {
     const sinRechazados = items.filter(item => !rechazados.has(item.id))
-    return sinRechazados.length >= 3 ? sinRechazados : items
+    const porRechazo = sinRechazados.length >= 3 ? sinRechazados : items
+    const porTecho = porRechazo.filter(item => dentroDelTecho(item.intensidad, intensidadMaxima))
+    const porTechoFinal = porTecho.length >= 3 ? porTecho : porRechazo
+    if (!ultimaCategoriaRef.current) return porTechoFinal
+    const variados = porTechoFinal.filter(item => item.categoria !== ultimaCategoriaRef.current)
+    return variados.length >= 3 ? variados : porTechoFinal
   })()
 
   function girar() {
@@ -53,6 +65,7 @@ export default function RuletaPicantePage() {
         const idx = pickIndex(itemsDisponibles.length, prev)
         const next = prev.size >= itemsDisponibles.length - 1 ? new Set([idx]) : new Set(prev).add(idx)
         setPromptItem(itemsDisponibles[idx])
+        ultimaCategoriaRef.current = itemsDisponibles[idx].categoria
         return next
       })
       setGirando(false)
