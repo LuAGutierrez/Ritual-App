@@ -111,9 +111,11 @@
 
 ## display_name en signUp + trigger en DB
 
-**Decisión**: Al registrarse, el `display_name` se pasa como `options.data.display_name`. Un trigger de Supabase (`004_trigger_profiles_on_signup.sql`) crea el profile automáticamente con ese dato.
+**Decisión**: Al registrarse, el `display_name` se pasa como `options.data.display_name`. Un trigger de Supabase (`004_trigger_profiles_on_signup.sql`, corregido por `044_display_name_en_trigger_signup.sql`) crea el profile automáticamente con ese dato, leyéndolo de `raw_user_meta_data->>'display_name'`.
 
 **Motivación**: Evita una segunda llamada a la API después del signUp. Si el usuario confirma email, el profile ya existe cuando llega.
+
+**Bug encontrado y corregido (17/08)**: el trigger original (`004`) solo copiaba `id`/`email`, nunca leyó `display_name` — el nombre tipeado en el registro se perdía siempre. Existía un `.upsert()` client-side en `app/auth/page.tsx` que sí lo guardaba, pero solo corre si `signUp()` devuelve sesión inmediata; con confirmación de email obligatoria (estado actual en producción), eso nunca pasa, así que el upsert nunca se ejecutaba. Consecuencia real: `/onboarding` repreguntaba el nombre a todos los que se registraban por email/contraseña, no como fricción cosmética sino porque el nombre nunca se había guardado. Corregido en `044` para que el trigger lea `raw_user_meta_data->>'display_name'` directamente — probado de punta a punta (registro → confirmar email → onboarding salta al paso 2 sin repreguntar).
 
 ---
 

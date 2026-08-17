@@ -175,3 +175,9 @@ Tres bloqueos de producción, todos relacionados con no tener un dominio propio 
   actualizando `MP_BACK_URL` a `https://www.rituales.site/precios`. Al probar el fix se descubrió que
   `MP_ACCESS_TOKEN` **ya era un token de producción** (no cambiado en esta sesión) — el checkout de
   `/precios` puede procesar cobros reales desde ahora.
+- **El nombre tipeado al registrarse se perdía siempre.** El trigger `handle_new_user()` (migración
+  `004`) solo copiaba `id`/`email` a `profiles`, nunca leyó `display_name`. Había un `.upsert()`
+  client-side pensado para cubrir eso, pero solo corre si `signUp()` devuelve sesión inmediata — con
+  confirmación de email obligatoria (estado actual) eso nunca pasa. Consecuencia: `/onboarding`
+  repreguntaba el nombre a todos los registros por email/contraseña. Corregido en la migración `044`
+  para que el trigger lea `raw_user_meta_data->>'display_name'`. Ver `docs/DECISIONES.md`.
