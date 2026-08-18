@@ -395,6 +395,16 @@ export default function PerfilPage() {
           </div>
         )}
 
+        {/* Premium -- accesible siempre, tenga o no pareja unida todavía.
+            /precios y create-mp-subscription solo dependen de la sesión
+            del usuario, nunca de que exista un couple_id. */}
+        <button
+          onClick={() => router.push('/precios')}
+          className="w-full bg-ritual-gold/8 border border-ritual-gold/25 text-ritual-gold font-body text-sm font-medium py-4 rounded-2xl hover:bg-ritual-gold/12 transition-all duration-300"
+        >
+          Ver Rituales Premium →
+        </button>
+
         {/* Link al historial */}
         <button
           onClick={() => router.push('/historial')}
