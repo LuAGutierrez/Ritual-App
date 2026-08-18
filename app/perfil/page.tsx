@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { getPerfilAction, updatePerfilAction } from '@/app/actions/perfil'
 import type { PerfilData } from '@/app/actions/perfil'
+import { salirDeParejaAction } from '@/app/actions/couple'
 import { getCoupleMomentosAction } from '@/app/actions/momentos'
 import { getJuegosStatsSummaryAction } from '@/app/actions/juegos-stats'
 import { getRondasJugadasCountAction } from '@/app/actions/rondas-jugadas'
@@ -95,6 +96,8 @@ export default function PerfilPage() {
   const [error, setError] = useState<string | null>(null)
   const [intensidadMaxima, setIntensidadMaximaState] = useState<Intensidad>('intensa')
   const [copiedInvite, setCopiedInvite] = useState(false)
+  const [confirmarSalir, setConfirmarSalir] = useState(false)
+  const [saliendoDePareja, setSaliendoDePareja] = useState(false)
 
   useEffect(() => {
     getPerfilAction().then(d => {
@@ -150,6 +153,18 @@ export default function PerfilPage() {
     router.push('/auth')
   }
 
+  async function handleSalirDePareja() {
+    setSaliendoDePareja(true)
+    setError(null)
+    const result = await salirDeParejaAction()
+    if (!result.ok) {
+      setError(result.error ?? 'No se pudo salir de la pareja.')
+      setSaliendoDePareja(false)
+      return
+    }
+    router.push('/onboarding')
+  }
+
   async function cambiarIntensidadMaxima(intensidad: Intensidad) {
     setIntensidadMaximaState(intensidad)
     await setIntensidadMaximaAction(intensidad)
@@ -161,6 +176,7 @@ export default function PerfilPage() {
 
   const streak = data?.streak
   const rafacha = streak?.longest_streak ?? 0
+  const tieneParejaVinculada = !!data?.partnerName || !!data?.inviteCode
   const totalInteracciones = (data?.ritualesCompletados ?? 0) + totalJuegos
   const { nivel, siguiente, faltan } = nivelActual(totalInteracciones)
 
@@ -412,6 +428,45 @@ export default function PerfilPage() {
         >
           Ver historial de rituales →
         </button>
+
+        {/* Salir de la pareja -- deja intacto el historial del otro lado,
+            que pasa a ver "Todavía no se unió nadie" (mismo estado que
+            maneja el resto de la UI). Confirmación explícita porque corta
+            el vínculo con todo lo compartido y no tiene vuelta atrás. */}
+        {tieneParejaVinculada && (
+          confirmarSalir ? (
+            <div className="bg-red-500/5 border border-red-500/20 rounded-2xl p-5 text-center space-y-3">
+              <p className="font-body text-sm text-ritual-text leading-relaxed">
+                {data?.partnerName
+                  ? `¿Seguro que querés salir de tu pareja con ${data.partnerName}? No se borra lo que ya compartieron.`
+                  : '¿Seguro que querés cancelar esta pareja? Se pierde el link de invitación pendiente.'}
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setConfirmarSalir(false)}
+                  disabled={saliendoDePareja}
+                  className="flex-1 bg-transparent border border-white/10 text-ritual-muted font-body text-sm py-3.5 rounded-2xl hover:border-white/20 hover:text-ritual-text transition-all duration-300 disabled:opacity-50"
+                >
+                  No, quedarme
+                </button>
+                <button
+                  onClick={handleSalirDePareja}
+                  disabled={saliendoDePareja}
+                  className="flex-1 bg-red-500/15 border border-red-500/30 text-red-400 font-body text-sm font-medium py-3.5 rounded-2xl hover:bg-red-500/20 transition-all duration-300 disabled:opacity-50"
+                >
+                  {saliendoDePareja ? 'Saliendo...' : 'Sí, salir'}
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button
+              onClick={() => setConfirmarSalir(true)}
+              className="w-full text-red-400/60 font-body text-xs py-2 hover:text-red-400 transition-colors"
+            >
+              Salir de la pareja
+            </button>
+          )
+        )}
 
         {/* Cerrar sesión */}
         <button

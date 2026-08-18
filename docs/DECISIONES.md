@@ -482,3 +482,36 @@ picante) ya hace `JOIN` contra todos los `couple_members` de la pareja del que l
 cualquiera de los dos tiene una suscripción activa, los dos acceden -- esto ya estaba bien desde la
 migración `019` (corrigió una primera versión en la `018` que solo miraba al usuario que llama). No
 hizo falta ningún cambio ahí.
+
+---
+
+## Salir de la pareja + candado a nivel de esquema (no solo en las RPCs)
+
+**Decisión**: `UNIQUE (user_id)` en `couple_members` (migración 050) -- estructuralmente imposible una
+segunda fila, sin importar qué código intente insertarla. Nueva función `leave_couple()` (SECURITY
+DEFINER, `couple_members` no tiene policy de DELETE para el cliente) borra solo la fila del que llama.
+Botón "Salir de la pareja" en `/perfil` (con confirmación inline, mismo patrón que
+`PicanteConsentGate`), visible siempre que haya un `couple_id` vinculado (con pareja unida o con una
+invitación todavía pendiente).
+
+**Motivación**: la 049 le puso el candado a `join_couple_by_invite`/`check_invite_code`, pero
+`crearPareja()` (`app/actions/couple.ts`) hace un INSERT directo a `couple_members` sin pasar por
+ninguna de las dos -- seguía siendo posible terminar en dos parejas por ese tercer camino. En vez de
+repetir el mismo chequeo a mano en cada lugar nuevo que aparezca, el candado pasa al esquema. Además,
+sin forma de salir de una pareja, alguien que ya no está con su pareja (separación real) quedaba
+trabado para siempre una vez puesto el candado de la 049 -- no había forma de recuperarse.
+
+**Diseño de "salir"**: unilateral, no pide confirmación del otro lado. Borra solo tu propia membresía;
+la pareja y su historial (rituales, streaks, rondas de juegos) quedan intactos para el otro lado, que
+pasa a verse como "todavía no se unió nadie" -- mismo estado que ya maneja toda la UI, sin código
+nuevo ahí. `crearPareja()` también gana un chequeo previo (SELECT antes del INSERT) para no dejar una
+fila huérfana en `couples` cuando el INSERT en `couple_members` iba a fallar de todos modos por el
+UNIQUE.
+
+Probado en vivo con dos cuentas reales: A sale de la pareja con B → A queda redirigida a `/onboarding`
+y puede crear una pareja nueva con código de invitación fresco; B conserva su historial y ve
+`partnerProfile: null` (sin ningún dato perdido); un INSERT directo repitiendo el `user_id` de A
+después de que ya tiene pareja nueva es rechazado por el UNIQUE con `23505`.
+
+**Alcance explícitamente descartado**: soporte para más de dos personas por pareja -- ver la decisión
+anterior ("Un usuario no puede pertenecer a más de una pareja").
