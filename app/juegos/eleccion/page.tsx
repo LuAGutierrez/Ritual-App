@@ -10,6 +10,7 @@ import {
 } from '@/app/actions/eleccion'
 import { getIsCouplePremiumAction } from '@/app/actions/subscription'
 import { getPicanteHabilitadoAction, habilitarPicanteAction } from '@/app/actions/picante-consent'
+import { getPicanteTrialUsadoAction, marcarPicanteTrialUsadoAction } from '@/app/actions/picante-trial'
 import { useDobleONada } from '@/lib/hooks/useDobleONada'
 import { getCategoriaPreferida } from '@/lib/categoriaPreferida'
 import type { EleccionRound, MatchStats, UserContext } from '@/types'
@@ -66,7 +67,13 @@ export default function EleccionPage() {
         { event: '*', schema: 'public', table: 'couple_eleccion_rounds', filter: `couple_id=eq.${coupleId}` },
         (payload) => {
           if (payload.eventType === 'DELETE') return
-          setRound(payload.new as EleccionRound)
+          // couple_eleccion_rounds_one_active (migración 047) ya evita que
+          // exista una segunda ronda mientras la actual sigue sin revelar,
+          // pero si de todos modos llega el evento de otra ronda (id
+          // distinto) mientras la mía sigue activa, la ignoro en vez de
+          // saltar de pantalla sola -- ver bug documentado en DECISIONES.md.
+          const incoming = payload.new as EleccionRound
+          setRound(prev => (prev && !prev.revealed_at && incoming.id !== prev.id) ? prev : incoming)
         }
       )
       .on(
@@ -97,6 +104,7 @@ export default function EleccionPage() {
     init()
     getIsCouplePremiumAction().then(setIsPremium)
     getPicanteHabilitadoAction().then(setPicanteHabilitado)
+    getPicanteTrialUsadoAction('eleccion').then(setPicanteUsado)
 
     return () => {
       if (channelRef.current) supabase.removeChannel(channelRef.current)
@@ -119,7 +127,10 @@ export default function EleccionPage() {
     } else {
       setRound(nuevo)
       vistosRef.current = [...vistosRef.current, `${nuevo.option_a}|${nuevo.option_b}`]
-      if (intensidad === 'picante') setPicanteUsado(true)
+      if (intensidad === 'picante') {
+        setPicanteUsado(true)
+        marcarPicanteTrialUsadoAction('eleccion')
+      }
       if (esDobleONada) doble.aceptar()
       else doble.reset()
     }

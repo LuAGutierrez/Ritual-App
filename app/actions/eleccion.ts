@@ -91,7 +91,7 @@ export async function startEleccionRoundAction(
 
   const [user1, user2] = (members || []).map(m => m.user_id)
 
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from('couple_eleccion_rounds')
     .insert({
       couple_id: coupleId,
@@ -103,6 +103,20 @@ export async function startEleccionRoundAction(
     })
     .select('*')
     .single()
+
+  // couple_eleccion_rounds_one_active (migración 047): la pareja ya
+  // tenía una ronda sin revelar -- probablemente los dos tocaron
+  // "Empezar ronda" casi al mismo tiempo. En vez de fallar, devolvemos
+  // esa ronda existente para que este cliente también la vea.
+  if (error?.code === '23505') {
+    const { data: existente } = await supabase
+      .from('couple_eleccion_rounds')
+      .select('*')
+      .eq('couple_id', coupleId)
+      .is('revealed_at', null)
+      .single()
+    return existente as EleccionRound | null
+  }
 
   return data as EleccionRound | null
 }

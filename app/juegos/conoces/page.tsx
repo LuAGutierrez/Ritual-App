@@ -56,7 +56,10 @@ export default function ConocesPage() {
         { event: '*', schema: 'public', table: 'couple_conoces_rounds', filter: `couple_id=eq.${coupleId}` },
         (payload) => {
           if (payload.eventType === 'DELETE') return
-          setRound(payload.new as ConocesRound)
+          // Mismo fix que Elección (migración 047): ignorar el evento de
+          // una ronda distinta mientras la mía sigue activa sin revelar.
+          const incoming = payload.new as ConocesRound
+          setRound(prev => (prev && !prev.revealed_at && incoming.id !== prev.id) ? prev : incoming)
         }
       )
       .on(

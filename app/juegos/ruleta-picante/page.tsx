@@ -6,6 +6,7 @@ import { getRuletaPicanteItemsAction } from '@/app/actions/ruleta-picante'
 import { logContenidoRechazadoAction, getRechazadosAction } from '@/app/actions/contenido-rechazado'
 import { logRondaJugadaAction, getUltimaCategoriaRondaAction } from '@/app/actions/rondas-jugadas'
 import { getIsCouplePremiumAction } from '@/app/actions/subscription'
+import { getPicanteTrialUsadoAction, marcarPicanteTrialUsadoAction } from '@/app/actions/picante-trial'
 import { getIntensidadMaximaAction } from '@/app/actions/perfil-preferencias'
 import { dentroDelTecho, type Intensidad } from '@/lib/intensidad'
 import { getCategoriaPreferida } from '@/lib/categoriaPreferida'
@@ -36,6 +37,7 @@ export default function RuletaPicantePage() {
     getRuletaPicanteItemsAction().then(setItems)
     getRechazadosAction('ruleta_picante').then(ids => setRechazados(new Set(ids)))
     getIsCouplePremiumAction().then(setIsPremium)
+    getPicanteTrialUsadoAction('ruleta_picante').then(setPicanteUsado)
     getIntensidadMaximaAction().then(setIntensidadMaxima)
     getUltimaCategoriaRondaAction('ruleta_picante').then(c => { ultimaCategoriaRef.current = c })
   }, [])
@@ -81,6 +83,7 @@ export default function RuletaPicantePage() {
       })
       setGirando(false)
       setPicanteUsado(true)
+      marcarPicanteTrialUsadoAction('ruleta_picante')
     }, 350)
   }
 

@@ -366,3 +366,43 @@ el usuario sobre su propia cuenta real.
 modo producción (no en sandbox). Al investigar este fix se confirmó que `MP_ACCESS_TOKEN` ya es un
 token de producción (no configurado en esta sesión) — el checkout de `/precios` puede procesar cobros
 reales desde este cambio. Ver `docs/DEUDA-TECNICA.md`.
+
+---
+
+## "Una picante gratis" persistida por pareja, no en estado local de React
+
+**Decisión**: nueva tabla `couple_picante_trial` (migración `046`, una fila por `(couple_id, juego)` —
+la fila existe si ya se usó). `app/actions/picante-trial.ts` agrega `getPicanteTrialUsadoAction` /
+`marcarPicanteTrialUsadoAction`, usados en los 5 juegos con modo picante (Elección, Esto o Aquello,
+¿Quién de los dos?, Verdad o Reto, Ruleta Picante) en vez del `useState(false)` local que tenían.
+
+**Motivación**: el límite de "una ronda picante gratis antes del paywall" vivía en un `useState` por
+componente — se reseteaba solo con refrescar la página, y cada integrante de la pareja tenía su propio
+contador en su propio dispositivo (Premium es a nivel de pareja, pero este límite no lo era).
+Reportado por el usuario: jugó picante una vez, le pidió premium, pero su pareja pudo jugar una más
+desde su propio celular. Probado en vivo con dos cuentas reales: después del fix, el intento de la
+pareja B queda visible para A vía RLS (`SELECT` compartido), y el límite sobrevive un refresh completo
+de la página.
+
+---
+
+## Una sola ronda activa por pareja en los 4 juegos de reveal simultáneo
+
+**Decisión**: índice único parcial `UNIQUE (couple_id) WHERE revealed_at IS NULL` en las 4 tablas de
+ronda (`couple_eleccion_rounds`, `couple_esto_aquello_rounds`, `couple_conoces_rounds`,
+`couple_quien_de_los_dos_rounds`, migración `047`). Los `start*RoundAction` atrapan el conflicto
+(`error.code === '23505'`) y devuelven la ronda existente en vez de fallar. Además, el listener de
+Realtime de cada juego ahora ignora el evento de una ronda con `id` distinto mientras la propia sigue
+sin revelar, en vez de hacer `setRound(payload.new)` a ciegas para cualquier fila de la pareja.
+
+**Motivación**: reportado por el usuario en ¿Cuánto me conoces? — adivinó, esperó, su pareja respondió,
+y a ella le seguía apareciendo "Ya respondiste, esperando que tu pareja adivine" para siempre.
+Reproducido en vivo: nada impedía que existieran dos rondas sin revelar a la vez para la misma pareja
+(típicamente los dos tocando "Empezar ronda"/"Jugar de nuevo" casi al mismo tiempo). Con una cuenta de
+prueba parada en "Respondé sobre vos" sin haber contestado, insertar una segunda ronda hizo que su
+pantalla saltara sola a la ronda nueva — la vieja (donde la otra persona ya había adivinado) quedaba
+huérfana, esperando una respuesta que nunca iba a llegar porque nadie la tenía abierta. Confirmado que
+el mismo patrón (`setRound(payload.new)` sin filtrar por id) existía en los 4 juegos, no solo en
+Conoces. Con el índice único aplicado, se reintentó el mismo insert directo dos veces (con una ronda
+activa distinta cada vez) y en ambas la base lo rechazó con `23505` — el escenario ya no puede
+ocurrir, no solo se disimula en el cliente.
