@@ -270,6 +270,23 @@ nadie, entrar a `/juegos/conoces` ya no ofrece "Empezar ronda" en absoluto.
 
 ---
 
+## "¿Quién de los dos?" también avisa si nadie se unió
+
+**Decisión**: mismo fix que Conoces, aplicado a `app/juegos/quien-de-los-dos/page.tsx`.
+
+**Motivación**: acá el bug era distinto al de Conoces pero el síntoma era el mismo. Este juego arma
+`user1_id`/`user2_id` directo desde `couple_members` (no usa `siguienteTurno()`), así que
+`startQuienDeLosDosRoundAction` sí crea la ronda con `user2_id: null` sin fallar -- el usuario podía
+elegir una opción y quedaba en "Ya elegiste / Esperando a tu pareja..." **para siempre**, sin ningún
+indicio de que nadie se había unido ni forma de invitar desde ahí. Confirmado en vivo antes del fix:
+"Empezar ronda" funcionaba, se podía elegir, y quedaba colgado en la pantalla de espera genérica
+(`ctx?.partnerProfile?.display_name ?? 'tu pareja'`). Ahora se corta antes: si `ctx.couple` existe
+pero `ctx.partnerProfile` no, se muestra el link de invitación en vez de dejar arrancar una ronda que
+nunca iba a poder revelarse. Quedan los otros 3 juegos (Elección, Esto o Aquello, Verdad o Reto/Ruleta
+Picante) sin verificar todavía para este mismo escenario.
+
+---
+
 ## Refrescar ctx.partnerProfile cuando llega el reveal por Realtime
 
 **Decisión**: en el callback de `postgres_changes` de `/ritual`, si `ctxRef.current?.partnerProfile`
