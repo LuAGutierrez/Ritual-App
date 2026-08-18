@@ -364,6 +364,16 @@ verify_jwt = false
 [functions.eleccion-remoto]
 verify_jwt = false
 
+# Webhook de Mercado Pago -- lo llama MP, no un usuario logueado, así que
+# nunca hay un JWT de Supabase que verificar. La propia función valida el
+# request con la firma HMAC de MP (MP_WEBHOOK_SECRET). Ver DECISIONES.md
+# ("mp-webhook con verify_jwt en true"): faltaba esta entrada y el deploy
+# quedó con verify_jwt en true, rechazando con 401 todos los webhooks de
+# pago antes de llegar al código -- ningún pago activó Premium hasta que
+# se corrigió.
+[functions.mp-webhook]
+verify_jwt = false
+
 [edge_runtime]
 enabled = true
 # Supported request policies: `oneshot`, `per_worker`.

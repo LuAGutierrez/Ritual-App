@@ -422,3 +422,63 @@ veces la respuesta honesta de la pareja es "los dos por igual", no forzar a eleg
 personas. Probado en vivo con dos cuentas reales: los dos eligiendo "Ambos" revela como coincidencia,
 uno eligiendo un nombre y el otro "Ambos" revela como no-coincidencia con las etiquetas correctas, y
 un valor fuera de rango (`3`) sigue rechazado por la RPC.
+
+---
+
+## mp-webhook con verify_jwt en true -- ningún pago activaba Premium
+
+**Decisión**: redeploy de la edge function `mp-webhook` con `verify_jwt: false` (mismo código, sin
+cambios). El resto de las funciones ya lo tenían así (`create-mp-subscription`, `check-game-access`).
+
+**Motivación**: Mercado Pago nunca manda un JWT de sesión de Supabase en sus webhooks -- no tiene
+forma de tenerlo. Con `verify_jwt: true`, el gateway de Supabase rechazaba con 401 **todo** llamado de
+Mercado Pago antes de que la función llegue a ejecutar su propia verificación de firma (HMAC vía
+`MP_WEBHOOK_SECRET`, que ya estaba bien implementada). Confirmado con la tabla `subscriptions`
+completamente vacía a pesar de que el proyecto ya cobra en producción real desde hace semanas — ningún
+pago, de ningún cliente, activó Premium nunca. Reportado por el usuario: un cliente pagó, entró a
+Ruleta Picante, y en la segunda tirada le apareció el paywall de todos modos.
+
+Probado en vivo: un POST sin Authorization header (como lo manda Mercado Pago) pasó de 401 a 200
+después del redeploy.
+
+**Reconciliación manual**: el cliente que reportó el bug (`agoscorrea74@gmail.com`) se activó a mano
+con un `INSERT` directo en `subscriptions` (confirmado con el usuario antes de ejecutarlo -- el
+clasificador de auto-mode lo bloqueó por defecto al ser una escritura de datos de pago). Cualquier otro
+pago hecho mientras el webhook estuvo roto quedó en el mismo estado y necesita el mismo tipo de
+reconciliación manual si el cliente se queja -- Mercado Pago no va a reintentar esos webhooks solo.
+
+---
+
+## Un usuario no puede pertenecer a más de una pareja
+
+**Decisión**: `check_invite_code` y `join_couple_by_invite` (migración `049`) ahora rechazan la unión
+si quien se está uniendo ya es miembro de OTRA pareja (`couple_id` distinto al del código que está
+probando), con el error "Ya tenés una pareja vinculada. No podés unirte a otra." Volver a unirse a la
+MISMA pareja (caso `already_member`) sigue funcionando igual que antes.
+
+**Motivación**: nada lo impedía -- ni las dos funciones de invitación (solo validaban que la pareja
+destino no esté llena) ni el esquema (`couple_members` tiene `PRIMARY KEY (user_id, couple_id)`, no
+`user_id` solo, así que nada bloqueaba una segunda fila con un `couple_id` distinto). Reproducido en
+vivo con tres cuentas de prueba: Y se une a la pareja de X, después usa el código de Z y también entra
+ahí sin ningún error. Consecuencia real observada: el usuario duplicado (Y) solo ve una de las dos
+parejas en su propia app (`get_ritual_page_data` hace `LIMIT 1` sin `ORDER BY`), pero la otra persona
+(Z) sí lo ve como su pareja, con un ritual del día esperando una respuesta que nunca va a llegar --
+bug silencioso, sin ningún aviso de que algo salió mal.
+
+**Esto ya le había pasado a un caso real**: `venus.over6@gmail.com` (pareja del dueño del proyecto)
+quedó unida simultáneamente a la pareja del dueño (desde el 15/08) y a la de `agoscorrea74@gmail.com`
+(desde el 18/08, usando un código de invitación nuevo generado ese mismo día). Se resolvió a mano
+--con confirmación del usuario-- sacándola de la pareja con `agoscorrea74` y dejando solo la original.
+
+**Alcance de la pregunta original**: el usuario preguntó si debería poder tener más de una pareja a la
+vez (poliamor / relaciones no monógamas). Se descartó explícitamente -- todo el modelo de datos y la
+UX están armados alrededor de exactamente dos personas (ritual determinístico compartido, Premium a
+nivel de pareja, streaks, "vos"/"tu pareja" en toda la interfaz). Soportarlo de verdad sería un
+proyecto de rediseño aparte, no un ajuste sobre este bug.
+
+**Premium ya era por pareja, no por usuario** (verificado de paso al investigar esto): el usuario
+preguntó cómo funcionaba. `get_is_couple_premium()` (usada en `/precios` y en los 5 juegos con modo
+picante) ya hace `JOIN` contra todos los `couple_members` de la pareja del que llama, así que si
+cualquiera de los dos tiene una suscripción activa, los dos acceden -- esto ya estaba bien desde la
+migración `019` (corrigió una primera versión en la `018` que solo miraba al usuario que llama). No
+hizo falta ningún cambio ahí.
