@@ -37,7 +37,23 @@ export default function EleccionPage() {
   const [mostrarUpsell, setMostrarUpsell] = useState(false)
   const [picanteHabilitado, setPicanteHabilitado] = useState(false)
   const [mostrarConsentimiento, setMostrarConsentimiento] = useState(false)
+  const [copiedInvite, setCopiedInvite] = useState(false)
   const vistosRef = useRef<string[]>([])
+
+  // Pareja creada pero sin unir a nadie: startEleccionRoundAction crea la
+  // ronda igual (user2_id null, no exige 2 miembros) y el usuario quedaba
+  // en "Ya elegiste / Esperando a tu pareja..." para siempre. Mismo fix
+  // que /ritual, /perfil, Conoces y Quién de los dos.
+  async function copyInviteLink() {
+    if (!ctx?.couple) return
+    try {
+      await navigator.clipboard.writeText(`${window.location.origin}/unirse/${ctx.couple.invite_code}`)
+      setCopiedInvite(true)
+      setTimeout(() => setCopiedInvite(false), 2000)
+    } catch {
+      setError('No se pudo copiar. Copiá el link manualmente.')
+    }
+  }
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const subscribeToRounds = useCallback((coupleId: string) => {
@@ -143,6 +159,46 @@ export default function EleccionPage() {
 
   if (loading) {
     return <PageLoader />
+  }
+
+  if (ctx?.couple && !ctx.partnerProfile) {
+    return (
+      <div className="min-h-dvh bg-ritual-bg flex flex-col">
+        <header className="px-5 pt-8 pb-4 flex items-center justify-between">
+          <div>
+            <h1 className="font-display text-xl text-ritual-cream tracking-wide">💫 Elección</h1>
+            <p className="text-ritual-muted text-xs font-body mt-0.5">Elijan en secreto, vean si coinciden</p>
+          </div>
+          <button
+            onClick={() => router.push('/juegos')}
+            className="text-ritual-muted text-xs font-body hover:text-ritual-text transition-colors py-2 px-2"
+          >
+            ← Juegos
+          </button>
+        </header>
+
+        <main className="flex-1 px-5 pb-28 flex flex-col justify-center max-w-md mx-auto w-full">
+          <div className="text-center space-y-6 animate-fade-up">
+            <p className="font-display text-2xl text-ritual-cream">Todavía no se unió nadie</p>
+            <p className="text-ritual-muted font-body text-sm leading-relaxed">
+              Este juego se juega de a dos. Compartí el link para que tu pareja se una.
+            </p>
+            <div className="bg-ritual-bg-soft border border-white/10 rounded-2xl p-4 text-left">
+              <p className="text-ritual-muted text-xs font-body mb-2">Link de invitación</p>
+              <p className="text-ritual-cream font-body text-sm break-all leading-relaxed">
+                {`${window.location.origin}/unirse/${ctx.couple.invite_code}`}
+              </p>
+            </div>
+            <button
+              onClick={copyInviteLink}
+              className="w-full bg-ritual-gold text-ritual-bg font-body font-medium py-4 rounded-2xl transition-all duration-300 hover:bg-ritual-cream active:scale-[0.98]"
+            >
+              {copiedInvite ? '¡Copiado!' : 'Copiar link'}
+            </button>
+          </div>
+        </main>
+      </div>
+    )
   }
 
   const isUser1 = round?.user1_id === ctx?.userId
