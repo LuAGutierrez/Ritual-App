@@ -197,8 +197,8 @@ export type QuienDeLosDosRound = {
   user1_id: string | null
   user2_id: string | null
   pregunta: string
-  user1_choice: 0 | 1 | null
-  user2_choice: 0 | 1 | null
+  user1_choice: 0 | 1 | 2 | null
+  user2_choice: 0 | 1 | 2 | null
   revealed_at: string | null
   created_at: string
 }
