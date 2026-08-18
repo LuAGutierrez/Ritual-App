@@ -287,6 +287,31 @@ Picante) sin verificar todavía para este mismo escenario.
 
 ---
 
+## Elección y Esto o Aquello también avisan si nadie se unió; Verdad o Reto/Ruleta Picante no lo necesitan
+
+**Decisión**: mismo fix aplicado a `app/juegos/eleccion/page.tsx` y
+`app/juegos/esto-o-aquello/page.tsx`. Verdad o Reto y Ruleta Picante quedan sin cambios: revisados y
+confirmado que no tienen este bug.
+
+**Motivación**: mismo bug de silent-hang que en "¿Quién de los dos?" -- Elección y Esto o Aquello
+arman `user1_id`/`user2_id` directo desde `couple_members` e insertan con `user2_id: user2 || null`,
+así que la ronda se crea igual, el usuario puede elegir una opción y queda colgado para siempre en
+"Ya elegiste / Esperando a {ctx?.partnerProfile?.display_name ?? 'tu pareja'}..." sin ningún indicio
+de que nadie se unió. Se corta antes con el mismo patrón: si `ctx.couple` existe pero
+`ctx.partnerProfile` no, se muestra el link de invitación en vez de dejar arrancar la ronda.
+
+Verdad o Reto y Ruleta Picante son distintos por diseño: no importan `UserContext`, no tienen
+concepto de pareja ni de `couple_members` en absoluto -- son juegos de un solo dispositivo, sin
+mecánica de dos personas ni reveal sincronizado. No hay bug de esta clase para corregir ahí.
+
+Probado en local con cuenta real sin pareja unida: `/juegos/eleccion` y `/juegos/esto-o-aquello`
+muestran "Todavía no se unió nadie" + link de invitación en vez de dejar elegir una opción;
+`/juegos/verdad-o-reto` funciona normal (no hay pantalla de espera que mostrar, es local). Con esto
+quedan los 4 juegos de dos personas (Conoces, Quién de los dos, Elección, Esto o Aquello) cubiertos
+para este escenario.
+
+---
+
 ## Refrescar ctx.partnerProfile cuando llega el reveal por Realtime
 
 **Decisión**: en el callback de `postgres_changes` de `/ritual`, si `ctxRef.current?.partnerProfile`
