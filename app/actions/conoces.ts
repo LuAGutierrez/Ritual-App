@@ -82,7 +82,7 @@ export async function startConocesRoundAction(
   if (!turno) return null
   const { user1, user2, actorId: subjectUserId } = turno
 
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from('couple_conoces_rounds')
     .insert({
       couple_id: coupleId,
@@ -94,6 +94,18 @@ export async function startConocesRoundAction(
     })
     .select('*')
     .single()
+
+  // couple_conoces_rounds_one_active (migración 047): mismo caso que
+  // Elección -- la pareja ya tenía una ronda sin revelar.
+  if (error?.code === '23505') {
+    const { data: existente } = await supabase
+      .from('couple_conoces_rounds')
+      .select('*')
+      .eq('couple_id', coupleId)
+      .is('revealed_at', null)
+      .single()
+    return existente as ConocesRound | null
+  }
 
   return data as ConocesRound | null
 }

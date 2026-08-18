@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { getVerdadORetoItemsAction } from '@/app/actions/verdad-o-reto'
 import { getIsCouplePremiumAction } from '@/app/actions/subscription'
 import { getPicanteHabilitadoAction, habilitarPicanteAction } from '@/app/actions/picante-consent'
+import { getPicanteTrialUsadoAction, marcarPicanteTrialUsadoAction } from '@/app/actions/picante-trial'
 import { getIntensidadMaximaAction } from '@/app/actions/perfil-preferencias'
 import { logContenidoRechazadoAction, getRechazadosAction } from '@/app/actions/contenido-rechazado'
 import { logRondaJugadaAction, getUltimaCategoriaRondaAction } from '@/app/actions/rondas-jugadas'
@@ -46,6 +47,7 @@ export default function VerdadORetoPage() {
   useEffect(() => {
     getIsCouplePremiumAction().then(setIsPremium)
     getPicanteHabilitadoAction().then(setPicanteHabilitado)
+    getPicanteTrialUsadoAction('verdad_o_reto').then(setPicanteUsado)
     getIntensidadMaximaAction().then(setIntensidadMaxima)
     getVerdadORetoItemsAction().then(data => {
       setItems(data)
@@ -114,7 +116,10 @@ export default function VerdadORetoPage() {
     logRondaJugadaAction('verdad_o_reto', lista[idx].id, lista[idx].categoria)
     setRetoDobleExtra(extra)
     setMostrarUpsell(false)
-    if (intensidad === 'picante') setPicanteUsado(true)
+    if (intensidad === 'picante') {
+      setPicanteUsado(true)
+      marcarPicanteTrialUsadoAction('verdad_o_reto')
+    }
   }
 
   function siguiente() {
@@ -132,7 +137,10 @@ export default function VerdadORetoPage() {
     ultimaCategoriaRef.current = lista[idx].categoria
     logRondaJugadaAction('verdad_o_reto', lista[idx].id, lista[idx].categoria)
     setRetoDobleExtra(extra)
-    if (intensidad === 'picante') setPicanteUsado(true)
+    if (intensidad === 'picante') {
+      setPicanteUsado(true)
+      marcarPicanteTrialUsadoAction('verdad_o_reto')
+    }
   }
 
   // Distinto de "Siguiente" normal y de "Paso": solo se llama desde el

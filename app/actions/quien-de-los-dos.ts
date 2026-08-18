@@ -76,7 +76,7 @@ export async function startQuienDeLosDosRoundAction(
 
   const [user1, user2] = (members || []).map(m => m.user_id)
 
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from('couple_quien_de_los_dos_rounds')
     .insert({
       couple_id: coupleId,
@@ -86,6 +86,18 @@ export async function startQuienDeLosDosRoundAction(
     })
     .select('*')
     .single()
+
+  // couple_quien_de_los_dos_rounds_one_active (migración 047): mismo
+  // caso que Elección -- la pareja ya tenía una ronda sin revelar.
+  if (error?.code === '23505') {
+    const { data: existente } = await supabase
+      .from('couple_quien_de_los_dos_rounds')
+      .select('*')
+      .eq('couple_id', coupleId)
+      .is('revealed_at', null)
+      .single()
+    return existente as QuienDeLosDosRound | null
+  }
 
   return data as QuienDeLosDosRound | null
 }

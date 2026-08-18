@@ -10,6 +10,7 @@ import {
 } from '@/app/actions/esto-aquello'
 import { getIsCouplePremiumAction } from '@/app/actions/subscription'
 import { getPicanteHabilitadoAction, habilitarPicanteAction } from '@/app/actions/picante-consent'
+import { getPicanteTrialUsadoAction, marcarPicanteTrialUsadoAction } from '@/app/actions/picante-trial'
 import { useDobleONada } from '@/lib/hooks/useDobleONada'
 import { getCategoriaPreferida } from '@/lib/categoriaPreferida'
 import type { EstoAquelloRound, MatchStats, UserContext } from '@/types'
@@ -66,7 +67,10 @@ export default function EstoOAquelloPage() {
         { event: '*', schema: 'public', table: 'couple_esto_aquello_rounds', filter: `couple_id=eq.${coupleId}` },
         (payload) => {
           if (payload.eventType === 'DELETE') return
-          setRound(payload.new as EstoAquelloRound)
+          // Mismo fix que Elección (migración 047): ignorar el evento de
+          // una ronda distinta mientras la mía sigue activa sin revelar.
+          const incoming = payload.new as EstoAquelloRound
+          setRound(prev => (prev && !prev.revealed_at && incoming.id !== prev.id) ? prev : incoming)
         }
       )
       .on(
@@ -97,6 +101,7 @@ export default function EstoOAquelloPage() {
     init()
     getIsCouplePremiumAction().then(setIsPremium)
     getPicanteHabilitadoAction().then(setPicanteHabilitado)
+    getPicanteTrialUsadoAction('esto_aquello').then(setPicanteUsado)
 
     return () => {
       if (channelRef.current) supabase.removeChannel(channelRef.current)
@@ -119,7 +124,10 @@ export default function EstoOAquelloPage() {
     } else {
       setRound(nuevo)
       vistosRef.current = [...vistosRef.current, `${nuevo.option_a}|${nuevo.option_b}`]
-      if (intensidad === 'picante') setPicanteUsado(true)
+      if (intensidad === 'picante') {
+        setPicanteUsado(true)
+        marcarPicanteTrialUsadoAction('esto_aquello')
+      }
       if (esDobleONada) doble.aceptar()
       else doble.reset()
     }

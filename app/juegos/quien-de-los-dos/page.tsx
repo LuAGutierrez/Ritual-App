@@ -10,6 +10,7 @@ import {
 } from '@/app/actions/quien-de-los-dos'
 import { getIsCouplePremiumAction } from '@/app/actions/subscription'
 import { getPicanteHabilitadoAction, habilitarPicanteAction } from '@/app/actions/picante-consent'
+import { getPicanteTrialUsadoAction, marcarPicanteTrialUsadoAction } from '@/app/actions/picante-trial'
 import { getCategoriaPreferida } from '@/lib/categoriaPreferida'
 import type { QuienDeLosDosRound, MatchStats, UserContext } from '@/types'
 import PageLoader from '@/components/PageLoader'
@@ -78,7 +79,10 @@ export default function QuienDeLosDosPage() {
         { event: '*', schema: 'public', table: 'couple_quien_de_los_dos_rounds', filter: `couple_id=eq.${coupleId}` },
         (payload) => {
           if (payload.eventType === 'DELETE') return
-          setRound(payload.new as QuienDeLosDosRound)
+          // Mismo fix que Elección (migración 047): ignorar el evento de
+          // una ronda distinta mientras la mía sigue activa sin revelar.
+          const incoming = payload.new as QuienDeLosDosRound
+          setRound(prev => (prev && !prev.revealed_at && incoming.id !== prev.id) ? prev : incoming)
         }
       )
       .on(
@@ -109,6 +113,7 @@ export default function QuienDeLosDosPage() {
     init()
     getIsCouplePremiumAction().then(setIsPremium)
     getPicanteHabilitadoAction().then(setPicanteHabilitado)
+    getPicanteTrialUsadoAction('quien_de_los_dos').then(setPicanteUsado)
 
     return () => {
       if (channelRef.current) supabase.removeChannel(channelRef.current)
@@ -131,7 +136,10 @@ export default function QuienDeLosDosPage() {
     } else {
       setRound(nuevo)
       vistosRef.current = [...vistosRef.current, nuevo.pregunta]
-      if (intensidad === 'picante') setPicanteUsado(true)
+      if (intensidad === 'picante') {
+        setPicanteUsado(true)
+        marcarPicanteTrialUsadoAction('quien_de_los_dos')
+      }
     }
     setStarting(false)
   }
