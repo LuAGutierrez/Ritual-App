@@ -106,7 +106,7 @@ export async function startQuienDeLosDosRoundAction(
 // DEFINER, migración 034) -- mismo patrón que submitEleccionChoiceAction.
 export async function submitQuienDeLosDosChoiceAction(
   roundId: string,
-  choice: 0 | 1
+  choice: 0 | 1 | 2
 ): Promise<QuienDeLosDosRound | null> {
   const supabase = await createClient()
 

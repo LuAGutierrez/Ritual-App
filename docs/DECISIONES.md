@@ -406,3 +406,19 @@ el mismo patrón (`setRound(payload.new)` sin filtrar por id) existía en los 4 
 Conoces. Con el índice único aplicado, se reintentó el mismo insert directo dos veces (con una ronda
 activa distinta cada vez) y en ambas la base lo rechazó con `23505` — el escenario ya no puede
 ocurrir, no solo se disimula en el cliente.
+
+---
+
+## "Ambos" como tercera opción en ¿Quién de los dos?
+
+**Decisión**: `user1_choice`/`user2_choice` en `couple_quien_de_los_dos_rounds` ahora aceptan `0 | 1 | 2`
+(migración `048`, mismo cambio reflejado en el CHECK de la tabla y en la validación de
+`submit_quien_de_los_dos_choice`). `2` = "Ambos por igual", tercer botón en la UI. La lógica de
+"coincidieron" (`user1_choice = user2_choice`) no necesitó ningún cambio — sigue siendo una simple
+igualdad, así que "los dos eligieron Ambos" cuenta como coincidencia igual que antes.
+
+**Motivación**: pedido directo del usuario — en preguntas comparativas ("¿Quién es más celoso/a?") a
+veces la respuesta honesta de la pareja es "los dos por igual", no forzar a elegir entre las dos
+personas. Probado en vivo con dos cuentas reales: los dos eligiendo "Ambos" revela como coincidencia,
+uno eligiendo un nombre y el otro "Ambos" revela como no-coincidencia con las etiquetas correctas, y
+un valor fuera de rango (`3`) sigue rechazado por la RPC.

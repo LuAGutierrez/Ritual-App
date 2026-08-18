@@ -161,7 +161,7 @@ export default function QuienDeLosDosPage() {
     setMostrarUpsell(false)
   }
 
-  async function handleElegir(choice: 0 | 1) {
+  async function handleElegir(choice: 0 | 1 | 2) {
     if (!round) return
     setSubmitting(true)
     setError(null)
@@ -223,6 +223,8 @@ export default function QuienDeLosDosPage() {
   const revelado = !!round?.revealed_at
   const coincidieron = revelado && round?.user1_choice === round?.user2_choice
   const esTodosLosOjos = round ? hashProbabilidad(round.id) < 0.15 : false
+  const nombreEleccion = (choice: 0 | 1 | 2 | null) =>
+    choice === 0 ? nombreUser1 : choice === 1 ? nombreUser2 : 'Ambos'
 
   return (
     <div className="min-h-dvh bg-ritual-bg flex flex-col">
@@ -331,6 +333,13 @@ export default function QuienDeLosDosPage() {
               >
                 <span className="font-display text-xl text-ritual-cream">{nombreUser2}</span>
               </button>
+              <button
+                onClick={() => handleElegir(2)}
+                disabled={submitting}
+                className="w-full bg-ritual-bg-soft border border-white/10 rounded-2xl py-3.5 text-center hover:border-ritual-gold/40 transition-all disabled:opacity-50"
+              >
+                <span className="font-body text-sm text-ritual-muted">Ambos por igual</span>
+              </button>
             </div>
           </div>
         )}
@@ -354,10 +363,10 @@ export default function QuienDeLosDosPage() {
             <p className="font-body text-ritual-cream/90 text-base">{round.pregunta}</p>
             <div className="flex items-center justify-center gap-3 text-sm font-body text-ritual-muted">
               <span className="bg-ritual-bg-soft border border-white/10 rounded-xl px-3 py-2">
-                {ctx?.profile?.display_name ?? 'Vos'}: {miEleccion === 0 ? nombreUser1 : nombreUser2}
+                {ctx?.profile?.display_name ?? 'Vos'}: {nombreEleccion(miEleccion)}
               </span>
               <span className="bg-ritual-bg-soft border border-white/10 rounded-xl px-3 py-2">
-                {ctx?.partnerProfile?.display_name ?? 'Pareja'}: {eleccionPartner === 0 ? nombreUser1 : nombreUser2}
+                {ctx?.partnerProfile?.display_name ?? 'Pareja'}: {nombreEleccion(eleccionPartner)}
               </span>
             </div>
             <button
