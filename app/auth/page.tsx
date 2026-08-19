@@ -17,7 +17,9 @@ function AuthForm() {
     searchParams.get('recovery') === '1'
   )
   const [tab, setTab] = useState<Tab>(
-    searchParams.get('recovery') === '1' ? 'nueva_contraseña' : 'login'
+    searchParams.get('recovery') === '1' ? 'nueva_contraseña'
+      : searchParams.get('tab') === 'registro' ? 'registro'
+      : 'login'
   )
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
