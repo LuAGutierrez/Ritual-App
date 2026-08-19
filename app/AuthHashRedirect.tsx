@@ -1,26 +1,22 @@
 'use client'
 
 import { useEffect } from 'react'
+import LandingPage from './LandingPage'
 
-// Antes esto solo mostraba un spinner -- un usuario sin sesión nunca lo
-// ve más que un instante (redirige enseguida), pero un crawler que lee
-// el HTML inicial (ej. la verificación de marca de Google OAuth) sí, y
-// sin texto real no puede entender de qué trata la app.
+// Un visitante sin sesión que entra a "/" a secas ve la landing completa
+// (queda como HTML real, así que también le sirve a un crawler que lee
+// el HTML inicial, ej. la verificación de marca de Google OAuth). El
+// único caso que redirige de una es cuando el hash trae algo de auth de
+// verdad (token de OAuth, error, recovery) -- eso no es una visita real,
+// es Supabase/Google devolviendo a alguien a mitad de un flujo.
 export function AuthHashRedirect() {
   useEffect(() => {
     const hash = window.location.hash
     const hasAuthHash = hash && /access_token|error|error_code|type=recovery/.test(hash)
-    window.location.replace(hasAuthHash ? `/auth${hash}` : '/auth')
+    if (hasAuthHash) {
+      window.location.replace(`/auth${hash}`)
+    }
   }, [])
 
-  return (
-    <div className="min-h-dvh bg-ritual-bg flex items-center justify-center px-6">
-      <div className="text-center max-w-sm animate-fade-in">
-        <h1 className="font-display text-3xl text-ritual-cream tracking-wide">Rituales</h1>
-        <p className="text-ritual-muted text-sm mt-3 font-body leading-relaxed">
-          Un ritual diario compartido y juegos para conectar con tu pareja, cinco minutos antes de dormir.
-        </p>
-      </div>
-    </div>
-  )
+  return <LandingPage />
 }
