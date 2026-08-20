@@ -49,6 +49,22 @@ export function IconBalanza() {
   )
 }
 
+export function IconDados() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
+      <rect x="2" y="9" width="11" height="11" rx="2.5" />
+      <circle cx="5.7" cy="12.7" r="0.8" fill="currentColor" stroke="none" />
+      <circle cx="9.3" cy="16.3" r="0.8" fill="currentColor" stroke="none" />
+      <rect x="11" y="2" width="11" height="11" rx="2.5" />
+      <circle cx="14.2" cy="5.2" r="0.8" fill="currentColor" stroke="none" />
+      <circle cx="18.8" cy="5.2" r="0.8" fill="currentColor" stroke="none" />
+      <circle cx="16.5" cy="7.5" r="0.8" fill="currentColor" stroke="none" />
+      <circle cx="14.2" cy="9.8" r="0.8" fill="currentColor" stroke="none" />
+      <circle cx="18.8" cy="9.8" r="0.8" fill="currentColor" stroke="none" />
+    </svg>
+  )
+}
+
 export function IconLlama() {
   return (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">

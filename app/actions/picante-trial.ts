@@ -2,7 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 
-type JuegoPicante = 'eleccion' | 'esto_aquello' | 'quien_de_los_dos' | 'verdad_o_reto' | 'ruleta_picante'
+type JuegoPicante = 'eleccion' | 'esto_aquello' | 'quien_de_los_dos' | 'verdad_o_reto' | 'ruleta_picante' | 'dado_picante'
 
 export async function getPicanteTrialUsadoAction(juego: JuegoPicante): Promise<boolean> {
   const supabase = await createClient()

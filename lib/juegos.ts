@@ -1,11 +1,12 @@
 import type { ComponentType } from 'react'
-import { IconEleccion, IconDado, IconBifurcacion, IconOjo, IconBalanza, IconLlama } from '@/components/icons/juegos'
+import { IconEleccion, IconDado, IconBifurcacion, IconOjo, IconBalanza, IconLlama, IconDados } from '@/components/icons/juegos'
 
 // Registro de juegos del hub /juegos. Agregar un juego nuevo es agregar
 // una entrada acá, no tocar JSX a mano en app/juegos/page.tsx -- la
 // página solo sabe renderizar 3 variantes de layout (destacado,
 // compacto, especial), no juegos puntuales.
 export type JuegoVariante = 'destacado' | 'compacto' | 'especial'
+export type JuegoModo = 'normal' | 'picante'
 
 export interface JuegoBadge {
   texto: string
@@ -20,6 +21,10 @@ export interface JuegoDef {
   Icono: ComponentType
   variante: JuegoVariante
   badge?: JuegoBadge
+  // En qué tab(s) de /juegos aparece. Los juegos con ambos ('normal' y
+  // 'picante') salen en las dos tabs -- adentro siguen teniendo su
+  // propio toggle de intensidad, esto solo decide en qué tab entran.
+  modos: JuegoModo[]
 }
 
 export const JUEGOS: JuegoDef[] = [
@@ -31,6 +36,7 @@ export const JUEGOS: JuegoDef[] = [
     Icono: IconEleccion,
     variante: 'destacado',
     badge: { texto: 'también picante', conLlama: true },
+    modos: ['normal', 'picante'],
   },
   {
     id: 'conoces',
@@ -40,6 +46,7 @@ export const JUEGOS: JuegoDef[] = [
     Icono: IconOjo,
     variante: 'destacado',
     badge: { texto: 'Nosotros' },
+    modos: ['normal'],
   },
   {
     id: 'quien-de-los-dos',
@@ -49,6 +56,7 @@ export const JUEGOS: JuegoDef[] = [
     Icono: IconBalanza,
     variante: 'destacado',
     badge: { texto: 'Nosotros' },
+    modos: ['normal'],
   },
   {
     id: 'verdad-o-reto',
@@ -58,6 +66,7 @@ export const JUEGOS: JuegoDef[] = [
     Icono: IconDado,
     variante: 'compacto',
     badge: { texto: 'también picante', conLlama: true },
+    modos: ['normal', 'picante'],
   },
   {
     id: 'esto-o-aquello',
@@ -67,6 +76,7 @@ export const JUEGOS: JuegoDef[] = [
     Icono: IconBifurcacion,
     variante: 'compacto',
     badge: { texto: 'también picante', conLlama: true },
+    modos: ['normal', 'picante'],
   },
   {
     id: 'ruleta-picante',
@@ -76,5 +86,16 @@ export const JUEGOS: JuegoDef[] = [
     Icono: IconLlama,
     variante: 'especial',
     badge: { texto: '+18' },
+    modos: ['picante'],
+  },
+  {
+    id: 'dado-picante',
+    href: '/juegos/dado-picante',
+    titulo: 'Dado Picante',
+    descripcion: 'Tiren los dados: lugar y posición',
+    Icono: IconDados,
+    variante: 'especial',
+    badge: { texto: '+18' },
+    modos: ['picante'],
   },
 ]
