@@ -134,6 +134,12 @@ export type RuletaPicanteItem = {
   categoria: string
 }
 
+export type DadoPicanteItem = {
+  id: string
+  tipo: 'lugar' | 'posicion'
+  texto: string
+}
+
 export type MatchStats = {
   couple_id: string
   coincidencias: number
