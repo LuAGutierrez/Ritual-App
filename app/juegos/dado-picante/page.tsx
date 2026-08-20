@@ -54,13 +54,15 @@ export default function DadoPicantePage() {
   const [items, setItems] = useState<DadoPicanteItem[]>([])
   const [lugarActual, setLugarActual] = useState<DadoPicanteItem | null>(null)
   const [posicionActual, setPosicionActual] = useState<DadoPicanteItem | null>(null)
-  const [girando, setGirando] = useState(false)
+  const [girandoLugar, setGirandoLugar] = useState(false)
+  const [girandoPosicion, setGirandoPosicion] = useState(false)
   const [pipLugar, setPipLugar] = useState(1)
   const [pipPosicion, setPipPosicion] = useState(4)
   const [isPremium, setIsPremium] = useState(false)
   const [picanteUsado, setPicanteUsado] = useState(false)
   const [mostrarUpsell, setMostrarUpsell] = useState(false)
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const intervalLugarRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const intervalPosicionRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   useEffect(() => {
     getDadoPicanteItemsAction().then(setItems)
@@ -68,32 +70,53 @@ export default function DadoPicantePage() {
     getPicanteTrialUsadoAction('dado_picante').then(setPicanteUsado)
 
     return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current)
+      if (intervalLugarRef.current) clearInterval(intervalLugarRef.current)
+      if (intervalPosicionRef.current) clearInterval(intervalPosicionRef.current)
     }
   }, [])
 
   const lugares = items.filter(i => i.tipo === 'lugar')
   const posiciones = items.filter(i => i.tipo === 'posicion')
 
-  function tirar() {
+  function tirarLugar() {
     if (!isPremium && picanteUsado) {
       setMostrarUpsell(true)
       return
     }
-    if (lugares.length === 0 || posiciones.length === 0) return
+    if (lugares.length === 0) return
 
     setMostrarUpsell(false)
-    setGirando(true)
-    intervalRef.current = setInterval(() => {
+    setGirandoLugar(true)
+    intervalLugarRef.current = setInterval(() => {
       setPipLugar(1 + Math.floor(Math.random() * 6))
+    }, 90)
+
+    setTimeout(() => {
+      if (intervalLugarRef.current) clearInterval(intervalLugarRef.current)
+      setLugarActual(pickRandom(lugares))
+      setGirandoLugar(false)
+      setPicanteUsado(true)
+      marcarPicanteTrialUsadoAction('dado_picante')
+    }, 650)
+  }
+
+  function tirarPosicion() {
+    if (!isPremium && picanteUsado) {
+      setMostrarUpsell(true)
+      return
+    }
+    if (posiciones.length === 0) return
+
+    setMostrarUpsell(false)
+    setGirandoPosicion(true)
+    intervalPosicionRef.current = setInterval(() => {
       setPipPosicion(1 + Math.floor(Math.random() * 6))
     }, 90)
 
     setTimeout(() => {
-      if (intervalRef.current) clearInterval(intervalRef.current)
-      setLugarActual(pickRandom(lugares))
+      if (intervalPosicionRef.current) clearInterval(intervalPosicionRef.current)
       setPosicionActual(pickRandom(posiciones))
-      setGirando(false)
+      setGirandoPosicion(false)
       setPicanteUsado(true)
       marcarPicanteTrialUsadoAction('dado_picante')
     }, 650)
@@ -146,36 +169,42 @@ export default function DadoPicantePage() {
           <PicanteUpsell />
         ) : (
           <div className="space-y-8 animate-fade-up">
-            <div className="flex items-center justify-center gap-6">
-              <div className="flex flex-col items-center gap-3">
-                <Dado valor={pipLugar} girando={girando} />
+            <div className="flex items-start justify-center gap-6">
+              <div className="flex flex-col items-center gap-3 flex-1">
+                <Dado valor={pipLugar} girando={girandoLugar} />
                 <p
                   className={`font-display text-lg text-ritual-cream text-center transition-opacity duration-200 ${
-                    girando ? 'opacity-0' : 'opacity-100'
+                    girandoLugar ? 'opacity-0' : 'opacity-100'
                   }`}
                 >
                   {lugarActual?.texto ?? '—'}
                 </p>
+                <button
+                  onClick={tirarLugar}
+                  disabled={girandoLugar || lugares.length === 0}
+                  className="w-full bg-[#D4A5A5] text-ritual-bg font-body font-medium py-3 rounded-2xl hover:opacity-90 transition-all disabled:opacity-50 text-sm"
+                >
+                  {girandoLugar ? 'Tirando...' : 'Tirar lugar'}
+                </button>
               </div>
-              <div className="flex flex-col items-center gap-3">
-                <Dado valor={pipPosicion} girando={girando} />
+              <div className="flex flex-col items-center gap-3 flex-1">
+                <Dado valor={pipPosicion} girando={girandoPosicion} />
                 <p
                   className={`font-display text-lg text-ritual-cream text-center transition-opacity duration-200 ${
-                    girando ? 'opacity-0' : 'opacity-100'
+                    girandoPosicion ? 'opacity-0' : 'opacity-100'
                   }`}
                 >
                   {posicionActual?.texto ?? '—'}
                 </p>
+                <button
+                  onClick={tirarPosicion}
+                  disabled={girandoPosicion || posiciones.length === 0}
+                  className="w-full bg-[#D4A5A5] text-ritual-bg font-body font-medium py-3 rounded-2xl hover:opacity-90 transition-all disabled:opacity-50 text-sm"
+                >
+                  {girandoPosicion ? 'Tirando...' : 'Tirar posición'}
+                </button>
               </div>
             </div>
-
-            <button
-              onClick={tirar}
-              disabled={girando || items.length === 0}
-              className="w-full bg-[#D4A5A5] text-ritual-bg font-body font-medium py-4 rounded-2xl hover:opacity-90 transition-all disabled:opacity-50"
-            >
-              {girando ? 'Tirando...' : lugarActual ? 'Tirar de nuevo' : 'Tirar los dados'}
-            </button>
           </div>
         )}
       </main>
