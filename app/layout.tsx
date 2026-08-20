@@ -3,7 +3,7 @@ import './globals.css'
 
 export const metadata: Metadata = {
   title: 'Rituales — Momentos que acercan',
-  description: 'Un ritual diario para parejas. Cinco minutos antes de dormir.',
+  description: 'Un ritual diario para parejas. Un momento cada noche, solo para ustedes.',
   openGraph: {
     title: 'Rituales',
     description: 'Un ritual diario para parejas.',

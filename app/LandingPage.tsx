@@ -39,7 +39,7 @@ export default function LandingPage() {
         <section className="px-5 pt-10 pb-16 max-w-2xl mx-auto w-full text-center animate-fade-up">
           <p className="text-2xl">✦</p>
           <h1 className="font-display text-4xl sm:text-5xl text-ritual-cream leading-tight mt-4 text-balance">
-            Cinco minutos, cada noche, solo para ustedes
+            Un momento cada noche, solo para ustedes
           </h1>
           <p className="text-ritual-muted font-body text-base mt-4 max-w-md mx-auto leading-relaxed">
             Rituales es una pregunta diaria compartida con tu pareja. Respondan en secreto; cuando los

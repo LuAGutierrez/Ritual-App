@@ -327,7 +327,7 @@ function AuthForm() {
           Rituales
         </h1>
         <p className="text-ritual-muted text-sm mt-2 font-body">
-          Cinco minutos antes de dormir
+          Un momento cada noche, solo para ustedes
         </p>
       </div>
 
