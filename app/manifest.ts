@@ -4,7 +4,7 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: 'Rituales — Momentos que acercan',
     short_name: 'Rituales',
-    description: 'Un ritual diario para parejas. Cinco minutos antes de dormir.',
+    description: 'Un ritual diario para parejas. Un momento cada noche, solo para ustedes.',
     start_url: '/ritual',
     display: 'standalone',
     background_color: '#0F0D0B',
