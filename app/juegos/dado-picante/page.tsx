@@ -8,10 +8,25 @@ import { getPicanteTrialUsadoAction, marcarPicanteTrialUsadoAction } from '@/app
 import type { DadoPicanteItem } from '@/types'
 import PicanteUpsell from '@/components/PicanteUpsell'
 
+type Tipo = 'lugar' | 'posicion' | 'accion' | 'zona'
+type Modo = 'posiciones' | 'caricias'
+
+const DADOS_POR_MODO: Record<Modo, [Tipo, Tipo]> = {
+  posiciones: ['lugar', 'posicion'],
+  caricias: ['accion', 'zona'],
+}
+
+const ETIQUETA: Record<Tipo, string> = {
+  lugar: 'lugar',
+  posicion: 'posición',
+  accion: 'acción',
+  zona: 'zona',
+}
+
 // Patrones de pips 1-6 en una grilla de 3x3 (fila, columna), igual
 // que un dado físico. Puramente decorativo: el número que muestra el
-// dado durante el giro no tiene relación con qué lugar/posición sale
-// -- el pool de cada uno no tiene por qué ser de 6 elementos.
+// dado durante el giro no tiene relación con qué opción sale -- el
+// pool de cada tipo no tiene por qué ser de 6 elementos.
 const PIPS: Record<number, [number, number][]> = {
   1: [[1, 1]],
   2: [[0, 0], [2, 2]],
@@ -51,18 +66,23 @@ function pickRandom(items: DadoPicanteItem[]): DadoPicanteItem | null {
 export default function DadoPicantePage() {
   const router = useRouter()
   const [confirmado, setConfirmado] = useState(false)
+  const [modo, setModo] = useState<Modo>('posiciones')
   const [items, setItems] = useState<DadoPicanteItem[]>([])
-  const [lugarActual, setLugarActual] = useState<DadoPicanteItem | null>(null)
-  const [posicionActual, setPosicionActual] = useState<DadoPicanteItem | null>(null)
-  const [girandoLugar, setGirandoLugar] = useState(false)
-  const [girandoPosicion, setGirandoPosicion] = useState(false)
-  const [pipLugar, setPipLugar] = useState(1)
-  const [pipPosicion, setPipPosicion] = useState(4)
+  const [resultados, setResultados] = useState<Record<Tipo, DadoPicanteItem | null>>({
+    lugar: null, posicion: null, accion: null, zona: null,
+  })
+  const [girando, setGirando] = useState<Record<Tipo, boolean>>({
+    lugar: false, posicion: false, accion: false, zona: false,
+  })
+  const [pips, setPips] = useState<Record<Tipo, number>>({
+    lugar: 1, posicion: 4, accion: 2, zona: 5,
+  })
   const [isPremium, setIsPremium] = useState(false)
   const [picanteUsado, setPicanteUsado] = useState(false)
   const [mostrarUpsell, setMostrarUpsell] = useState(false)
-  const intervalLugarRef = useRef<ReturnType<typeof setInterval> | null>(null)
-  const intervalPosicionRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const intervalsRef = useRef<Record<Tipo, ReturnType<typeof setInterval> | null>>({
+    lugar: null, posicion: null, accion: null, zona: null,
+  })
 
   useEffect(() => {
     getDadoPicanteItemsAction().then(setItems)
@@ -70,53 +90,36 @@ export default function DadoPicantePage() {
     getPicanteTrialUsadoAction('dado_picante').then(setPicanteUsado)
 
     return () => {
-      if (intervalLugarRef.current) clearInterval(intervalLugarRef.current)
-      if (intervalPosicionRef.current) clearInterval(intervalPosicionRef.current)
+      Object.values(intervalsRef.current).forEach(id => { if (id) clearInterval(id) })
     }
   }, [])
 
-  const lugares = items.filter(i => i.tipo === 'lugar')
-  const posiciones = items.filter(i => i.tipo === 'posicion')
-
-  function tirarLugar() {
-    if (!isPremium && picanteUsado) {
-      setMostrarUpsell(true)
-      return
-    }
-    if (lugares.length === 0) return
-
-    setMostrarUpsell(false)
-    setGirandoLugar(true)
-    intervalLugarRef.current = setInterval(() => {
-      setPipLugar(1 + Math.floor(Math.random() * 6))
-    }, 90)
-
-    setTimeout(() => {
-      if (intervalLugarRef.current) clearInterval(intervalLugarRef.current)
-      setLugarActual(pickRandom(lugares))
-      setGirandoLugar(false)
-      setPicanteUsado(true)
-      marcarPicanteTrialUsadoAction('dado_picante')
-    }, 650)
+  const itemsPorTipo: Record<Tipo, DadoPicanteItem[]> = {
+    lugar: items.filter(i => i.tipo === 'lugar'),
+    posicion: items.filter(i => i.tipo === 'posicion'),
+    accion: items.filter(i => i.tipo === 'accion'),
+    zona: items.filter(i => i.tipo === 'zona'),
   }
 
-  function tirarPosicion() {
+  function tirar(tipo: Tipo) {
     if (!isPremium && picanteUsado) {
       setMostrarUpsell(true)
       return
     }
-    if (posiciones.length === 0) return
+    const pool = itemsPorTipo[tipo]
+    if (pool.length === 0) return
 
     setMostrarUpsell(false)
-    setGirandoPosicion(true)
-    intervalPosicionRef.current = setInterval(() => {
-      setPipPosicion(1 + Math.floor(Math.random() * 6))
+    setGirando(prev => ({ ...prev, [tipo]: true }))
+    intervalsRef.current[tipo] = setInterval(() => {
+      setPips(prev => ({ ...prev, [tipo]: 1 + Math.floor(Math.random() * 6) }))
     }, 90)
 
     setTimeout(() => {
-      if (intervalPosicionRef.current) clearInterval(intervalPosicionRef.current)
-      setPosicionActual(pickRandom(posiciones))
-      setGirandoPosicion(false)
+      const id = intervalsRef.current[tipo]
+      if (id) clearInterval(id)
+      setResultados(prev => ({ ...prev, [tipo]: pickRandom(pool) }))
+      setGirando(prev => ({ ...prev, [tipo]: false }))
       setPicanteUsado(true)
       marcarPicanteTrialUsadoAction('dado_picante')
     }, 650)
@@ -131,7 +134,7 @@ export default function DadoPicantePage() {
             Contenido +18 para parejas
           </p>
           <p className="text-ritual-muted font-body text-sm leading-relaxed">
-            Dos dados: uno de lugar, otro de posición. Lo que salga, se juega.
+            Dos dados a la vez: posiciones, o caricias (acción + zona). Lo que salga, se juega.
           </p>
           <div className="space-y-3">
             <button
@@ -152,6 +155,8 @@ export default function DadoPicantePage() {
     )
   }
 
+  const [tipoA, tipoB] = DADOS_POR_MODO[modo]
+
   return (
     <div className="min-h-dvh bg-ritual-bg flex flex-col">
       <header className="px-5 pt-8 pb-4 flex items-center justify-between">
@@ -165,45 +170,49 @@ export default function DadoPicantePage() {
       </header>
 
       <main className="flex-1 px-5 pb-28 flex flex-col justify-center max-w-md mx-auto w-full">
+        <div className="flex bg-ritual-bg-soft rounded-2xl p-1 mb-8">
+          <button
+            onClick={() => setModo('posiciones')}
+            className={`flex-1 py-2.5 rounded-xl text-sm font-body font-medium transition-all duration-300 ${
+              modo === 'posiciones' ? 'bg-[#D4A5A5] text-ritual-bg' : 'text-ritual-muted hover:text-ritual-text'
+            }`}
+          >
+            Posiciones
+          </button>
+          <button
+            onClick={() => setModo('caricias')}
+            className={`flex-1 py-2.5 rounded-xl text-sm font-body font-medium transition-all duration-300 ${
+              modo === 'caricias' ? 'bg-[#D4A5A5] text-ritual-bg' : 'text-ritual-muted hover:text-ritual-text'
+            }`}
+          >
+            Caricias
+          </button>
+        </div>
+
         {mostrarUpsell ? (
           <PicanteUpsell />
         ) : (
           <div className="space-y-8 animate-fade-up">
             <div className="flex items-start justify-center gap-6">
-              <div className="flex flex-col items-center gap-3 flex-1">
-                <Dado valor={pipLugar} girando={girandoLugar} />
-                <p
-                  className={`font-display text-lg text-ritual-cream text-center transition-opacity duration-200 ${
-                    girandoLugar ? 'opacity-0' : 'opacity-100'
-                  }`}
-                >
-                  {lugarActual?.texto ?? '—'}
-                </p>
-                <button
-                  onClick={tirarLugar}
-                  disabled={girandoLugar || lugares.length === 0}
-                  className="w-full bg-[#D4A5A5] text-ritual-bg font-body font-medium py-3 rounded-2xl hover:opacity-90 transition-all disabled:opacity-50 text-sm"
-                >
-                  {girandoLugar ? 'Tirando...' : 'Tirar lugar'}
-                </button>
-              </div>
-              <div className="flex flex-col items-center gap-3 flex-1">
-                <Dado valor={pipPosicion} girando={girandoPosicion} />
-                <p
-                  className={`font-display text-lg text-ritual-cream text-center transition-opacity duration-200 ${
-                    girandoPosicion ? 'opacity-0' : 'opacity-100'
-                  }`}
-                >
-                  {posicionActual?.texto ?? '—'}
-                </p>
-                <button
-                  onClick={tirarPosicion}
-                  disabled={girandoPosicion || posiciones.length === 0}
-                  className="w-full bg-[#D4A5A5] text-ritual-bg font-body font-medium py-3 rounded-2xl hover:opacity-90 transition-all disabled:opacity-50 text-sm"
-                >
-                  {girandoPosicion ? 'Tirando...' : 'Tirar posición'}
-                </button>
-              </div>
+              {[tipoA, tipoB].map(tipo => (
+                <div key={tipo} className="flex flex-col items-center gap-3 flex-1">
+                  <Dado valor={pips[tipo]} girando={girando[tipo]} />
+                  <p
+                    className={`font-display text-lg text-ritual-cream text-center transition-opacity duration-200 ${
+                      girando[tipo] ? 'opacity-0' : 'opacity-100'
+                    }`}
+                  >
+                    {resultados[tipo]?.texto ?? '—'}
+                  </p>
+                  <button
+                    onClick={() => tirar(tipo)}
+                    disabled={girando[tipo] || itemsPorTipo[tipo].length === 0}
+                    className="w-full bg-[#D4A5A5] text-ritual-bg font-body font-medium py-3 rounded-2xl hover:opacity-90 transition-all disabled:opacity-50 text-sm"
+                  >
+                    {girando[tipo] ? 'Tirando...' : `Tirar ${ETIQUETA[tipo]}`}
+                  </button>
+                </div>
+              ))}
             </div>
           </div>
         )}

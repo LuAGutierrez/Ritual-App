@@ -136,7 +136,7 @@ export type RuletaPicanteItem = {
 
 export type DadoPicanteItem = {
   id: string
-  tipo: 'lugar' | 'posicion'
+  tipo: 'lugar' | 'posicion' | 'accion' | 'zona'
   texto: string
 }
 
