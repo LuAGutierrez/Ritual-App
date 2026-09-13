@@ -4,22 +4,8 @@ import { createClient } from '@/lib/supabase/server'
 import { notifyPartnerResponded } from '@/lib/push/notify'
 import { isCouplePremiumAction } from '@/app/actions/subscription'
 import { FREE_HISTORIAL_LIMIT } from '@/lib/plans'
+import { todayInArgentina, addDaysToDateStr } from '@/lib/fecha'
 import type { CoupleRitualSession, UserContext, Profile, Couple, Streak } from '@/types'
-
-const ART_TZ = 'America/Argentina/Buenos_Aires'
-
-// El "día" del ritual y de la racha corta a medianoche en Argentina, no en UTC —
-// evita que el corte de día ocurra a las 21:00 ART (justo la franja "antes de dormir").
-function todayInArgentina(): string {
-  return new Date().toLocaleDateString('en-CA', { timeZone: ART_TZ })
-}
-
-function addDaysToDateStr(dateStr: string, delta: number): string {
-  const [year, month, day] = dateStr.split('-').map(Number)
-  const d = new Date(Date.UTC(year, month - 1, day))
-  d.setUTCDate(d.getUTCDate() + delta)
-  return d.toISOString().split('T')[0]
-}
 
 export async function getUserContextAction(): Promise<UserContext | null> {
   const supabase = await createClient()

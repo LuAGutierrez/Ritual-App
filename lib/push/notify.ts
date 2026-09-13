@@ -27,7 +27,11 @@ export async function notifyPartnerResponded(
   if (sent) await logNotification(partnerId, 'partner_responded')
 }
 
-export function isReminderHour(reminderTime: string, timezone: string): boolean {
+export function isReminderHour(
+  reminderTime: string,
+  timezone: string,
+  now: Date = new Date()
+): boolean {
   const hourStr = reminderTime.slice(0, 2)
   const targetHour = parseInt(hourStr, 10)
 
@@ -36,6 +40,6 @@ export function isReminderHour(reminderTime: string, timezone: string): boolean 
     hour: 'numeric',
     hour12: false,
   })
-  const currentHour = parseInt(formatter.format(new Date()), 10)
+  const currentHour = parseInt(formatter.format(now), 10)
   return currentHour === targetHour
 }

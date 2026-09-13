@@ -12,6 +12,7 @@ import {
   usarComodinAction,
 } from '@/app/actions/ritual'
 import { crearPareja } from '@/app/actions/couple'
+import { todayInArgentina, addDaysToDateStr } from '@/lib/fecha'
 import type { CoupleRitualSession, Streak, UserContext, SessionState } from '@/types'
 import RitualCard from '@/components/RitualCard'
 import WaitingState from '@/components/WaitingState'
@@ -268,11 +269,8 @@ export default function RitualPage() {
   function streakEnRiesgo(): boolean {
     if (!streak || comodinUsado) return false
     if ((streak.wildcards_remaining ?? 0) <= 0) return false
-    const today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Argentina/Buenos_Aires' })
-    const [y, m, d] = today.split('-').map(Number)
-    const yesterdayUtc = new Date(Date.UTC(y, m - 1, d))
-    yesterdayUtc.setUTCDate(yesterdayUtc.getUTCDate() - 1)
-    const yesterdayStr = yesterdayUtc.toISOString().split('T')[0]
+    const today = todayInArgentina()
+    const yesterdayStr = addDaysToDateStr(today, -1)
     const last = streak.last_completed_date
     return !!last && last !== today && last !== yesterdayStr && streak.current_streak > 0
   }

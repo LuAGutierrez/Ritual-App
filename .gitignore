@@ -5,7 +5,12 @@ node_modules/
 !.env.example
 .vercel
 supabase/.temp/
+supabase/.branches/
 *.log
 .DS_Store
 tsconfig.tsbuildinfo
 .cursor/rules/skills/superpowers/
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/

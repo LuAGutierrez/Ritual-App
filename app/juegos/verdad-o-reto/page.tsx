@@ -10,6 +10,7 @@ import { getIntensidadMaximaAction } from '@/app/actions/perfil-preferencias'
 import { logContenidoRechazadoAction, getRechazadosAction } from '@/app/actions/contenido-rechazado'
 import { logRondaJugadaAction, getUltimaCategoriaRondaAction } from '@/app/actions/rondas-jugadas'
 import { registrarRetoDobleCompletadoAction } from '@/app/actions/momentos'
+import { generarVerdadORetoConIAAction } from '@/app/actions/verdad-o-reto-ia'
 import { getCategoriaPreferida } from '@/lib/categoriaPreferida'
 import { dentroDelTecho, type Intensidad as Techo } from '@/lib/intensidad'
 import type { VerdadORetoItem } from '@/types'
@@ -42,6 +43,8 @@ export default function VerdadORetoPage() {
   const [mostrarConsentimiento, setMostrarConsentimiento] = useState(false)
   const [retoDobleExtra, setRetoDobleExtra] = useState<VerdadORetoItem | null>(null)
   const [intensidadMaxima, setIntensidadMaxima] = useState<Techo>('intensa')
+  const [generandoIA, setGenerandoIA] = useState(false)
+  const [errorIA, setErrorIA] = useState<string | null>(null)
   const ultimaCategoriaRef = useRef<string | null>(null)
 
   useEffect(() => {
@@ -183,6 +186,27 @@ export default function VerdadORetoPage() {
       setRechazados(prev => new Set(prev).add(promptItem.id))
     }
     siguiente()
+  }
+
+  // Genera una consigna nueva con IA en vez de sacarla del pool fijo --
+  // solo en la tab picante (ver migración 054: el historial que evita
+  // repeticiones vive en couple_ia_contenido, separado del pool de
+  // verdad_o_reto_items). Complementa el flujo existente, no lo
+  // reemplaza: "Siguiente" después de esto vuelve a sacar del pool.
+  async function generarConIA() {
+    if (!modo) return
+    setGenerandoIA(true)
+    setErrorIA(null)
+    const resultado = await generarVerdadORetoConIAAction(modo, intensidadMaxima)
+    setGenerandoIA(false)
+    if (!resultado.ok) {
+      setErrorIA(resultado.error)
+      return
+    }
+    setPromptItem(resultado.item)
+    ultimaCategoriaRef.current = resultado.item.categoria
+    setRetoDobleExtra(null)
+    logRondaJugadaAction('verdad_o_reto', resultado.item.id, resultado.item.categoria)
   }
 
   // Cada 3 rondas en modo normal, si la pregunta/reto actual tiene un par
@@ -336,6 +360,21 @@ export default function VerdadORetoPage() {
                 {retoDobleExtra ? 'Hecho, los dos' : 'Siguiente'}
               </button>
             </div>
+
+            {intensidad === 'picante' && (
+              <div className="space-y-1.5">
+                <button
+                  onClick={generarConIA}
+                  disabled={generandoIA}
+                  className="w-full bg-[#D4A5A5]/8 border border-[#D4A5A5]/25 text-[#D4A5A5] font-body text-sm py-3 rounded-2xl hover:border-[#D4A5A5]/40 transition-all disabled:opacity-50"
+                >
+                  {generandoIA ? 'Pensando...' : '✨ Quiero otra'}
+                </button>
+                {errorIA && (
+                  <p className="text-ritual-muted text-xs font-body text-center">{errorIA}</p>
+                )}
+              </div>
+            )}
 
             <button
               onClick={pasar}

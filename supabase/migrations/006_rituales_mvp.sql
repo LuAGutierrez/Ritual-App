@@ -13,6 +13,13 @@ CREATE TABLE IF NOT EXISTS public.couples (
   created_at   timestamptz DEFAULT now()
 );
 
+CREATE TABLE IF NOT EXISTS public.couple_members (
+  user_id    uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  couple_id  uuid NOT NULL REFERENCES public.couples(id) ON DELETE CASCADE,
+  joined_at  timestamptz DEFAULT now(),
+  PRIMARY KEY (user_id, couple_id)
+);
+
 -- RLS
 ALTER TABLE public.couples ENABLE ROW LEVEL SECURITY;
 
@@ -39,17 +46,6 @@ CREATE POLICY "couples_update_member" ON public.couples
         AND couple_members.user_id = auth.uid()
     )
   );
-
-
--- ─────────────────────────────────────────────
--- TABLA: couple_members
--- ─────────────────────────────────────────────
-CREATE TABLE IF NOT EXISTS public.couple_members (
-  user_id    uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  couple_id  uuid NOT NULL REFERENCES public.couples(id) ON DELETE CASCADE,
-  joined_at  timestamptz DEFAULT now(),
-  PRIMARY KEY (user_id, couple_id)
-);
 
 -- RLS
 ALTER TABLE public.couple_members ENABLE ROW LEVEL SECURITY;
