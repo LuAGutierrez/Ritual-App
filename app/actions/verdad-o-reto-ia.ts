@@ -62,6 +62,7 @@ export async function generarVerdadORetoConIAAction(
   intensidad: Intensidad
 ): Promise<GenerarVerdadORetoIAResult> {
   if (!isGroqConfigured()) {
+    console.error('[verdad-o-reto-ia] GROQ_API_KEY no configurada')
     return { ok: false, error: 'No se pudo generar la consigna. Probá de nuevo.' }
   }
 
@@ -88,11 +89,13 @@ export async function generarVerdadORetoConIAAction(
   let texto: string
   try {
     texto = (await completeWithGroq('Generá la consigna.', { systemPrompt, maxTokens: 150 })).trim()
-  } catch {
+  } catch (err) {
+    console.error('[verdad-o-reto-ia] Error llamando a Groq:', err)
     return { ok: false, error: 'No se pudo generar la consigna. Probá de nuevo.' }
   }
 
   if (!texto) {
+    console.error('[verdad-o-reto-ia] Groq devolvió texto vacío')
     return { ok: false, error: 'No se pudo generar la consigna. Probá de nuevo.' }
   }
 
