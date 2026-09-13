@@ -9,5 +9,3 @@ supabase/.temp/
 .DS_Store
 tsconfig.tsbuildinfo
 .cursor/rules/skills/superpowers/
-.claude.json
-.claude/settings.local.json
