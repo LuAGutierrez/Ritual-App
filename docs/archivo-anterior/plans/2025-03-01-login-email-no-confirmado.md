@@ -1,7 +1,5 @@
 # Login con email no confirmado — Plan de implementación
 
-> **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
-
 **Goal:** Mostrar el bloque "confirmá tu correo" + reenviar cuando el login falla por email no confirmado (en vez del mensaje crudo de Supabase).
 
 **Architecture:** Detección en el catch del submit de login en auth-page.js por mensaje de error; reutilizar `mostrarMensajeConfirmarEmail(email)` ya existente. Sin cambios en auth.js.

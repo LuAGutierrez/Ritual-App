@@ -1,7 +1,5 @@
 # Memoria nuestra — Plan de implementación
 
-> **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
-
 **Goal:** Añadir el cuarto juego "Memoria nuestra": cada uno escribe en secreto su recuerdo, se revelan las dos respuestas y charlan. Sin rondas; siguiente pregunta hasta acabar el banco.
 
 **Architecture:** Nuevo HTML y JS siguiendo el patrón de juego-eleccion (paywall, game-content, fases). Datos en `RitualDatos.memoria`; una baraja al entrar; fases: respuesta 1 → respuesta 2 → revelar → Siguiente (o pantalla "Se acabaron las memorias"). Mismo game-gate que el resto; actualizar texto del paywall a "las experiencias".

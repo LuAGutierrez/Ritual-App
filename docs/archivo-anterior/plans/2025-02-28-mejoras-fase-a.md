@@ -1,7 +1,5 @@
 # Mejoras Fase A — Plan de implementación
 
-> **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
-
 **Goal:** Centralizar la lógica "¿puede jugar otra ronda?" en game-gate.js, quitar logs de auth.js y documentar hallazgos de una pasada de consistencia.
 
 **Architecture:** Se expone `window.Ritual.canPlayAnotherRound(hasCompletedFirstRound, cb)` desde el gate; los tres juegos eliminan su función local y llaman a esta API. Auth deja de usar console. Tras los cambios, una pasada de lectura genera `docs/mejoras-fase-a.md` con hallazgos.
