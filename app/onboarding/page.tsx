@@ -7,6 +7,7 @@ import { crearPareja } from '@/app/actions/couple'
 import { recordDeviceFingerprintAction } from '@/app/actions/device-fingerprint'
 import { getDeviceFingerprint } from '@/lib/deviceFingerprint'
 import PageLoader from '@/components/PageLoader'
+import VincularAhoraMismoTelefono from '@/components/VincularAhoraMismoTelefono'
 
 type Step = 'nombre' | 'opciones' | 'esperando'
 
@@ -17,10 +18,13 @@ export default function OnboardingPage() {
   const [step, setStep] = useState<Step>('nombre')
   const [nombre, setNombre] = useState('')
   const [userId, setUserId] = useState<string | null>(null)
+  const [inviteCode, setInviteCode] = useState<string | null>(null)
   const [inviteLink, setInviteLink] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
+  const [confirmarVincular, setConfirmarVincular] = useState(false)
+  const [vinculandoAhora, setVinculandoAhora] = useState(false)
   const [isPending, startTransition] = useTransition()
 
   useEffect(() => {
@@ -69,9 +73,21 @@ export default function OnboardingPage() {
     }
 
     const link = `${window.location.origin}/unirse/${result.inviteCode}`
+    setInviteCode(result.inviteCode ?? null)
     setInviteLink(link)
     setLoading(false)
     setStep('esperando')
+  }
+
+  // Onboarding guiado en el mismo dispositivo: cierra la sesión de quien
+  // creó la pareja y lo manda a /auth apuntando al link de invitación, para
+  // que la pareja se registre (o inicie sesión) ahí mismo y quede vinculada
+  // sin que nadie tenga que compartir el link por otro medio.
+  async function handleVincularAhora() {
+    if (!inviteCode) return
+    setVinculandoAhora(true)
+    await supabase.auth.signOut()
+    router.push(`/auth?redirect=${encodeURIComponent(`/unirse/${inviteCode}`)}&tab=registro`)
   }
 
   async function copyLink() {
@@ -201,6 +217,18 @@ export default function OnboardingPage() {
               >
                 Ir al ritual de hoy →
               </button>
+            </div>
+
+            {/* Vincular ahora, en el mismo teléfono: alternativa a compartir
+                el link por otro medio cuando la pareja está al lado tuyo. */}
+            <div className="mt-6">
+              <VincularAhoraMismoTelefono
+                confirmar={confirmarVincular}
+                onAbrir={() => setConfirmarVincular(true)}
+                onCancelar={() => setConfirmarVincular(false)}
+                onConfirmar={handleVincularAhora}
+                loading={vinculandoAhora}
+              />
             </div>
           </div>
         )}

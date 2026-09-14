@@ -20,6 +20,7 @@ import StreakBadge from '@/components/StreakBadge'
 import PartnerRespondedBanner from '@/components/PartnerRespondedBanner'
 import BottomNav from '@/components/BottomNav'
 import PageLoader from '@/components/PageLoader'
+import VincularAhoraMismoTelefono from '@/components/VincularAhoraMismoTelefono'
 import { getNotificationPrefsAction } from '@/app/actions/notifications'
 import { usePushNotifications } from '@/hooks/usePushNotifications'
 import { isPushPromptDismissed } from '@/lib/push/client'
@@ -57,8 +58,11 @@ export default function RitualPage() {
   const [showPushPrompt, setShowPushPrompt] = useState(false)
   const [creandoPareja, setCreandoPareja] = useState(false)
   const [inviteLink, setInviteLink] = useState<string | null>(null)
+  const [inviteCode, setInviteCode] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
   const [copiedPending, setCopiedPending] = useState(false)
+  const [confirmarVincular, setConfirmarVincular] = useState(false)
+  const [vinculandoAhora, setVinculandoAhora] = useState(false)
   const { subscribe, loading: pushLoading, isSupported } = usePushNotifications()
   const ctxRef = useRef<UserContext | null>(null)
 
@@ -79,6 +83,7 @@ export default function RitualPage() {
       return
     }
     setInviteLink(`${window.location.origin}/unirse/${result.inviteCode}`)
+    setInviteCode(result.inviteCode ?? null)
     setCreandoPareja(false)
   }
 
@@ -106,6 +111,16 @@ export default function RitualPage() {
     } catch {
       setError('No se pudo copiar. Copiá el link manualmente.')
     }
+  }
+
+  // Onboarding guiado en el mismo dispositivo: cierra la sesión de quien
+  // creó la pareja y lo manda a /auth apuntando al link de invitación, para
+  // que la pareja se registre (o inicie sesión) ahí mismo y quede vinculada
+  // sin que nadie tenga que compartir el link por otro medio.
+  async function handleVincularAhora(code: string) {
+    setVinculandoAhora(true)
+    await supabase.auth.signOut()
+    router.push(`/auth?redirect=${encodeURIComponent(`/unirse/${code}`)}&tab=registro`)
   }
 
   // ─── Calcular el estado de la sesión ───────────────────────────
@@ -350,6 +365,16 @@ export default function RitualPage() {
             >
               {copied ? '¡Copiado!' : 'Copiar link'}
             </button>
+
+            {inviteCode && (
+              <VincularAhoraMismoTelefono
+                confirmar={confirmarVincular}
+                onAbrir={() => setConfirmarVincular(true)}
+                onCancelar={() => setConfirmarVincular(false)}
+                onConfirmar={() => handleVincularAhora(inviteCode)}
+                loading={vinculandoAhora}
+              />
+            )}
           </div>
         )}
 
@@ -451,6 +476,14 @@ export default function RitualPage() {
             >
               {copiedPending ? '¡Copiado!' : 'Copiar link'}
             </button>
+
+            <VincularAhoraMismoTelefono
+              confirmar={confirmarVincular}
+              onAbrir={() => setConfirmarVincular(true)}
+              onCancelar={() => setConfirmarVincular(false)}
+              onConfirmar={() => handleVincularAhora(ctx.couple!.invite_code)}
+              loading={vinculandoAhora}
+            />
           </div>
         )}
 

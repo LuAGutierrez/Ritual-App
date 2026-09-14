@@ -288,8 +288,16 @@ No se tocó (borrar functions/tablas de producción es destructivo) -- si se con
 es candidata a limpieza en otra sesión.
 
 ### Pendiente
-- [ ] Onboarding: opción "vincular ahora, en este mismo teléfono" (wrapper guiado sobre
-      `crearPareja`/`unirseAPareja`/`signOut`, sin backend nuevo)
+- [x] Onboarding: opción "vincular ahora, en este mismo teléfono" (14/09) -- botón + confirmación
+      de dos pasos (`components/VincularAhoraMismoTelefono.tsx`) en las 3 pantallas donde se puede
+      estar esperando a la pareja (`/onboarding` paso 3, y las dos pantallas de espera de `/ritual`:
+      recién creada la pareja, y al volver otro día sin que nadie se haya unido todavía). Sin backend
+      nuevo: reusa `crearPareja`/`signOut`/el `redirect` que `/auth` y `/unirse/[code]` ya soportaban.
+      Probado end-to-end en producción con 2 cuentas reales (creadas y borradas en la misma sesión):
+      signOut → `/auth?redirect=/unirse/CODE&tab=registro` → registro → confirmar email → login →
+      join automático → reveal compartido. Bono de 150 créditos se otorga normal (`risk_flagged: false`),
+      confirmado por SQL -- el anti-farmeo de la 056 solo dispara en el *segundo* uso del mismo
+      dispositivo, no en el primer vínculo real.
 - [ ] Decidir qué hacer con `get-gift-status`/`claim-gift`/`create-mp-gift`/`gifts` (ver hallazgo arriba)
 
 ---
