@@ -2,8 +2,6 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { notifyPartnerResponded } from '@/lib/push/notify'
-import { isCouplePremiumAction } from '@/app/actions/subscription'
-import { FREE_HISTORIAL_LIMIT } from '@/lib/plans'
 import { todayInArgentina, addDaysToDateStr } from '@/lib/fecha'
 import type { CoupleRitualSession, UserContext, Profile, Couple, Streak } from '@/types'
 
@@ -154,7 +152,7 @@ export async function getHistorialAction(
   categoria?: string,
   offset = 0,
   limit = HISTORIAL_PAGE_SIZE
-): Promise<{ sessions: CoupleRitualSession[]; hasMore: boolean; isPremium: boolean; totalCompleted: number; totalCompletedAll: number }> {
+): Promise<{ sessions: CoupleRitualSession[]; hasMore: boolean; totalCompleted: number; totalCompletedAll: number }> {
   const supabase = await createClient()
   const useCategory = categoria && categoria !== 'todos'
 
@@ -168,8 +166,7 @@ export async function getHistorialAction(
     countQuery = countQuery.eq('ritual.category', categoria)
   }
 
-  const [isPremium, totalAllResult, countResult] = await Promise.all([
-    isCouplePremiumAction(coupleId),
+  const [totalAllResult, countResult] = await Promise.all([
     supabase
       .from('couple_ritual_sessions')
       .select('id', { count: 'exact', head: true })
@@ -181,21 +178,13 @@ export async function getHistorialAction(
   const totalCompletedAll = totalAllResult.count ?? 0
   const totalCompleted = countResult.count ?? 0
 
-  if (!isPremium && offset >= FREE_HISTORIAL_LIMIT) {
-    return { sessions: [], hasMore: false, isPremium, totalCompleted, totalCompletedAll }
-  }
-
-  const cappedLimit = isPremium
-    ? limit
-    : Math.min(limit, FREE_HISTORIAL_LIMIT - offset)
-
   let query = supabase
     .from('couple_ritual_sessions')
     .select(useCategory ? '*, ritual:rituals!inner(*)' : '*, ritual:rituals(*)')
     .eq('couple_id', coupleId)
     .not('revealed_at', 'is', null)
     .order('session_date', { ascending: false })
-    .range(offset, offset + cappedLimit)
+    .range(offset, offset + limit)
 
   if (useCategory) {
     query = query.eq('ritual.category', categoria)
@@ -203,21 +192,18 @@ export async function getHistorialAction(
 
   const { data } = await query
   const rows = (data ?? []) as CoupleRitualSession[]
-  const hasMoreRows = rows.length > cappedLimit
-  const sessions = hasMoreRows ? rows.slice(0, cappedLimit) : rows
-  const hasMore = isPremium
-    ? hasMoreRows
-    : hasMoreRows && offset + sessions.length < FREE_HISTORIAL_LIMIT
+  const hasMore = rows.length > limit
+  const sessions = hasMore ? rows.slice(0, limit) : rows
 
-  return { sessions, hasMore, isPremium, totalCompleted, totalCompletedAll }
+  return { sessions, hasMore, totalCompleted, totalCompletedAll }
 }
 
 // Version RPC: junta contexto + primera pagina de historial en una sola
 // consulta a Postgres (ver migracion 016_historial_page_rpc.sql), en vez
 // de encadenar ~7-8 round trips server->Supabase (auth.getUser, profile,
-// membership, couple, partner, isPremium x3, counts, datos). El JOIN pasa
-// a resolverse adentro de la base, que es rapido; lo caro era la cantidad
-// de idas y vueltas de red, no el trabajo de cada query en si.
+// membership, couple, partner, counts, datos). El JOIN pasa a resolverse
+// adentro de la base, que es rapido; lo caro era la cantidad de idas y
+// vueltas de red, no el trabajo de cada query en si.
 //
 // handleCategoria/handleLoadMore en la pagina siguen llamando a
 // getHistorialAction directo porque ahi ya se conoce el coupleId.
@@ -225,7 +211,6 @@ type HistorialPageData = {
   context: UserContext
   sessions: CoupleRitualSession[]
   hasMore: boolean
-  isPremium: boolean
   totalCompleted: number
   totalCompletedAll: number
 } | { context: UserContext } | null
@@ -245,7 +230,6 @@ export async function getHistorialPageDataAction(categoria = 'todos'): Promise<H
     context: UserContext | null
     sessions?: CoupleRitualSession[]
     hasMore?: boolean
-    isPremium?: boolean
     totalCompleted?: number
     totalCompletedAll?: number
   }
@@ -257,7 +241,6 @@ export async function getHistorialPageDataAction(categoria = 'todos'): Promise<H
     context: result.context,
     sessions: result.sessions,
     hasMore: result.hasMore ?? false,
-    isPremium: result.isPremium ?? false,
     totalCompleted: result.totalCompleted ?? 0,
     totalCompletedAll: result.totalCompletedAll ?? 0,
   }
@@ -279,6 +262,7 @@ export async function updateStreakAction(coupleId: string): Promise<Streak | nul
       .insert({ couple_id: coupleId, current_streak: 1, longest_streak: 1, last_completed_date: today })
       .select()
       .single()
+    await supabase.rpc('grant_daily_streak_credits', { p_couple_id: coupleId })
     return newStreak as Streak
   }
 
@@ -295,6 +279,11 @@ export async function updateStreakAction(coupleId: string): Promise<Streak | nul
     .eq('couple_id', coupleId)
     .select()
     .single()
+
+  // Créditos de racha diaria (sistema de créditos) -- grant_daily_streak_credits
+  // ya es idempotente por día (last_streak_grant_date), así que no hace
+  // falta duplicar ese chequeo acá.
+  await supabase.rpc('grant_daily_streak_credits', { p_couple_id: coupleId })
 
   return updated as Streak
 }

@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState, useTransition } from 'react'
 import BottomNav from '@/components/BottomNav'
+import CreditsBadge from '@/components/CreditsBadge'
 import PageLoader from '@/components/PageLoader'
 import PicanteConsentGate from '@/components/PicanteConsentGate'
 import { getJuegosStatsSummaryAction, type JuegosStatsSummary } from '@/app/actions/juegos-stats'
@@ -147,12 +148,17 @@ export default function JuegosPage() {
         </div>
       )}
 
-      <header className="px-5 pt-8 pb-4">
-        <h1 className="font-display text-xl text-ritual-cream tracking-wide">Juegos</h1>
-        <p className="text-ritual-muted text-xs font-body mt-0.5">Para jugar juntos, más allá del ritual de hoy</p>
-        {mensaje && (
-          <p className="text-ritual-gold text-xs font-body mt-2">{mensaje}</p>
-        )}
+      <header className="px-5 pt-8 pb-4 flex items-start justify-between gap-3">
+        <div>
+          <h1 className="font-display text-xl text-ritual-cream tracking-wide">Juegos</h1>
+          <p className="text-ritual-muted text-xs font-body mt-0.5">Para jugar juntos, más allá del ritual de hoy</p>
+          {mensaje && (
+            <p className="text-ritual-gold text-xs font-body mt-2">{mensaje}</p>
+          )}
+        </div>
+        <div className="flex-shrink-0">
+          <CreditsBadge />
+        </div>
       </header>
 
       <main className="flex-1 px-5 pb-28 max-w-md mx-auto w-full space-y-3">

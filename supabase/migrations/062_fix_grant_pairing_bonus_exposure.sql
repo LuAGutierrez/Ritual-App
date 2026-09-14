@@ -1,0 +1,21 @@
+-- ============================================================
+-- Migración 062: cerrar la exposición pública de grant_pairing_bonus
+--
+-- Bug real introducido en la migración 056, encontrado vía
+-- mcp__supabase__get_advisors (anon_security_definer_function_executable)
+-- justo después de aplicar las migraciones 055-061 a producción --
+-- grant_pairing_bonus() es SECURITY DEFINER y no tenía NINGÚN chequeo
+-- de que quien llama sea parte de p_user_a/p_user_b, ni el EXECUTE
+-- revocado de anon/authenticated (a diferencia de grant_purchase_credits,
+-- que sí lo tenía desde el vamos). Cualquier autenticado podía llamar
+-- /rest/v1/rpc/grant_pairing_bonus directo con cualquier user_id ajeno
+-- y poner en cero su saldo individual (user_credits.balance = 0), o
+-- fabricar un bono de vinculación para una pareja que nunca vinculó.
+--
+-- join_couple_by_invite() sigue funcionando igual: la llama internamente
+-- vía PERFORM, y ese llamado corre con los privilegios del dueño de la
+-- función (postgres), no del rol que originó el request -- revocarle
+-- EXECUTE a anon/authenticated no rompe ese camino.
+-- ============================================================
+
+REVOKE EXECUTE ON FUNCTION public.grant_pairing_bonus(uuid, uuid, uuid) FROM PUBLIC, anon, authenticated;

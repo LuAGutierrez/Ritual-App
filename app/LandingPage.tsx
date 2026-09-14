@@ -1,5 +1,13 @@
 import Link from 'next/link'
-import { FREE_FEATURES, PREMIUM_FEATURES, PREMIUM_PRICE } from '@/lib/plans'
+import { CREDIT_FEATURES, WELCOME_CREDITS } from '@/lib/credits'
+
+const GRATIS_PARA_SIEMPRE = [
+  'Ritual diario compartido',
+  'Rachas y comodines',
+  'Los 6 juegos, incluido el modo picante',
+  'Historial completo sin límite',
+  'Notificaciones con tu pareja',
+] as const
 
 const JUEGOS_LANDING = [
   { titulo: 'Elección', descripcion: 'Elijan en secreto, en tiempo real, y vean si coinciden.' },
@@ -126,14 +134,15 @@ export default function LandingPage() {
           <div className="text-center mb-10">
             <h2 className="font-display text-3xl text-ritual-cream">Gratis para siempre</h2>
             <p className="text-ritual-muted font-body text-sm mt-2 max-w-sm mx-auto leading-relaxed">
-              El ritual diario nunca tiene costo. Premium suma profundidad para quienes quieren más.
+              Todo el contenido de Rituales es gratis. Los créditos son solo para pedirle a la IA
+              algo hecho a medida cuando les provoca.
             </p>
           </div>
           <div className="grid sm:grid-cols-2 gap-4">
             <div className="bg-ritual-bg-soft border border-white/10 rounded-3xl p-6 space-y-3">
-              <p className="text-ritual-muted text-xs font-body uppercase tracking-widest">Gratis</p>
+              <p className="text-ritual-muted text-xs font-body uppercase tracking-widest">Siempre gratis</p>
               <ul className="space-y-2">
-                {FREE_FEATURES.map(f => (
+                {GRATIS_PARA_SIEMPRE.map(f => (
                   <li key={f} className="flex items-start gap-2.5 text-ritual-muted font-body text-sm">
                     <span className="text-ritual-gold/70 mt-0.5">·</span>
                     {f}
@@ -143,13 +152,16 @@ export default function LandingPage() {
             </div>
             <div className="bg-ritual-gold/8 border border-ritual-gold/25 rounded-3xl p-6 space-y-3">
               <p className="text-ritual-gold text-xs font-body uppercase tracking-widest">
-                Premium — {PREMIUM_PRICE.label} / {PREMIUM_PRICE.period}
+                ✨ Con IA — {WELCOME_CREDITS} créditos de regalo al empezar
               </p>
               <ul className="space-y-2">
-                {PREMIUM_FEATURES.map(f => (
-                  <li key={f} className="flex items-start gap-2.5 text-ritual-text font-body text-sm">
-                    <span className="text-ritual-gold mt-0.5">✦</span>
-                    {f}
+                {CREDIT_FEATURES.map(f => (
+                  <li key={f.id} className="flex items-start justify-between gap-2.5 text-ritual-text font-body text-sm">
+                    <span className="flex items-start gap-2.5">
+                      <span className="text-ritual-gold mt-0.5">✦</span>
+                      {f.label}
+                    </span>
+                    <span className="text-ritual-muted text-xs shrink-0 pt-0.5">{f.cost} créditos</span>
                   </li>
                 ))}
               </ul>

@@ -8,14 +8,11 @@ import {
   startEleccionRoundAction,
   submitEleccionChoiceAction,
 } from '@/app/actions/eleccion'
-import { getIsCouplePremiumAction } from '@/app/actions/subscription'
 import { getPicanteHabilitadoAction, habilitarPicanteAction } from '@/app/actions/picante-consent'
-import { getPicanteTrialUsadoAction, marcarPicanteTrialUsadoAction } from '@/app/actions/picante-trial'
 import { useDobleONada } from '@/lib/hooks/useDobleONada'
 import { getCategoriaPreferida } from '@/lib/categoriaPreferida'
 import type { EleccionRound, MatchStats, UserContext } from '@/types'
 import PageLoader from '@/components/PageLoader'
-import PicanteUpsell from '@/components/PicanteUpsell'
 import PicanteConsentGate from '@/components/PicanteConsentGate'
 
 type Intensidad = 'normal' | 'picante'
@@ -33,9 +30,6 @@ export default function EleccionPage() {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [intensidad, setIntensidad] = useState<Intensidad>('normal')
-  const [isPremium, setIsPremium] = useState(false)
-  const [picanteUsado, setPicanteUsado] = useState(false)
-  const [mostrarUpsell, setMostrarUpsell] = useState(false)
   const [picanteHabilitado, setPicanteHabilitado] = useState(false)
   const [mostrarConsentimiento, setMostrarConsentimiento] = useState(false)
   const [copiedInvite, setCopiedInvite] = useState(false)
@@ -102,9 +96,7 @@ export default function EleccionPage() {
       setLoading(false)
     }
     init()
-    getIsCouplePremiumAction().then(setIsPremium)
     getPicanteHabilitadoAction().then(setPicanteHabilitado)
-    getPicanteTrialUsadoAction('eleccion').then(setPicanteUsado)
 
     return () => {
       if (channelRef.current) supabase.removeChannel(channelRef.current)
@@ -114,23 +106,14 @@ export default function EleccionPage() {
 
   async function empezarRonda(esDobleONada: boolean) {
     if (!ctx?.couple) return
-    if (intensidad === 'picante' && !isPremium && picanteUsado) {
-      setMostrarUpsell(true)
-      return
-    }
     setStarting(true)
     setError(null)
-    setMostrarUpsell(false)
     const nuevo = await startEleccionRoundAction(ctx.couple.id, intensidad, vistosRef.current, getCategoriaPreferida())
     if (!nuevo) {
       setError('No se pudo empezar la ronda. Intentá de nuevo.')
     } else {
       setRound(nuevo)
       vistosRef.current = [...vistosRef.current, `${nuevo.option_a}|${nuevo.option_b}`]
-      if (intensidad === 'picante') {
-        setPicanteUsado(true)
-        marcarPicanteTrialUsadoAction('eleccion')
-      }
       if (esDobleONada) doble.aceptar()
       else doble.reset()
     }
@@ -143,7 +126,6 @@ export default function EleccionPage() {
       return
     }
     setIntensidad(ints)
-    setMostrarUpsell(false)
   }
 
   async function confirmarPicante() {
@@ -151,7 +133,6 @@ export default function EleccionPage() {
     setPicanteHabilitado(true)
     setMostrarConsentimiento(false)
     setIntensidad('picante')
-    setMostrarUpsell(false)
   }
 
   async function handleElegir(choice: 0 | 1) {
@@ -264,8 +245,6 @@ export default function EleccionPage() {
                 onConfirmar={confirmarPicante}
                 onCancelar={() => setMostrarConsentimiento(false)}
               />
-            ) : mostrarUpsell ? (
-              <PicanteUpsell />
             ) : (
               <div className="text-center space-y-6">
                 {stats && stats.intentos > 0 && (

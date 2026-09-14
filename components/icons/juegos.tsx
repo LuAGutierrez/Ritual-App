@@ -72,3 +72,13 @@ export function IconLlama() {
     </svg>
   )
 }
+
+export function IconChispa() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 3l1.8 5.6 5.7.1-4.6 3.5 1.8 5.6-4.7-3.4-4.7 3.4 1.8-5.6-4.6-3.5 5.7-.1z" />
+      <path d="M19 3v3" />
+      <path d="M17.5 4.5h3" />
+    </svg>
+  )
+}

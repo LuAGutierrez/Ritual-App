@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { getHistorialPageDataAction, getHistorialAction } from '@/app/actions/ritual'
 import { getHistorialJuegosAction } from '@/app/actions/historial-juegos'
-import { FREE_HISTORIAL_LIMIT } from '@/lib/plans'
 import BottomNav from '@/components/BottomNav'
 import PageLoader from '@/components/PageLoader'
 import type { CoupleRitualSession, UserContext, RitualCategory, HistorialJuegoEntry } from '@/types'
@@ -71,7 +70,6 @@ export default function HistorialPage() {
   const [loading, setLoading] = useState(true)
   const [loadingMore, setLoadingMore] = useState(false)
   const [hasMore, setHasMore] = useState(false)
-  const [isPremium, setIsPremium] = useState(false)
   const [totalCompleted, setTotalCompleted] = useState(0)
   const [totalCompletedAll, setTotalCompletedAll] = useState(0)
   const [error, setError] = useState<string | null>(null)
@@ -85,10 +83,9 @@ export default function HistorialPage() {
   const [juegoLoadingMore, setJuegoLoadingMore] = useState(false)
   const [juegoLoaded, setJuegoLoaded] = useState(false)
 
-  function applyHistorial(result: { sessions: CoupleRitualSession[]; hasMore: boolean; isPremium: boolean; totalCompleted: number; totalCompletedAll: number }, append = false) {
+  function applyHistorial(result: { sessions: CoupleRitualSession[]; hasMore: boolean; totalCompleted: number; totalCompletedAll: number }, append = false) {
     setSessions(prev => append ? [...prev, ...result.sessions] : result.sessions)
     setHasMore(result.hasMore)
-    setIsPremium(result.isPremium)
     setTotalCompleted(result.totalCompleted)
     setTotalCompletedAll(result.totalCompletedAll)
     setError(null)
@@ -182,8 +179,6 @@ export default function HistorialPage() {
     if (!ctx) return ''
     return ctx.userId === s.user1_id ? (s.user2_response ?? '') : (s.user1_response ?? '')
   }
-
-  const showPremiumUpsell = categoria === 'todos' && !isPremium && totalCompletedAll > FREE_HISTORIAL_LIMIT && !hasMore
 
   const headerCount = categoria === 'todos' ? totalCompletedAll : totalCompleted
 
@@ -359,22 +354,6 @@ export default function HistorialPage() {
               >
                 {loadingMore ? 'Cargando...' : 'Cargar más'}
               </button>
-            )}
-            {showPremiumUpsell && (
-              <div className="bg-ritual-gold/8 border border-ritual-gold/20 rounded-2xl p-5 text-center space-y-3">
-                <p className="font-display text-lg text-ritual-cream">
-                  Hay más recuerdos guardados
-                </p>
-                <p className="text-ritual-muted font-body text-sm leading-relaxed">
-                  Llevan {totalCompletedAll} rituales juntos. Con Premium podés ver todo su historial.
-                </p>
-                <button
-                  onClick={() => router.push('/precios')}
-                  className="w-full bg-ritual-gold text-ritual-bg font-body font-medium text-sm py-3.5 rounded-2xl hover:bg-ritual-cream transition-all duration-300"
-                >
-                  Ver Premium
-                </button>
-              </div>
             )}
           </div>
         ))}

@@ -27,6 +27,30 @@ export async function notifyPartnerResponded(
   if (sent) await logNotification(partnerId, 'partner_responded')
 }
 
+// Sistema de créditos (Sprint 5): avisa al otro miembro cuando alguien
+// gasta créditos del pozo compartido -- mismo patrón que
+// notifyPartnerResponded, sin deduplicación por día porque acá cada
+// aviso es un evento distinto (no tendría sentido "ya te avisé hoy que
+// gastaron créditos" si gastan varias veces).
+export async function notifyPartnerCreditsSpent(partnerId: string, amount: number, remaining: number) {
+  const supabase = createServiceClient()
+  if (!supabase) return
+
+  const { data: prefs } = await supabase
+    .from('notification_prefs')
+    .select('push_enabled')
+    .eq('user_id', partnerId)
+    .single()
+
+  if (!prefs?.push_enabled) return
+
+  await sendPushToUser(partnerId, {
+    title: 'Rituales',
+    body: `Tu pareja generó algo con IA (-${amount} créditos). Quedan ${remaining} en el pozo.`,
+    url: '/ritual-ia',
+  })
+}
+
 export function isReminderHour(
   reminderTime: string,
   timezone: string,

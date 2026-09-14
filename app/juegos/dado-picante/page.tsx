@@ -3,10 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { getDadoPicanteItemsAction } from '@/app/actions/dado-picante'
-import { getIsCouplePremiumAction } from '@/app/actions/subscription'
-import { getPicanteTrialUsadoAction, marcarPicanteTrialUsadoAction } from '@/app/actions/picante-trial'
 import type { DadoPicanteItem } from '@/types'
-import PicanteUpsell from '@/components/PicanteUpsell'
 
 type Tipo = 'lugar' | 'posicion' | 'accion' | 'zona'
 type Modo = 'posiciones' | 'caricias'
@@ -77,17 +74,12 @@ export default function DadoPicantePage() {
   const [pips, setPips] = useState<Record<Tipo, number>>({
     lugar: 1, posicion: 4, accion: 2, zona: 5,
   })
-  const [isPremium, setIsPremium] = useState(false)
-  const [picanteUsado, setPicanteUsado] = useState(false)
-  const [mostrarUpsell, setMostrarUpsell] = useState(false)
   const intervalsRef = useRef<Record<Tipo, ReturnType<typeof setInterval> | null>>({
     lugar: null, posicion: null, accion: null, zona: null,
   })
 
   useEffect(() => {
     getDadoPicanteItemsAction().then(setItems)
-    getIsCouplePremiumAction().then(setIsPremium)
-    getPicanteTrialUsadoAction('dado_picante').then(setPicanteUsado)
 
     return () => {
       Object.values(intervalsRef.current).forEach(id => { if (id) clearInterval(id) })
@@ -102,14 +94,9 @@ export default function DadoPicantePage() {
   }
 
   function tirar(tipo: Tipo) {
-    if (!isPremium && picanteUsado) {
-      setMostrarUpsell(true)
-      return
-    }
     const pool = itemsPorTipo[tipo]
     if (pool.length === 0) return
 
-    setMostrarUpsell(false)
     setGirando(prev => ({ ...prev, [tipo]: true }))
     intervalsRef.current[tipo] = setInterval(() => {
       setPips(prev => ({ ...prev, [tipo]: 1 + Math.floor(Math.random() * 6) }))
@@ -120,8 +107,6 @@ export default function DadoPicantePage() {
       if (id) clearInterval(id)
       setResultados(prev => ({ ...prev, [tipo]: pickRandom(pool) }))
       setGirando(prev => ({ ...prev, [tipo]: false }))
-      setPicanteUsado(true)
-      marcarPicanteTrialUsadoAction('dado_picante')
     }, 650)
   }
 
@@ -189,10 +174,7 @@ export default function DadoPicantePage() {
           </button>
         </div>
 
-        {mostrarUpsell ? (
-          <PicanteUpsell />
-        ) : (
-          <div className="space-y-8 animate-fade-up">
+        <div className="space-y-8 animate-fade-up">
             <div className="flex items-start justify-center gap-6">
               {[tipoA, tipoB].map(tipo => (
                 <div key={tipo} className="flex flex-col items-center gap-3 flex-1">
@@ -214,8 +196,7 @@ export default function DadoPicantePage() {
                 </div>
               ))}
             </div>
-          </div>
-        )}
+        </div>
       </main>
     </div>
   )

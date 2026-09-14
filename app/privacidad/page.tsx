@@ -34,7 +34,8 @@ export default function PrivacidadPage() {
             <li><strong className="text-ritual-cream">Datos de cuenta:</strong> email, nombre o apodo, avatar (el emoji que elijas).</li>
             <li><strong className="text-ritual-cream">Contenido que generás:</strong> tus respuestas al ritual diario, tus elecciones en los juegos, rachas y estadísticas de la pareja.</li>
             <li><strong className="text-ritual-cream">Notificaciones:</strong> si activás los avisos, guardamos la suscripción push de tu navegador para poder enviártelos. No accedemos a tu ubicación ni a tus contactos.</li>
-            <li><strong className="text-ritual-cream">Datos de pago:</strong> si te suscribís a Premium, el pago lo procesa Mercado Pago. Rituales nunca ve ni guarda el número de tu tarjeta.</li>
+            <li><strong className="text-ritual-cream">Datos de pago:</strong> si comprás créditos, el pago lo procesa Mercado Pago. Rituales nunca ve ni guarda el número de tu tarjeta.</li>
+            <li><strong className="text-ritual-cream">Rituales con IA:</strong> si le pedís a la IA un ritual o dinámica personalizada, mandamos etiquetas breves de contexto (ánimo, tiempo disponible, objetivo) al proveedor de inferencia -- nunca tus respuestas íntimas ni datos que te identifiquen.</li>
           </ul>
         </section>
 
@@ -55,8 +56,9 @@ export default function PrivacidadPage() {
           </p>
           <ul className="text-ritual-text font-body text-sm leading-relaxed space-y-2 list-disc list-inside">
             <li>Supabase, nuestra infraestructura de base de datos y autenticación.</li>
-            <li>Mercado Pago, únicamente para procesar los pagos de la suscripción Premium.</li>
+            <li>Mercado Pago, únicamente para procesar la compra de paquetes de créditos.</li>
             <li>El servicio de notificaciones push de tu navegador, solo para poder avisarte.</li>
+            <li>Groq (u otro proveedor de inferencia), únicamente para generar contenido con IA cuando lo pedís -- solo recibe las etiquetas de contexto de esa consigna puntual, nunca tu historial completo.</li>
           </ul>
         </section>
 

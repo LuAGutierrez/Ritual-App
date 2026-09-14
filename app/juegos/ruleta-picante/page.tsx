@@ -5,13 +5,10 @@ import { useRouter } from 'next/navigation'
 import { getRuletaPicanteItemsAction } from '@/app/actions/ruleta-picante'
 import { logContenidoRechazadoAction, getRechazadosAction } from '@/app/actions/contenido-rechazado'
 import { logRondaJugadaAction, getUltimaCategoriaRondaAction } from '@/app/actions/rondas-jugadas'
-import { getIsCouplePremiumAction } from '@/app/actions/subscription'
-import { getPicanteTrialUsadoAction, marcarPicanteTrialUsadoAction } from '@/app/actions/picante-trial'
 import { getIntensidadMaximaAction } from '@/app/actions/perfil-preferencias'
 import { dentroDelTecho, type Intensidad } from '@/lib/intensidad'
 import { getCategoriaPreferida } from '@/lib/categoriaPreferida'
 import type { RuletaPicanteItem } from '@/types'
-import PicanteUpsell from '@/components/PicanteUpsell'
 
 function pickIndex(total: number, vistos: Set<number>): number {
   const disponibles = Array.from({ length: total }, (_, i) => i).filter(i => !vistos.has(i))
@@ -27,17 +24,12 @@ export default function RuletaPicantePage() {
   const [vistos, setVistos] = useState<Set<number>>(new Set())
   const [items, setItems] = useState<RuletaPicanteItem[]>([])
   const [rechazados, setRechazados] = useState<Set<string>>(new Set())
-  const [isPremium, setIsPremium] = useState(false)
-  const [picanteUsado, setPicanteUsado] = useState(false)
-  const [mostrarUpsell, setMostrarUpsell] = useState(false)
   const [intensidadMaxima, setIntensidadMaxima] = useState<Intensidad>('intensa')
   const ultimaCategoriaRef = useRef<string | null>(null)
 
   useEffect(() => {
     getRuletaPicanteItemsAction().then(setItems)
     getRechazadosAction('ruleta_picante').then(ids => setRechazados(new Set(ids)))
-    getIsCouplePremiumAction().then(setIsPremium)
-    getPicanteTrialUsadoAction('ruleta_picante').then(setPicanteUsado)
     getIntensidadMaximaAction().then(setIntensidadMaxima)
     getUltimaCategoriaRondaAction('ruleta_picante').then(c => { ultimaCategoriaRef.current = c })
   }, [])
@@ -65,12 +57,7 @@ export default function RuletaPicantePage() {
   })()
 
   function girar() {
-    if (!isPremium && picanteUsado) {
-      setMostrarUpsell(true)
-      return
-    }
     if (itemsDisponibles.length === 0) return
-    setMostrarUpsell(false)
     setGirando(true)
     setTimeout(() => {
       setVistos(prev => {
@@ -82,8 +69,6 @@ export default function RuletaPicantePage() {
         return next
       })
       setGirando(false)
-      setPicanteUsado(true)
-      marcarPicanteTrialUsadoAction('ruleta_picante')
     }, 350)
   }
 
@@ -140,9 +125,7 @@ export default function RuletaPicantePage() {
       </header>
 
       <main className="flex-1 px-5 pb-28 flex flex-col justify-center max-w-md mx-auto w-full">
-        {mostrarUpsell ? (
-          <PicanteUpsell />
-        ) : !promptItem ? (
+        {!promptItem ? (
           <div className="text-center animate-fade-up">
             <button
               onClick={girar}

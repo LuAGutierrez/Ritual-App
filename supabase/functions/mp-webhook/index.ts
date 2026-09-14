@@ -1,5 +1,9 @@
-// Ritual — Webhook de Mercado Pago: suscripciones (preapproval).
+// Ritual — Webhook de Mercado Pago: suscripciones (preapproval, legacy
+// -- se mantiene sin tocar hasta cancelar las suscripciones activas,
+// ver docs/ROADMAP.md) y pagos únicos de paquetes de créditos (Sprint 5).
 // Suscripción: type subscription_preapproval, data.id = preapproval id.
+// Créditos: type payment, data.id = payment id, external_reference =
+// credit_purchases.id (seteado por create-credit-checkout).
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 
@@ -49,6 +53,75 @@ async function verifyMpSignature(req: Request, dataId: string): Promise<boolean>
   return computed === v1;
 }
 
+async function handleSubscriptionEvent(supabase: ReturnType<typeof createClient>, dataId: string, now: string) {
+  const preapprovalId = dataId;
+  const mpRes = await fetch(`https://api.mercadopago.com/preapproval/${preapprovalId}`, {
+    headers: { "Authorization": `Bearer ${MP_ACCESS_TOKEN}` },
+  });
+  const preapproval = await mpRes.json().catch(() => ({}));
+  if (!mpRes.ok) return;
+
+  const status = preapproval.status;
+  const externalRef = preapproval.external_reference;
+  const userId = typeof externalRef === "string" ? externalRef : (externalRef != null ? String(externalRef) : null);
+  if (!userId) return;
+
+  if (status === "authorized") {
+    const { error } = await supabase.from("subscriptions").upsert(
+      {
+        user_id: userId,
+        plan: "monthly",
+        status: "active",
+        mp_subscription_id: preapprovalId,
+        current_period_start: now,
+        current_period_end: preapproval.next_payment_date || null,
+        updated_at: now,
+      },
+      { onConflict: "user_id" }
+    );
+    if (error) console.error("mp-webhook subscription upsert error", error);
+  } else if (status === "cancelled" || status === "paused") {
+    await supabase.from("subscriptions").update({ status: "canceled", updated_at: now }).eq("mp_subscription_id", preapprovalId);
+  }
+}
+
+// Pago único de un paquete de créditos (Checkout Pro, Sprint 5).
+// external_reference es el id de la fila en credit_purchases que
+// create-credit-checkout ya insertó en estado 'pending' -- acá solo se
+// confirma contra la API de MP (nunca se confía en el body del webhook
+// solo) y se marca approved/rejected. grant_purchase_credits es
+// idempotente (chequea credits_granted), así que no hace falta guardia
+// extra contra reintentos del webhook.
+async function handlePaymentEvent(supabase: ReturnType<typeof createClient>, dataId: string) {
+  const mpRes = await fetch(`https://api.mercadopago.com/v1/payments/${dataId}`, {
+    headers: { "Authorization": `Bearer ${MP_ACCESS_TOKEN}` },
+  });
+  const payment = await mpRes.json().catch(() => ({}));
+  if (!mpRes.ok) return;
+
+  const status = payment.status;
+  const purchaseId = payment.external_reference;
+  if (!purchaseId) return;
+
+  if (status === "approved") {
+    const { error } = await supabase
+      .from("credit_purchases")
+      .update({ status: "approved", mp_payment_id: String(payment.id) })
+      .eq("id", purchaseId)
+      .eq("status", "pending");
+    if (error) console.error("mp-webhook credit_purchases update error", error);
+
+    const { error: grantError } = await supabase.rpc("grant_purchase_credits", { p_purchase_id: purchaseId });
+    if (grantError) console.error("mp-webhook grant_purchase_credits error", grantError);
+  } else if (status === "rejected" || status === "cancelled") {
+    await supabase
+      .from("credit_purchases")
+      .update({ status: "rejected", mp_payment_id: String(payment.id) })
+      .eq("id", purchaseId)
+      .eq("status", "pending");
+  }
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method !== "POST") {
     return new Response(JSON.stringify({ ok: false }), { status: 405, headers: { "Content-Type": "application/json" } });
@@ -77,45 +150,10 @@ Deno.serve(async (req: Request) => {
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
   const now = new Date().toISOString();
 
-  // Suscripción recurrente
-  if (type !== "subscription_preapproval" && type !== "subscription_authorized_payment") {
-    return new Response(JSON.stringify({ ok: true }), { status: 200, headers: { "Content-Type": "application/json" } });
-  }
-
-  const preapprovalId = dataId;
-  const mpRes = await fetch(`https://api.mercadopago.com/preapproval/${preapprovalId}`, {
-    headers: { "Authorization": `Bearer ${MP_ACCESS_TOKEN}` },
-  });
-  const preapproval = await mpRes.json().catch(() => ({}));
-  if (!mpRes.ok) {
-    return new Response(JSON.stringify({ ok: true }), { status: 200, headers: { "Content-Type": "application/json" } });
-  }
-
-  const status = preapproval.status;
-  const externalRef = preapproval.external_reference;
-  const userId = typeof externalRef === "string" ? externalRef : (externalRef != null ? String(externalRef) : null);
-  if (!userId) {
-    return new Response(JSON.stringify({ ok: true }), { status: 200, headers: { "Content-Type": "application/json" } });
-  }
-
-  if (status === "authorized") {
-    const { error } = await supabase.from("subscriptions").upsert(
-      {
-        user_id: userId,
-        plan: "monthly",
-        status: "active",
-        mp_subscription_id: preapprovalId,
-        current_period_start: now,
-        current_period_end: preapproval.next_payment_date || null,
-        updated_at: now,
-      },
-      { onConflict: "user_id" }
-    );
-    if (error) {
-      console.error("mp-webhook upsert error", error);
-    }
-  } else if (status === "cancelled" || status === "paused") {
-    await supabase.from("subscriptions").update({ status: "canceled", updated_at: now }).eq("mp_subscription_id", preapprovalId);
+  if (type === "subscription_preapproval" || type === "subscription_authorized_payment") {
+    await handleSubscriptionEvent(supabase, dataId, now);
+  } else if (type === "payment") {
+    await handlePaymentEvent(supabase, dataId);
   }
 
   return new Response(JSON.stringify({ ok: true }), { status: 200, headers: { "Content-Type": "application/json" } });

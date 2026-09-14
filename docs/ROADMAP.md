@@ -2,7 +2,7 @@
 
 Stack actual: **Next.js 14 (App Router) + TypeScript + Tailwind CSS + Supabase**
 
-Última actualización: 17 de agosto de 2026
+Última actualización: 14 de septiembre de 2026
 
 ---
 
@@ -12,9 +12,10 @@ Stack actual: **Next.js 14 (App Router) + TypeScript + Tailwind CSS + Supabase**
 |--------|--------|
 | Sprint 1 — Core | ✅ Completo |
 | Sprint 2 — Engagement | ✅ Completo (reminder diario: 1x/día por plan Hobby) |
-| Sprint 3 — Monetización | ✅ Mercado Pago en **producción real** (no sandbox) desde el 17/08 |
+| Sprint 3 — Monetización (Mercado Pago, suscripción mensual) | ❌ Retirada — reemplazada por Sprint 5 |
 | Juegos (evolución) | ✅ 6 juegos, metadata rica, Momentos, historial, personalización — ver sección propia |
-| Sprint 4 — IA | ❌ Pendiente |
+| Sprint 4 — IA | ✅ Verdad o Reto con IA (Groq, tab picante) desde 13/09 — resto de Sprint 4 sigue pendiente |
+| Sprint 5 — Sistema de créditos | ✅ Completo y en producción (14/09) — backend, UI, pago único, cutover y anti-farmeo |
 
 ---
 
@@ -83,7 +84,12 @@ Stack actual: **Next.js 14 (App Router) + TypeScript + Tailwind CSS + Supabase**
 
 ---
 
-## Sprint 3 — Monetización ✅ Mercado Pago en producción (no Stripe)
+## Sprint 3 — Monetización ❌ RETIRADA (14/09, ver Sprint 5)
+
+> Histórico: esto es lo que se construyó y funcionó en producción entre agosto y el 14/09/2026. El
+> modelo de suscripción mensual completo (Premium, `lib/plans.ts`, paywall, `/precios` como checkout
+> de suscripción) se reemplazó por el sistema de créditos — ver "Sprint 5" más abajo para el estado
+> actual. Se deja esta sección sin borrar como registro de lo que se hizo y por qué.
 
 > Se reusa la infra legacy del proyecto HTML anterior (tabla `subscriptions`, Mercado Pago, Edge Functions) integrándola al flujo Next.js.
 
@@ -153,16 +159,138 @@ propia, solo el texto ya copiado — el historial de juegos puede mostrar qué s
 
 ---
 
-## Sprint 4 — IA y personalización ❌ PENDIENTE
+## Sprint 4 — IA y personalización ⚠️ PARCIAL
 
-### Rituales con IA
-- [ ] Generación de rituales personalizados basados en historial de la pareja
-- [ ] Modo "sorpresa": la IA elige el ritual según el estado emocional declarado
-- [ ] Sugerencias de temas no explorados
+### Verdad o Reto con IA ✅
+- [x] Generación de consignas con IA en la tab picante (Groq) — ver "Sprint 4: IA en Verdad o Reto" en memoria del proyecto
 
-### Insights emocionales
+### Rituales con IA ✅ (cumplido vía Sprint 5, no gratis — con créditos)
+- [x] Generación de rituales personalizados basados en contexto de la pareja — `ritual_profundo`
+      en `/ritual-ia` (10 créditos), usa ánimo/tiempo/objetivo/racha, no el historial completo de
+      respuestas (eso implicaría mandarle contenido íntimo al proveedor de IA, se evitó a propósito)
+- [x] Modo "sorpresa" por estado de ánimo declarado — chip "Ánimo" en `/ritual-ia`
+- [ ] Sugerencias de temas no explorados — no se construyó
+
+### Insights emocionales ❌ sigue pendiente
 - [ ] Resumen semanal de la pareja ("Esta semana conectaron en intimidad")
 - [ ] Detección de patrones (categorías que evitan, temas recurrentes)
+
+---
+
+## Sprint 5 — Sistema de créditos ✅ COMPLETO (14/09/2026)
+
+Pivot de modelo de negocio: reemplaza la suscripción mensual de Mercado Pago por un pozo de
+créditos compartido por pareja, gastado solo en generación con IA. El catálogo estático (rituales,
+los 6 juegos, picante, historial) es gratis para siempre — ver `docs/DECISIONES.md`.
+
+### Esquema y backend
+- [x] `user_credits` (saldo individual pre-vinculación) y `couple_credits` (pozo compartido), con
+      `credit_transactions` como ledger inmutable de auditoría (migración `055`)
+- [x] `credit_packages` / `credit_purchases` para el cobro por pago único (migración `055`, nullable
+      en `couple_id` desde la `063` para soportar compra en modo solo)
+- [x] 50 créditos de bienvenida al registrarse, sumado a `handle_new_user()` (migración `056`)
+- [x] Bono de 150 créditos fijos al vincular pareja, con chequeo de riesgo por `device_fingerprints`
+      (`grant_pairing_bonus`, enganchado en `join_couple_by_invite`, migración `056`)
+- [x] `consume_credits()`: RPC único de descuento, resuelve solo/pareja por `auth.uid()`, con
+      `SELECT ... FOR UPDATE` (control de concurrencia) e idempotencia por `idempotency_key` (migración `057`)
+- [x] `refund_credits()`, `grant_daily_streak_credits()` (1-2 créditos no acumulables, expiran a las
+      24h, enganchado en `updateStreakAction`), `grant_purchase_credits()` (solo `service_role`)
+- [x] `lib/ai/provider.ts` + `lib/ai/providers/{groq,together}.ts`: capa de proveedor intercambiable,
+      hoy en Groq, lista para saltar a Together AI (modelos sin censura) con una env var
+- [x] `lib/ai/context.ts` (`buildContextTags`): arma el contexto como tags cortas entre corchetes en
+      vez de párrafos, para minimizar tokens de entrada
+- [x] `lib/credits.ts`: tarifario (`ritual_simple` 5cr, `ritual_profundo` 10cr, `dinamica_ia` 15cr)
+- [x] `app/actions/credits.ts`: balance, consumo, refund, checkout, listado de paquetes
+
+### UI
+- [x] `CreditsBadge` + `useCredits`: pozo en tiempo real vía Realtime (pareja) o refetch por evento
+      `notifyCreditsChanged` (solo, sin Realtime posible) -- probado en vivo en navegador
+- [x] `/ritual-ia`: selector de tier + chips de contexto (ánimo/tiempo/objetivo) + resultado --
+      probado end-to-end con Groq real, los 3 tiers. `maxTokens` en 450 (no 260) tras confirmar contra
+      la API real que Groq devuelve `json_validate_failed` con menos -- el razonamiento se come el budget
+- [x] Entrada "Ritual con IA" en el hub `/juegos`
+- [x] `/precios`: paquetes reales desde `credit_packages`, botón "Comprar" funcional (Checkout Pro)
+
+### Pago único de créditos (reemplaza la suscripción recurrente)
+- [x] `create-credit-checkout` (edge function nueva): Checkout Pro de MP, crea `credit_purchases` en
+      `pending` y devuelve `init_point`. Soporta compra en modo solo o pareja
+- [x] `mp-webhook`: rama nueva `type === 'payment'` que confirma contra la API de MP y llama
+      `grant_purchase_credits`; la rama vieja `subscription_preapproval` queda intacta (no había
+      necesidad de tocarla, ver cutover más abajo)
+- [x] Ambas functions desplegadas a producción y probadas con requests reales (sin completar un pago
+      real): `create-credit-checkout` sin auth devuelve `missing_auth`, `mp-webhook` con un payment id
+      inexistente responde `ok:true` sin crashear
+- No se tocó `create-mp-subscription`: queda desplegada pero inalcanzable desde la UI
+
+### Anti-farmeo con fingerprint de dispositivo
+- [x] `lib/deviceFingerprint.ts` (UUID persistente en `localStorage`) + RPC `record_device_fingerprint`
+      (migración `065`), llamado en `/onboarding` y `/unirse/[code]` -- los dos puntos por los que pasa
+      cualquiera antes de vincularse. `grant_pairing_bonus` ya consultaba esta tabla desde el
+      principio pero nunca tenía datos -- ahora el anti-farmeo funciona de verdad
+
+### Cutover: sin suscriptores reales que migrar
+- [x] Antes de cancelar nada, se investigaron las 3 filas `subscriptions.status='active'` en
+      producción: ninguna tenía `mp_subscription_id` ni `current_period_end` (el webhook siempre
+      completa esos campos con un preapproval real autorizado) -- confirmando que eran filas de
+      prueba/desarrollo, no clientes pagando. Se marcaron `canceled` (migración `064`). No hizo falta
+      llamar a la API de MP ni compensar a nadie con créditos de cortesía
+
+### Decisiones de diseño tomadas
+- Reemplazo **total** de la suscripción Premium — no conviven los dos modelos
+- Pool de vinculación: **150 fijo siempre**, no una transferencia variable del saldo individual
+  restante — prioriza que el número sea predecible y comunicable en marketing
+- Sin gating técnico de features de IA por estado de vinculación: Ritual Profundo y Dinámica de
+  compatibilidad son llamables en solitario, la escasez de créditos (50 vs. 150 tras vincular) ya
+  empuja a vincular pareja sin necesidad de bloquear nada por código
+- Anti-farmeo: fingerprint + reglas server-side, sin verificación por SMS (fricción excesiva para
+  una app de uso ocasional)
+- Se mantiene Groq como proveedor (ya integrado, gratis en su tier actual) con miras a migrar a
+  Together AI cuando se necesiten modelos sin las restricciones de contenido de Groq
+
+### Retiro del gating de suscripción vieja (completo, catálogo estático 100% gratis)
+- [x] `lib/plans.ts`, `app/actions/subscription.ts`, `app/actions/picante-trial.ts`,
+      `components/PicanteUpsell.tsx` — borrados enteros, sin código muerto
+- [x] Los 6 juegos: picante ya no se corta tras el primer uso, sin `isPremium`/`picanteUsado`/upsell
+- [x] Historial sin límite de 30 — se reescribió también el RPC `get_historial_page_data`
+      (migración `061`), el límite no vivía solo en el cliente
+- [x] `app/LandingPage.tsx`, `/perfil`, `/terminos`, `/privacidad`: copy actualizada (incluye mención
+      a Groq como procesador de datos para la IA, que antes faltaba)
+- Deliberadamente NO tocado: `get_ritual_page_data` sigue seleccionando `WHERE premium = false` para
+  el ritual del día -- los ~30 rituales `premium = true` (migración 013) nunca se sirvieron ni antes
+  ni ahora, es deuda técnica preexistente y separada, no algo que este retiro haya roto
+- `get_perfil_page_data()` todavía calcula un campo `isPremium` que ya no usa ninguna UI -- inofensivo
+
+### Bugs reales encontrados y corregidos en el camino (no solo leídos — probados)
+- **RLS recursivo preexistente, no relacionado a Sprint 5**: `couple_members_select` (migración 006)
+  causaba recursión infinita (`42P17`) en el Postgres de la Supabase CLI local, rompiendo cualquier
+  login/navegación en local. Arreglado en `060` (función `SECURITY DEFINER` `my_couple_id()`). Sin
+  evidencia de que afecte al proyecto remoto (versión de Postgres distinta), pero era un bug real y
+  latente ahí también.
+- **`grant_pairing_bonus` expuesta como RPC pública sin autorización** (introducido en la propia
+  `056`): cualquier autenticado podía llamarla directo con IDs ajenos y poner en cero el saldo de
+  cualquier cuenta. Encontrado por `mcp__supabase__get_advisors` corrido en producción después de
+  aplicar las migraciones -- corregido en minutos con `062` (mismo `REVOKE EXECUTE` que ya tenía
+  `grant_purchase_credits`).
+- **`grant_pairing_bonus` rompía la vinculación entera en el caso de riesgo detectado**: con
+  `v_amount = 0`, el `INSERT` a `credit_transactions` violaba `CHECK(amount <> 0)` (migración 055) --
+  la excepción se propagaba y hacía fallar `join_couple_by_invite` completo, no solo el bono.
+  Encontrado por el primer test que de verdad ejercitó ese camino (`tests/sql/device-fingerprint.test.ts`,
+  escrito recién al construir el anti-farmeo). Corregido en `066` (no loguear en el ledger si el monto
+  es 0; el guard de "ya otorgado" se movió a chequear `couple_credits`, que sí se crea siempre).
+  Estuvo mal en producción una ventana corta dentro de esta misma sesión -- sin usuarios reales en
+  ese lapso, impacto real nulo.
+
+### Hallazgo sin resolver: infraestructura huérfana en producción
+Al listar las edge functions de producción aparecieron `get-gift-status`, `claim-gift`,
+`create-mp-gift` y probablemente una tabla `gifts` -- no existen en el repo local, moneda EUR,
+referencias a `tudominio.com/precios.html`. Es de una iteración anterior del producto, ya abandonada.
+No se tocó (borrar functions/tablas de producción es destructivo) -- si se confirma que nadie la usa,
+es candidata a limpieza en otra sesión.
+
+### Pendiente
+- [ ] Onboarding: opción "vincular ahora, en este mismo teléfono" (wrapper guiado sobre
+      `crearPareja`/`unirseAPareja`/`signOut`, sin backend nuevo)
+- [ ] Decidir qué hacer con `get-gift-status`/`claim-gift`/`create-mp-gift`/`gifts` (ver hallazgo arriba)
 
 ---
 

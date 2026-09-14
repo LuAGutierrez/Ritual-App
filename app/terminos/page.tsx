@@ -65,11 +65,11 @@ export default function TerminosPage() {
         </section>
 
         <section className="space-y-2">
-          <h2 className="font-display text-lg text-ritual-cream">6. Suscripción Premium</h2>
+          <h2 className="font-display text-lg text-ritual-cream">6. Créditos</h2>
           <ul className="text-ritual-text font-body text-sm leading-relaxed space-y-2 list-disc list-inside">
-            <li>Rituales ofrece un plan gratuito y un plan Premium pago.</li>
-            <li>Los pagos de Premium se procesan a través de Mercado Pago, con renovación periódica según el plan elegido.</li>
-            <li>Podés cancelar tu suscripción cuando quieras; seguís teniendo acceso Premium hasta el final del período ya pagado.</li>
+            <li>El ritual diario, los 6 juegos (incluido el modo picante) y el historial son gratis para siempre.</li>
+            <li>Los créditos se usan solo para pedirle a la IA contenido personalizado y son compartidos por la pareja.</li>
+            <li>Los paquetes de créditos comprados se procesan a través de Mercado Pago y no expiran.</li>
             <li>Los precios pueden cambiar; te avisamos antes de que un cambio te afecte.</li>
           </ul>
         </section>

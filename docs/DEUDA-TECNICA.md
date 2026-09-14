@@ -94,11 +94,18 @@ proyecto legacy no tenía auth de pareja. La tabla `remote_eleccion_rooms` y la 
 quedan sin uso — se pueden eliminar cuando se confirme que no hay referencias externas.
 **Riesgo**: Bajo. No interfieren con el flujo actual.
 
-### Migración legacy de MercadoPago (activa)
-**Archivos**: `supabase/migrations/003_mercadopago_subscription.sql`
-**Estado**: `create-mp-subscription` y `mp-webhook` SÍ están integradas — `/precios` las invoca para el checkout.
-`check-game-access` sigue sin uso.
-**Accion recomendada**: ninguna, documentado para referencia.
+### Migración legacy de MercadoPago (retirada, Sprint 5 — 2026-09-14)
+**Archivos**: `supabase/migrations/003_mercadopago_subscription.sql`, `supabase/functions/create-mp-subscription`
+**Estado**: el modelo de suscripción mensual se reemplazó por completo por el sistema de créditos
+(ver `docs/ROADMAP.md`, Sprint 5). `/precios` ya no invoca `create-mp-subscription` -- usa
+`create-credit-checkout` (pago único, Checkout Pro). `create-mp-subscription` sigue desplegada en
+producción pero inalcanzable desde la UI; `mp-webhook` se extendió (no se reescribió desde cero) para
+seguir soportando el tipo de evento de suscripción por si queda algo en tránsito, además del nuevo
+tipo `payment`. Las 3 filas de `subscriptions` con `status='active'` que había resultaron ser de
+prueba (sin `mp_subscription_id` real) y se cancelaron.
+`check-game-access` sigue sin uso, sin relación con esto.
+**Accion recomendada**: ninguna por ahora. Si se confirma que `create-mp-subscription` no se necesita
+ni como referencia, es candidata a undeploy en otra sesión.
 
 ### `~/.cursor` directory en raíz del proyecto
 **Path**: `C:\Users\Usuario\Downloads\Parejas Juego\~\.cursor`

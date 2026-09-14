@@ -1,5 +1,5 @@
 import type { ComponentType } from 'react'
-import { IconEleccion, IconDado, IconBifurcacion, IconOjo, IconBalanza, IconLlama, IconDados } from '@/components/icons/juegos'
+import { IconEleccion, IconDado, IconBifurcacion, IconOjo, IconBalanza, IconLlama, IconDados, IconChispa } from '@/components/icons/juegos'
 
 // Registro de juegos del hub /juegos. Agregar un juego nuevo es agregar
 // una entrada acá, no tocar JSX a mano en app/juegos/page.tsx -- la
@@ -28,6 +28,16 @@ export interface JuegoDef {
 }
 
 export const JUEGOS: JuegoDef[] = [
+  {
+    id: 'ritual-ia',
+    href: '/ritual-ia',
+    titulo: 'Ritual con IA',
+    descripcion: 'Generado al momento, a medida de cómo están hoy. Con créditos de la pareja.',
+    Icono: IconChispa,
+    variante: 'destacado',
+    badge: { texto: '✨ nuevo' },
+    modos: ['normal'],
+  },
   {
     id: 'eleccion',
     href: '/juegos/eleccion',

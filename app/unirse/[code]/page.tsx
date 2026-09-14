@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { unirseAPareja, verificarInvitacionAction } from '@/app/actions/couple'
+import { recordDeviceFingerprintAction } from '@/app/actions/device-fingerprint'
+import { getDeviceFingerprint } from '@/lib/deviceFingerprint'
 import PageLoader from '@/components/PageLoader'
 
 export default function UnirsePareja() {
@@ -25,6 +27,8 @@ export default function UnirsePareja() {
         router.replace(`/auth?redirect=/unirse/${code}`)
         return
       }
+
+      recordDeviceFingerprintAction(getDeviceFingerprint())
 
       let result = await verificarInvitacionAction(code)
 

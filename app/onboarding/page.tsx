@@ -4,6 +4,8 @@ import { useState, useEffect, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { crearPareja } from '@/app/actions/couple'
+import { recordDeviceFingerprintAction } from '@/app/actions/device-fingerprint'
+import { getDeviceFingerprint } from '@/lib/deviceFingerprint'
 import PageLoader from '@/components/PageLoader'
 
 type Step = 'nombre' | 'opciones' | 'esperando'
@@ -25,6 +27,7 @@ export default function OnboardingPage() {
     supabase.auth.getUser().then(async ({ data: { user } }) => {
       if (!user) { router.replace('/auth'); return }
       setUserId(user.id)
+      recordDeviceFingerprintAction(getDeviceFingerprint())
 
       // Si ya tiene nombre (registrado con nombre), saltar directo a opciones
       const { data: profile } = await supabase

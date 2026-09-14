@@ -3,9 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { getVerdadORetoItemsAction } from '@/app/actions/verdad-o-reto'
-import { getIsCouplePremiumAction } from '@/app/actions/subscription'
 import { getPicanteHabilitadoAction, habilitarPicanteAction } from '@/app/actions/picante-consent'
-import { getPicanteTrialUsadoAction, marcarPicanteTrialUsadoAction } from '@/app/actions/picante-trial'
 import { getIntensidadMaximaAction } from '@/app/actions/perfil-preferencias'
 import { logContenidoRechazadoAction, getRechazadosAction } from '@/app/actions/contenido-rechazado'
 import { logRondaJugadaAction, getUltimaCategoriaRondaAction } from '@/app/actions/rondas-jugadas'
@@ -14,7 +12,6 @@ import { generarVerdadORetoConIAAction } from '@/app/actions/verdad-o-reto-ia'
 import { getCategoriaPreferida } from '@/lib/categoriaPreferida'
 import { dentroDelTecho, type Intensidad as Techo } from '@/lib/intensidad'
 import type { VerdadORetoItem } from '@/types'
-import PicanteUpsell from '@/components/PicanteUpsell'
 import PicanteConsentGate from '@/components/PicanteConsentGate'
 import PageLoader from '@/components/PageLoader'
 
@@ -33,9 +30,6 @@ export default function VerdadORetoPage() {
   const [intensidad, setIntensidad] = useState<Intensidad>('normal')
   const [promptItem, setPromptItem] = useState<VerdadORetoItem | null>(null)
   const [vistos, setVistos] = useState<Set<number>>(new Set())
-  const [isPremium, setIsPremium] = useState(false)
-  const [picanteUsado, setPicanteUsado] = useState(false)
-  const [mostrarUpsell, setMostrarUpsell] = useState(false)
   const [items, setItems] = useState<VerdadORetoItem[]>([])
   const [loading, setLoading] = useState(true)
   const [rechazados, setRechazados] = useState<Set<string>>(new Set())
@@ -48,9 +42,7 @@ export default function VerdadORetoPage() {
   const ultimaCategoriaRef = useRef<string | null>(null)
 
   useEffect(() => {
-    getIsCouplePremiumAction().then(setIsPremium)
     getPicanteHabilitadoAction().then(setPicanteHabilitado)
-    getPicanteTrialUsadoAction('verdad_o_reto').then(setPicanteUsado)
     getIntensidadMaximaAction().then(setIntensidadMaxima)
     getVerdadORetoItemsAction().then(data => {
       setItems(data)
@@ -104,11 +96,6 @@ export default function VerdadORetoPage() {
   }
 
   function jugar(m: Modo) {
-    if (intensidad === 'picante' && !isPremium && picanteUsado) {
-      setModo(m)
-      setMostrarUpsell(true)
-      return
-    }
     const lista = listaFiltrada(m, intensidad)
     const idx = pickIndex(lista, new Set())
     const { extra, vistos: nuevosVistos } = elegirRetoDoble(m, intensidad, lista, new Set([idx]))
@@ -118,19 +105,10 @@ export default function VerdadORetoPage() {
     ultimaCategoriaRef.current = lista[idx].categoria
     logRondaJugadaAction('verdad_o_reto', lista[idx].id, lista[idx].categoria)
     setRetoDobleExtra(extra)
-    setMostrarUpsell(false)
-    if (intensidad === 'picante') {
-      setPicanteUsado(true)
-      marcarPicanteTrialUsadoAction('verdad_o_reto')
-    }
   }
 
   function siguiente() {
     if (!modo) return
-    if (intensidad === 'picante' && !isPremium && picanteUsado) {
-      setMostrarUpsell(true)
-      return
-    }
     const lista = listaFiltrada(modo, intensidad)
     const idx = pickIndex(lista, vistos)
     const vistosConPrimario = vistos.size >= lista.length ? new Set([idx]) : new Set(vistos).add(idx)
@@ -140,10 +118,6 @@ export default function VerdadORetoPage() {
     ultimaCategoriaRef.current = lista[idx].categoria
     logRondaJugadaAction('verdad_o_reto', lista[idx].id, lista[idx].categoria)
     setRetoDobleExtra(extra)
-    if (intensidad === 'picante') {
-      setPicanteUsado(true)
-      marcarPicanteTrialUsadoAction('verdad_o_reto')
-    }
   }
 
   // Distinto de "Siguiente" normal y de "Paso": solo se llama desde el
@@ -161,7 +135,6 @@ export default function VerdadORetoPage() {
     }
     setIntensidad(ints)
     setModo(null)
-    setMostrarUpsell(false)
     setRetoDobleExtra(null)
     setVistos(new Set())
   }
@@ -172,7 +145,6 @@ export default function VerdadORetoPage() {
     setMostrarConsentimiento(false)
     setIntensidad('picante')
     setModo(null)
-    setMostrarUpsell(false)
     setRetoDobleExtra(null)
     setVistos(new Set())
   }
@@ -209,10 +181,10 @@ export default function VerdadORetoPage() {
     logRondaJugadaAction('verdad_o_reto', resultado.item.id, resultado.item.categoria)
   }
 
-  // Cada 3 rondas en modo normal, si la pregunta/reto actual tiene un par
-  // picante definido (migración 027), se muestra un preview -- borroso si
-  // la pareja no es premium, entero si ya lo es -- en vez de un upsell
-  // genérico.
+  // Cada 3 rondas en modo normal, si la pregunta/reto actual tiene un
+  // par picante definido (migración 027), se muestra un preview con
+  // link directo -- todo el contenido estático es gratis, así que acá
+  // no hay nada que desbloquear, solo un atajo a la tab picante.
   const parPicante = promptItem?.par_picante_id
     ? items.find(i => i.id === promptItem.par_picante_id)
     : undefined
@@ -229,14 +201,9 @@ export default function VerdadORetoPage() {
     logRondaJugadaAction('verdad_o_reto', parPicante.id, parPicante.categoria)
     setRetoDobleExtra(null)
     setVistos(new Set(idx >= 0 ? [idx] : []))
-    setMostrarUpsell(false)
   }
 
   function handleHintClick() {
-    if (!isPremium) {
-      router.push('/precios')
-      return
-    }
     if (!picanteHabilitado) {
       setMostrarConsentimiento(true)
       return
@@ -288,8 +255,6 @@ export default function VerdadORetoPage() {
             onConfirmar={confirmarPicante}
             onCancelar={() => setMostrarConsentimiento(false)}
           />
-        ) : mostrarUpsell ? (
-          <PicanteUpsell />
         ) : !modo ? (
           <div className="grid grid-cols-2 gap-4 animate-fade-up">
             <button
@@ -333,16 +298,7 @@ export default function VerdadORetoPage() {
                 className="w-full bg-[#D4A5A5]/8 border border-[#D4A5A5]/25 rounded-2xl p-4 text-left space-y-1.5 hover:border-[#D4A5A5]/40 transition-all"
               >
                 <p className="text-[#D4A5A5] text-[10px] font-body uppercase tracking-wider">🔥 Versión picante</p>
-                <p
-                  className={`font-body text-sm text-ritual-cream leading-snug ${
-                    isPremium ? '' : 'blur-[3px] select-none'
-                  }`}
-                >
-                  {parPicante.texto}
-                </p>
-                {!isPremium && (
-                  <p className="text-[#D4A5A5] text-xs font-body pt-0.5">Desbloqueá con Premium →</p>
-                )}
+                <p className="font-body text-sm text-ritual-cream leading-snug">{parPicante.texto}</p>
               </button>
             )}
 

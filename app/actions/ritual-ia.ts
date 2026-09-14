@@ -1,0 +1,142 @@
+'use server'
+
+import { createClient } from '@/lib/supabase/server'
+import { consumeCreditsAction, refundCreditsAction } from './credits'
+import { getIntensidadMaximaAction } from './perfil-preferencias'
+import { getAIProvider, AI_MODEL_BY_TIER } from '@/lib/ai/provider'
+import { buildContextTags, type ContextInput } from '@/lib/ai/context'
+import { buildCreditFeatureSystemPrompt } from '@/lib/ai/prompts-creditos'
+import { CREDIT_COST, type CreditFeature } from '@/lib/credits'
+import { notifyPartnerCreditsSpent } from '@/lib/push/notify'
+import { parseContenido, type IAGeneratedContent } from '@/lib/ai/parse-generated-content'
+
+export type GenerarConIAResult =
+  | { ok: true; content: IAGeneratedContent; balance: number; fromCache: boolean }
+  | { ok: false; error: 'insufficient_credits' | 'generation_failed' | 'not_authenticated'; balance?: number }
+
+// Genera contenido con IA para una de las 3 features del sistema de
+// créditos. Cobra ANTES de llamar al modelo (nunca al revés -- ver la
+// nota de concurrencia en la migración 057): si el modelo falla o
+// devuelve algo que no matchea el schema esperado, se refunda acá
+// mismo en vez de dejar a alguien pagado sin contenido.
+//
+// Caché por (feature, tags de contexto): si otra pareja ya generó
+// exactamente lo mismo, se sirve esa respuesta sin llamar al modelo de
+// nuevo -- ahorro real de tokens, no solo de latencia. No se trackea
+// "ya generado para ESTA pareja" para evitar repetición entre pedidos
+// (como sí hace couple_ia_contenido para Verdad o Reto, migración 054)
+// -- estas features se piden por ocasión, no en ráfaga, así que el
+// riesgo de repetición inmediata es bajo y no se justificaba una tabla
+// nueva para eso.
+export async function generarConIAAction(
+  feature: CreditFeature,
+  context: Omit<ContextInput, 'rachaActual'>
+): Promise<GenerarConIAResult> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { ok: false, error: 'not_authenticated' }
+
+  const { data: membership } = await supabase
+    .from('couple_members')
+    .select('couple_id')
+    .eq('user_id', user.id)
+    .maybeSingle()
+  const coupleId = membership?.couple_id ?? null
+
+  let rachaActual = 0
+  if (coupleId) {
+    const { data: streak } = await supabase
+      .from('streaks')
+      .select('current_streak')
+      .eq('couple_id', coupleId)
+      .maybeSingle()
+    rachaActual = streak?.current_streak ?? 0
+  }
+
+  const intensidad = await getIntensidadMaximaAction()
+  const tags = buildContextTags({ ...context, rachaActual })
+
+  const { data: cached } = await supabase
+    .from('ai_content_cache')
+    .select('id, output, hits')
+    .eq('feature', feature)
+    .eq('context_key', tags)
+    .maybeSingle()
+
+  const cobrado = await consumeCreditsAction(feature)
+  if (!cobrado.ok) {
+    return {
+      ok: false,
+      error: cobrado.error === 'insufficient_credits' ? 'insufficient_credits' : 'generation_failed',
+      balance: cobrado.balance,
+    }
+  }
+
+  if (coupleId) {
+    const { data: partner } = await supabase
+      .from('couple_members')
+      .select('user_id')
+      .eq('couple_id', coupleId)
+      .neq('user_id', user.id)
+      .maybeSingle()
+    if (partner) {
+      await notifyPartnerCreditsSpent(partner.user_id, CREDIT_COST[feature], cobrado.balance)
+    }
+  }
+
+  if (cached) {
+    await supabase.from('ai_content_cache').update({ hits: cached.hits + 1 }).eq('id', cached.id)
+    return { ok: true, content: cached.output as IAGeneratedContent, balance: cobrado.balance, fromCache: true }
+  }
+
+  const provider = getAIProvider()
+  if (!provider.isConfigured()) {
+    await refundCreditsAction(cobrado.idempotencyKey)
+    return { ok: false, error: 'generation_failed', balance: undefined }
+  }
+
+  const systemPrompt = buildCreditFeatureSystemPrompt(feature, intensidad, tags)
+
+  let raw: string
+  try {
+    raw = await provider.complete({
+      systemPrompt,
+      userPrompt: 'Generá el contenido.',
+      model: AI_MODEL_BY_TIER[feature],
+      // 450, no menos: probado contra la API real con maxTokens 260 y
+      // 300 -- Groq devuelve json_validate_failed ("max completion
+      // tokens reached before generating a valid document") porque el
+      // razonamiento (hasta ~48 reasoning_tokens observados, aun con
+      // reasoning_effort 'low') se come el budget antes de terminar el
+      // JSON. Con 450, el total observado (razonamiento + JSON) nunca
+      // superó ~185 en una docena de corridas -- deja margen real, no
+      // un número lindo sin probar.
+      maxTokens: 450,
+      reasoningEffort: 'low',
+      jsonMode: true,
+    })
+  } catch (err) {
+    console.error(`[ritual-ia] Error llamando a ${provider.name} para ${feature}:`, err)
+    await refundCreditsAction(cobrado.idempotencyKey)
+    return { ok: false, error: 'generation_failed' }
+  }
+
+  const content = parseContenido(raw)
+  if (!content) {
+    console.error(`[ritual-ia] Respuesta de ${provider.name} no matchea el schema esperado para ${feature}:`, raw)
+    await refundCreditsAction(cobrado.idempotencyKey)
+    return { ok: false, error: 'generation_failed' }
+  }
+
+  // Otra pareja pudo haber insertado la misma clave entre el SELECT de
+  // arriba y este INSERT -- 23505 (unique_violation) no es un error acá,
+  // ya existe el contenido cacheado, no hace falta reintentar nada.
+  const { error: cacheError } = await supabase
+    .from('ai_content_cache')
+    .insert({ feature, context_key: tags, model: AI_MODEL_BY_TIER[feature], output: content })
+  if (cacheError && cacheError.code !== '23505') {
+    console.error('[ritual-ia] No se pudo cachear el contenido:', cacheError)
+  }
+
+  return { ok: true, content, balance: cobrado.balance, fromCache: false }
+}
