@@ -3,6 +3,7 @@ export type Profile = {
   email: string | null
   display_name: string | null
   avatar: string | null
+  referral_code: string
   created_at: string
 }
 

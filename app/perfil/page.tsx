@@ -16,6 +16,7 @@ import {
   type RitualesEspecialesStatus,
 } from '@/app/actions/rituales-especiales'
 import { RITUALES_ESPECIALES_COST } from '@/lib/credits'
+import { getReferralInfoAction, type ReferralInfo } from '@/app/actions/referrals'
 import { nivelActual } from '@/lib/niveles'
 import type { Intensidad } from '@/lib/intensidad'
 import type { Momento } from '@/types'
@@ -115,6 +116,8 @@ export default function PerfilPage() {
   const [confirmarSalir, setConfirmarSalir] = useState(false)
   const [saliendoDePareja, setSaliendoDePareja] = useState(false)
   const [insights, setInsights] = useState<CoupleInsights | null>(null)
+  const [referralInfo, setReferralInfo] = useState<ReferralInfo | null>(null)
+  const [copiedReferral, setCopiedReferral] = useState(false)
   const [ritualesEspeciales, setRitualesEspeciales] = useState<RitualesEspecialesStatus | null>(null)
   const [desbloqueando, setDesbloqueando] = useState(false)
   const [errorDesbloqueo, setErrorDesbloqueo] = useState<string | null>(null)
@@ -131,6 +134,7 @@ export default function PerfilPage() {
     getIntensidadMaximaAction().then(setIntensidadMaximaState)
     getCoupleInsightsAction().then(setInsights)
     getRitualesEspecialesStatusAction().then(setRitualesEspeciales)
+    getReferralInfoAction().then(setReferralInfo)
     Promise.all([getJuegosStatsSummaryAction(), getRondasJugadasCountAction()]).then(([stats, rondas]) => {
       const total =
         (stats?.eleccion?.intentos ?? 0) +
@@ -156,6 +160,17 @@ export default function PerfilPage() {
       setTimeout(() => setSaved(false), 2500)
     }
     setSaving(false)
+  }
+
+  async function copyReferralLink() {
+    if (!referralInfo) return
+    try {
+      await navigator.clipboard.writeText(`${window.location.origin}/auth?tab=registro&ref=${referralInfo.referralCode}`)
+      setCopiedReferral(true)
+      setTimeout(() => setCopiedReferral(false), 2000)
+    } catch {
+      setError('No se pudo copiar. Copiá el link manualmente.')
+    }
   }
 
   async function copyInviteLink() {
@@ -506,6 +521,31 @@ export default function PerfilPage() {
               className="w-full bg-ritual-gold text-ritual-bg font-body text-sm font-medium py-3 rounded-xl hover:bg-ritual-cream active:scale-[0.98] transition-all duration-300 disabled:opacity-50"
             >
               {desbloqueando ? 'Desbloqueando...' : `Desbloquear por ${RITUALES_ESPECIALES_COST} créditos`}
+            </button>
+          </div>
+        )}
+
+        {/* Invitar a un amigo -- distinto del link de pareja de arriba:
+            este invita a cualquiera a crearse una cuenta propia, no a
+            unirse a esta pareja. Créditos al referente cuando el
+            invitado arranca de verdad (queda emparejado), no por el
+            solo registro -- ver migración 071. */}
+        {referralInfo && (
+          <div className="bg-ritual-bg-soft border border-white/10 rounded-2xl p-4 space-y-3">
+            <div>
+              <p className="text-ritual-cream font-body text-sm font-medium">
+                Invitá a un amigo
+              </p>
+              <p className="text-ritual-muted text-xs font-body mt-1 leading-relaxed">
+                Cuando arranque en Rituales con su pareja, ganás 30 créditos.
+                {referralInfo.activados > 0 && ` Ya invitaste a ${referralInfo.activados} persona${referralInfo.activados !== 1 ? 's' : ''}.`}
+              </p>
+            </div>
+            <button
+              onClick={copyReferralLink}
+              className="w-full bg-white/5 border border-white/10 text-ritual-text font-body text-sm py-3 rounded-xl hover:border-white/20 transition-all duration-300"
+            >
+              {copiedReferral ? '¡Copiado!' : 'Copiar link de invitación'}
             </button>
           </div>
         )}

@@ -343,7 +343,17 @@ simplificación de `mp-webhook`).
       pareja (`couples.ritual_changed_at`). Ritual nuevo elegido al azar (no determinístico como el
       del día, acá el pedido es explícitamente "otra cosa") entre los elegibles para la pareja.
 - [ ] Modo offline / PWA
-- [ ] Invitar a un amigo / referido
+- [x] Invitar a un amigo / referido (15/09/2026) — sistema separado del invite de pareja
+      (`couples.invite_code`): cada usuario tiene su propio `profiles.referral_code` (6
+      caracteres, mismo patrón), compartible como `/auth?tab=registro&ref=CODE`. El referente
+      gana 30 créditos cuando el referido **realmente arranca** (queda emparejado con su propia
+      pareja vía `join_couple_by_invite`), no por el solo registro — evita regalar créditos por un
+      email vacío que nunca vuelve. Anti-farmeo reutiliza `device_fingerprints` (mismo patrón que
+      `grant_pairing_bonus`). Tarjeta "Invitá a un amigo" en `/perfil`
+      (`app/actions/referrals.ts`, migración `071`). Alcance v1: solo signup por email/contraseña
+      -- el flujo de Google OAuth no pasa por `raw_user_meta_data` de la misma forma, capturar el
+      código ahí requeriría persistir el `ref` en cookie/localStorage antes del redirect a Google;
+      no se construyó para no meter esa complejidad sin que se pida.
 - [ ] Grupos pequeños (amigos, familia) — expansión más allá de parejas
 - [ ] Rituales de larga distancia con sincronización por zona horaria
 - [ ] Múltiples idiomas (inglés como prioridad)

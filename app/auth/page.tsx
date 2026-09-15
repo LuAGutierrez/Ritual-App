@@ -12,6 +12,7 @@ function AuthForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const redirect = searchParams.get('redirect') || '/ritual'
+  const refCode = searchParams.get('ref')
 
   const [isRecoveryFlow, setIsRecoveryFlow] = useState(
     searchParams.get('recovery') === '1'
@@ -233,7 +234,7 @@ function AuthForm() {
       email,
       password,
       options: {
-        data: { display_name: name.trim() },
+        data: { display_name: name.trim(), ...(refCode ? { referred_by: refCode } : {}) },
         emailRedirectTo: `${window.location.origin}${redirect}`,
       },
     })
