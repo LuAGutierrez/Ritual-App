@@ -11,6 +11,8 @@ export type Couple = {
   invite_code: string
   name: string | null
   created_at: string
+  rituales_especiales_desbloqueados: boolean
+  ritual_changed_at: string | null
 }
 
 export type RitualCategory = 'conexion' | 'diversion' | 'intimidad' | 'reto' | 'viajes' | 'planes' | 'fantasias'

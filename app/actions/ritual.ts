@@ -3,7 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { notifyPartnerResponded } from '@/lib/push/notify'
 import { todayInArgentina, addDaysToDateStr } from '@/lib/fecha'
-import type { CoupleRitualSession, UserContext, Profile, Couple, Streak } from '@/types'
+import type { CoupleRitualSession, UserContext, Profile, Couple, Streak, Ritual } from '@/types'
 
 export async function getUserContextAction(): Promise<UserContext | null> {
   const supabase = await createClient()
@@ -244,6 +244,30 @@ export async function getHistorialPageDataAction(categoria = 'todos'): Promise<H
     totalCompleted: result.totalCompleted ?? 0,
     totalCompletedAll: result.totalCompletedAll ?? 0,
   }
+}
+
+export type CambiarRitualResult =
+  | { ok: true; ritual: Ritual }
+  | { ok: false; error: 'not_authenticated' | 'no_couple' | 'cooldown' | 'no_session' | 'already_responded' | 'no_alternative' | 'unknown'; nextAt?: string }
+
+// cambiar_ritual_del_dia (migración 070): solo permitido si todavía nadie
+// respondió (ver comentario en la migración) y no antes de 7 días desde el
+// último cambio -- ambos límites se validan server-side, esto solo
+// traduce el resultado.
+export async function cambiarRitualDelDiaAction(): Promise<CambiarRitualResult> {
+  const supabase = await createClient()
+  const { data, error } = await supabase.rpc('cambiar_ritual_del_dia')
+
+  if (error) return { ok: false, error: 'unknown' }
+
+  const result = data as { ok: boolean; error?: string; nextAt?: string; ritual?: unknown }
+  if (!result.ok) {
+    const known = ['not_authenticated', 'no_couple', 'cooldown', 'no_session', 'already_responded', 'no_alternative'] as const
+    const err = known.find(k => k === result.error)
+    return { ok: false, error: err ?? 'unknown', nextAt: result.nextAt }
+  }
+
+  return { ok: true, ritual: result.ritual as Ritual }
 }
 
 export async function updateStreakAction(coupleId: string): Promise<Streak | null> {

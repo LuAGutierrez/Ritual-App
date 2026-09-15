@@ -10,6 +10,7 @@ import {
   submitResponseAction,
   updateStreakAction,
   usarComodinAction,
+  cambiarRitualDelDiaAction,
 } from '@/app/actions/ritual'
 import { crearPareja } from '@/app/actions/couple'
 import { todayInArgentina, addDaysToDateStr } from '@/lib/fecha'
@@ -63,6 +64,8 @@ export default function RitualPage() {
   const [copiedPending, setCopiedPending] = useState(false)
   const [confirmarVincular, setConfirmarVincular] = useState(false)
   const [vinculandoAhora, setVinculandoAhora] = useState(false)
+  const [cambiandoRitual, setCambiandoRitual] = useState(false)
+  const [errorCambioRitual, setErrorCambioRitual] = useState<string | null>(null)
   const { subscribe, loading: pushLoading, isSupported } = usePushNotifications()
   const ctxRef = useRef<UserContext | null>(null)
 
@@ -303,6 +306,36 @@ export default function RitualPage() {
     setComodinLoading(false)
   }
 
+  // ─── Cambiar el ritual del día ───────────────────────────────────
+  // Solo mientras nadie respondió (cambiar después dejaría una respuesta
+  // ya dada apuntando a otra pregunta) y como máximo 1 vez por semana --
+  // ambos límites se validan también server-side (migración 070), esto es
+  // solo para no ni mostrar el botón cuando ya se sabe que va a fallar.
+  const nadieRespondioAun = !!session && !session.user1_completed_at && !session.user2_completed_at
+  const cambioDisponible =
+    !ctx?.couple?.ritual_changed_at ||
+    Date.now() - new Date(ctx.couple.ritual_changed_at).getTime() >= 7 * 24 * 60 * 60 * 1000
+
+  async function handleCambiarRitual() {
+    setCambiandoRitual(true)
+    setErrorCambioRitual(null)
+    const result = await cambiarRitualDelDiaAction()
+    if (!result.ok) {
+      setErrorCambioRitual(
+        result.error === 'cooldown'
+          ? 'Ya cambiaron el ritual esta semana — probá la próxima.'
+          : result.error === 'already_responded'
+          ? 'Tu pareja ya respondió, no se puede cambiar ahora.'
+          : 'No se pudo cambiar el ritual. Probá de nuevo.'
+      )
+      setCambiandoRitual(false)
+      return
+    }
+    setSession(prev => (prev ? { ...prev, ritual: result.ritual } : prev))
+    setCtx(prev => (prev?.couple ? { ...prev, couple: { ...prev.couple, ritual_changed_at: new Date().toISOString() } } : prev))
+    setCambiandoRitual(false)
+  }
+
   // ─── Render ──────────────────────────────────────────────────────
   const today = new Date().toLocaleDateString('es', {
     weekday: 'long',
@@ -430,13 +463,36 @@ export default function RitualPage() {
 
         {/* Ritual del día — responder */}
         {state === 'waiting_self' && session?.ritual && (
-          <RitualCard
-            ritual={session.ritual}
-            response={response}
-            onResponseChange={setResponse}
-            onSubmit={handleSubmit}
-            loading={submitting}
-          />
+          <>
+            <RitualCard
+              ritual={session.ritual}
+              response={response}
+              onResponseChange={setResponse}
+              onSubmit={handleSubmit}
+              loading={submitting}
+            />
+
+            {nadieRespondioAun && (
+              <div className="mt-4 text-center">
+                {errorCambioRitual && (
+                  <p className="text-ritual-muted text-xs font-body mb-2">{errorCambioRitual}</p>
+                )}
+                {cambioDisponible ? (
+                  <button
+                    onClick={handleCambiarRitual}
+                    disabled={cambiandoRitual}
+                    className="text-ritual-muted text-xs font-body underline underline-offset-2 hover:text-ritual-text transition-colors disabled:opacity-40"
+                  >
+                    {cambiandoRitual ? 'Cambiando...' : '¿No les gustó? Pedir otro ritual'}
+                  </button>
+                ) : (
+                  <p className="text-ritual-muted/60 text-xs font-body">
+                    Ya cambiaron el ritual esta semana
+                  </p>
+                )}
+              </div>
+            )}
+          </>
         )}
 
         {/* Esperando al partner -- ya respondió, falta el otro lado */}

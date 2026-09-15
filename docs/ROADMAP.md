@@ -335,8 +335,13 @@ simplificación de `mp-webhook`).
 
 - [x] Landing pública en Next.js — ya existe (`app/LandingPage.tsx`, servida desde `/` para
       visitantes sin sesión vía `AuthHashRedirect`), esta nota estaba desactualizada
-- [ ] Recuperación de contraseña / OAuth (recovery desde `/auth` ✅; OAuth pendiente)
-- [ ] Cambiar el ritual del día (una vez por semana) si no les gustó
+- [x] Recuperación de contraseña / OAuth — ambos ya existen (`/auth`: recovery + "Continuar con
+      Google" vía `signInWithOAuth`), esta nota estaba desactualizada
+- [x] Cambiar el ritual del día (15/09/2026) — `cambiar_ritual_del_dia()` (migración `070`), botón
+      "¿No les gustó? Pedir otro ritual" en `/ritual`. Solo mientras nadie respondió todavía (cambiar
+      después dejaría una respuesta ya dada apuntando a otra pregunta) y máximo 1 vez por semana por
+      pareja (`couples.ritual_changed_at`). Ritual nuevo elegido al azar (no determinístico como el
+      del día, acá el pedido es explícitamente "otra cosa") entre los elegibles para la pareja.
 - [ ] Modo offline / PWA
 - [ ] Invitar a un amigo / referido
 - [ ] Grupos pequeños (amigos, familia) — expansión más allá de parejas
