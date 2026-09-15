@@ -199,9 +199,10 @@ function AuthForm() {
   async function handleGoogleSignIn() {
     setError(null)
     setLoading(true)
+    const refParam = refCode ? `&ref=${encodeURIComponent(refCode)}` : ''
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: `${window.location.origin}/auth/callback?redirect=${encodeURIComponent(redirect)}` },
+      options: { redirectTo: `${window.location.origin}/auth/callback?redirect=${encodeURIComponent(redirect)}${refParam}` },
     })
     if (error) {
       setError('No se pudo iniciar sesión con Google. Intentá de nuevo.')

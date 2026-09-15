@@ -10,6 +10,7 @@ export async function GET(request: Request) {
   const redirectParam = searchParams.get('redirect')
   const safeRedirect = redirectParam?.startsWith('/') && !redirectParam.startsWith('//') ? redirectParam : null
   const next = type === 'recovery' ? '/auth?recovery=1' : (safeRedirect || '/ritual')
+  const refCode = searchParams.get('ref')
   let redirectTo = `${origin}/auth?error=link_invalido`
 
   const cookieStore = await cookies()
@@ -35,7 +36,15 @@ export async function GET(request: Request) {
 
   if (code) {
     const { error } = await supabase.auth.exchangeCodeForSession(code)
-    if (!error) redirectTo = `${origin}${next}`
+    if (!error) {
+      redirectTo = `${origin}${next}`
+      // Solo aplica a Google (email/contraseña ya linkea el referral desde
+      // handle_new_user vía raw_user_meta_data, ver migración 071). La RPC
+      // es un no-op seguro si la cuenta no es nueva o el código no existe.
+      if (refCode) {
+        await supabase.rpc('link_referral_for_new_oauth_user', { p_ref_code: refCode })
+      }
+    }
   } else if (token_hash && type === 'recovery') {
     const { error } = await supabase.auth.verifyOtp({ token_hash, type: 'recovery' })
     if (!error) redirectTo = `${origin}${next}`

@@ -350,10 +350,13 @@ simplificación de `mp-webhook`).
       pareja vía `join_couple_by_invite`), no por el solo registro — evita regalar créditos por un
       email vacío que nunca vuelve. Anti-farmeo reutiliza `device_fingerprints` (mismo patrón que
       `grant_pairing_bonus`). Tarjeta "Invitá a un amigo" en `/perfil`
-      (`app/actions/referrals.ts`, migración `071`). Alcance v1: solo signup por email/contraseña
-      -- el flujo de Google OAuth no pasa por `raw_user_meta_data` de la misma forma, capturar el
-      código ahí requeriría persistir el `ref` en cookie/localStorage antes del redirect a Google;
-      no se construyó para no meter esa complejidad sin que se pida.
+      (`app/actions/referrals.ts`, migración `071`). Funciona también con Google (15/09/2026,
+      migración `072`): el código viaja como `?ref=` en la URL de vuelta del callback OAuth (Google
+      no deja inyectar `raw_user_meta_data` como sí hace `signUp()`) y se linkea ahí con
+      `link_referral_for_new_oauth_user()` -- SECURITY DEFINER para poder leer
+      `auth.users.created_at` y confirmar que la cuenta se acaba de crear (ventana de 5 minutos),
+      así una cuenta ya existente no puede activar el bono de un amigo clickeando su link meses
+      después.
 - [ ] Grupos pequeños (amigos, familia) — expansión más allá de parejas
 - [ ] Rituales de larga distancia con sincronización por zona horaria
 - [ ] Múltiples idiomas (inglés como prioridad)
