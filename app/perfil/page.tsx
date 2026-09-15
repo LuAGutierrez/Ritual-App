@@ -539,6 +539,8 @@ export default function PerfilPage() {
               <p className="text-ritual-muted text-xs font-body mt-1 leading-relaxed">
                 Cuando arranque en Rituales con su pareja, ganás 30 créditos.
                 {referralInfo.activados > 0 && ` Ya invitaste a ${referralInfo.activados} persona${referralInfo.activados !== 1 ? 's' : ''}.`}
+                {referralInfo.pendientes > 0 &&
+                  ` ${referralInfo.pendientes} ${referralInfo.pendientes !== 1 ? 'más se registraron' : 'más se registró'} y todavía no ${referralInfo.pendientes !== 1 ? 'armaron' : 'armó'} pareja.`}
               </p>
             </div>
             <button
