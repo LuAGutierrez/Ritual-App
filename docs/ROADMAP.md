@@ -280,12 +280,12 @@ los 6 juegos, picante, historial) es gratis para siempre — ver `docs/DECISIONE
   Estuvo mal en producción una ventana corta dentro de esta misma sesión -- sin usuarios reales en
   ese lapso, impacto real nulo.
 
-### Hallazgo sin resolver: infraestructura huérfana en producción
-Al listar las edge functions de producción aparecieron `get-gift-status`, `claim-gift`,
-`create-mp-gift` y probablemente una tabla `gifts` -- no existen en el repo local, moneda EUR,
-referencias a `tudominio.com/precios.html`. Es de una iteración anterior del producto, ya abandonada.
-No se tocó (borrar functions/tablas de producción es destructivo) -- si se confirma que nadie la usa,
-es candidata a limpieza en otra sesión.
+### ~~Hallazgo: infraestructura huérfana en producción~~ RESUELTO (2026-09-14)
+Se confirmó que no había tabla `gifts` (nunca se creó, o ya no existía) y se borraron las 3 edge
+functions de regalos (`get-gift-status`, `claim-gift`, `create-mp-gift`) de producción. De paso se hizo
+una barrida más amplia de todo lo detectado como sin uso: ver "Retiro de infraestructura huérfana" en
+`docs/DEUDA-TECNICA.md` para el detalle completo (edge functions legacy, tablas sin referencias,
+simplificación de `mp-webhook`).
 
 ### Pendiente
 - [x] Onboarding: opción "vincular ahora, en este mismo teléfono" (14/09) -- botón + confirmación

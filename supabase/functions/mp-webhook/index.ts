@@ -1,9 +1,11 @@
-// Ritual — Webhook de Mercado Pago: suscripciones (preapproval, legacy
-// -- se mantiene sin tocar hasta cancelar las suscripciones activas,
-// ver docs/ROADMAP.md) y pagos únicos de paquetes de créditos (Sprint 5).
-// Suscripción: type subscription_preapproval, data.id = preapproval id.
-// Créditos: type payment, data.id = payment id, external_reference =
+// Ritual — Webhook de Mercado Pago: pagos únicos de paquetes de créditos
+// (Sprint 5). type payment, data.id = payment id, external_reference =
 // credit_purchases.id (seteado por create-credit-checkout).
+//
+// La rama de suscripciones (subscription_preapproval, legacy) se retiró
+// el 14/09/2026 junto con create-mp-subscription: sin esa función nada
+// puede crear una preapproval nueva, y las 3 filas de subscriptions que
+// había eran de prueba (ver docs/ROADMAP.md, Sprint 5).
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 
@@ -51,38 +53,6 @@ async function verifyMpSignature(req: Request, dataId: string): Promise<boolean>
     .join("");
 
   return computed === v1;
-}
-
-async function handleSubscriptionEvent(supabase: ReturnType<typeof createClient>, dataId: string, now: string) {
-  const preapprovalId = dataId;
-  const mpRes = await fetch(`https://api.mercadopago.com/preapproval/${preapprovalId}`, {
-    headers: { "Authorization": `Bearer ${MP_ACCESS_TOKEN}` },
-  });
-  const preapproval = await mpRes.json().catch(() => ({}));
-  if (!mpRes.ok) return;
-
-  const status = preapproval.status;
-  const externalRef = preapproval.external_reference;
-  const userId = typeof externalRef === "string" ? externalRef : (externalRef != null ? String(externalRef) : null);
-  if (!userId) return;
-
-  if (status === "authorized") {
-    const { error } = await supabase.from("subscriptions").upsert(
-      {
-        user_id: userId,
-        plan: "monthly",
-        status: "active",
-        mp_subscription_id: preapprovalId,
-        current_period_start: now,
-        current_period_end: preapproval.next_payment_date || null,
-        updated_at: now,
-      },
-      { onConflict: "user_id" }
-    );
-    if (error) console.error("mp-webhook subscription upsert error", error);
-  } else if (status === "cancelled" || status === "paused") {
-    await supabase.from("subscriptions").update({ status: "canceled", updated_at: now }).eq("mp_subscription_id", preapprovalId);
-  }
 }
 
 // Pago único de un paquete de créditos (Checkout Pro, Sprint 5).
@@ -148,11 +118,8 @@ Deno.serve(async (req: Request) => {
   }
 
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-  const now = new Date().toISOString();
 
-  if (type === "subscription_preapproval" || type === "subscription_authorized_payment") {
-    await handleSubscriptionEvent(supabase, dataId, now);
-  } else if (type === "payment") {
+  if (type === "payment") {
     await handlePaymentEvent(supabase, dataId);
   }
 

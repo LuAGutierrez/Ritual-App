@@ -85,32 +85,47 @@ Se agregó `components/BottomNav.tsx`, una nav bar inferior fija con 4 tabs (Hoy
 
 ## Codigo/archivos potencialmente obsoletos
 
-### Migración legacy de eleccion-remoto (superseded)
-**Archivos**: `supabase/migrations/005_eleccion_remota.sql`, `supabase/functions/eleccion-remoto`
-**Estado**: El juego "Elección" del roadmap se implementó de cero en agosto 2026 como `couple_eleccion_rounds`
-(migración `015`) + `app/actions/eleccion.ts` + `app/juegos/eleccion/page.tsx`, usando `couple_id` y Realtime
-en vez del sistema de salas con código (`remote_eleccion_rooms`) que requería la Edge Function porque el
-proyecto legacy no tenía auth de pareja. La tabla `remote_eleccion_rooms` y la función `eleccion-remoto`
-quedan sin uso — se pueden eliminar cuando se confirme que no hay referencias externas.
-**Riesgo**: Bajo. No interfieren con el flujo actual.
+### ~~Infraestructura huérfana (eleccion-remoto, MercadoPago legacy, regalos, tablas sin uso)~~ RESUELTO (2026-09-14)
+Barrida completa de todo lo detectado como sin uso, ahora que el proyecto no tiene usuarios reales
+("aún no ve la luz") y se podía actuar sin riesgo de romper algo en producción:
 
-### Migración legacy de MercadoPago (retirada, Sprint 5 — 2026-09-14)
-**Archivos**: `supabase/migrations/003_mercadopago_subscription.sql`, `supabase/functions/create-mp-subscription`
-**Estado**: el modelo de suscripción mensual se reemplazó por completo por el sistema de créditos
-(ver `docs/ROADMAP.md`, Sprint 5). `/precios` ya no invoca `create-mp-subscription` -- usa
-`create-credit-checkout` (pago único, Checkout Pro). `create-mp-subscription` sigue desplegada en
-producción pero inalcanzable desde la UI; `mp-webhook` se extendió (no se reescribió desde cero) para
-seguir soportando el tipo de evento de suscripción por si queda algo en tránsito, además del nuevo
-tipo `payment`. Las 3 filas de `subscriptions` con `status='active'` que había resultaron ser de
-prueba (sin `mp_subscription_id` real) y se cancelaron.
-`check-game-access` sigue sin uso, sin relación con esto.
-**Accion recomendada**: ninguna por ahora. Si se confirma que `create-mp-subscription` no se necesita
-ni como referencia, es candidata a undeploy en otra sesión.
+- **Edge functions borradas de producción y del repo**: `eleccion-remoto` (superseded por
+  `couple_eleccion_rounds` + Realtime desde agosto 2026), `create-mp-subscription` (inalcanzable desde
+  la UI desde el pivot a créditos del Sprint 5), `check-game-access` (gating del proyecto HTML legacy,
+  gateaba por `subscriptions` con slugs de juego que ya no existen), `get-gift-status`/`claim-gift`/
+  `create-mp-gift` (infraestructura de una iteración de "regalos" nunca integrada al repo actual, sin
+  tabla `gifts` ni referencia en ningún lado).
+- **`mp-webhook` simplificado**: se sacó la rama `subscription_preapproval`/`subscription_authorized_payment`
+  (dead code sin `create-mp-subscription` para generar preapprovals nuevos). Solo queda el flujo de
+  `payment` para créditos. Redeployado y probado con requests reales (payment inexistente y
+  subscription_preapproval ambos devuelven `ok:true` sin crashear).
+- **Tablas dropeadas** (migración `067_drop_tablas_huerfanas.sql`, sin FKs entrantes, cero referencias
+  en código): `game_progress` (legacy de la migración `001`, 0 filas) y `couple_picante_trial`
+  (gateaba la prueba gratis de picante, sin lectores desde que el Sprint 5 sacó el paywall entero).
+- `remote_eleccion_rooms` (la tabla que en teoría acompañaba a `eleccion-remoto`) no existía en la base
+  de producción — nada que dropear ahí.
+- `supabase/config.toml` limpiado de las entradas `verify_jwt` de las 3 funciones borradas.
+
+### ~~subscriptions y isPremium (RPC get_perfil_page_data)~~ RESUELTO (2026-09-14, segunda pasada)
+Se confirmó cero lectores de `isPremium` en toda la UI (`grep -rn "\.isPremium"` sin resultados) y de
+`get_is_couple_premium()` (RPC sin ningún llamador, solo mencionada en migraciones viejas). Migración
+`068_retirar_subscriptions.sql`:
+- `get_perfil_page_data()` redefinida sin el cálculo de `isPremium` (leía `subscriptions`) ni la clave
+  en el jsonb devuelto. `PerfilData` (`app/actions/perfil.ts`) actualizado en el mismo cambio.
+- `get_is_couple_premium()` dropeada — no tenía llamador.
+- Tabla `subscriptions` dropeada (sus 3 filas eran de prueba, ya canceladas desde la migración `064`;
+  sin FKs entrantes).
+- `profiles.trial_used` (migración `002`, prueba gratuita del proyecto legacy) dropeada — sin ningún
+  lector en el código actual.
+- Verificado: `tsc --noEmit` limpio, `get_perfil_page_data()` corre sin error, advisories de seguridad
+  sin novedades nuevas post-cambio.
+
+Las migraciones históricas `003_mercadopago_subscription.sql` / `005_eleccion_remota.sql` /
+`002_trial_en_profiles.sql` se dejan sin tocar como registro inmutable de schema ya aplicado — nunca se
+borran migraciones pasadas, solo se agregan nuevas que revierten lo que ya no se necesita.
 
 ### `~/.cursor` directory en raíz del proyecto
-**Path**: `C:\Users\Usuario\Downloads\Parejas Juego\~\.cursor`
-**Problema**: Hay un directorio `~/` en la raíz del proyecto, probablemente creado por error con `mkdir ~` en Windows. Contiene una carpeta `.cursor` vacía.
-**Accion**: Verificar si es accidental y eliminar si es el caso. No está en `.gitignore`.
+Ya no existe (verificado 2026-09-14) — se ve que se limpió en otra sesión o nunca se creó de forma persistente.
 
 ---
 

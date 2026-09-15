@@ -9,7 +9,6 @@ export type PerfilData = {
   ritualesCompletados: number
   categoriaFavorita: string | null
   partnerName: string | null
-  isPremium: boolean
   inviteCode: string | null
 }
 

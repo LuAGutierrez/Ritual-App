@@ -354,16 +354,6 @@ authorization_url_path = "/oauth/consent"
 # Allow dynamic client registration
 allow_dynamic_registration = false
 
-# La pasarela no verifica JWT; cada función valida el usuario con auth.getUser() y el header Authorization.
-[functions.create-mp-subscription]
-verify_jwt = false
-
-[functions.check-game-access]
-verify_jwt = false
-
-[functions.eleccion-remoto]
-verify_jwt = false
-
 # Webhook de Mercado Pago -- lo llama MP, no un usuario logueado, así que
 # nunca hay un JWT de Supabase que verificar. La propia función valida el
 # request con la firma HMAC de MP (MP_WEBHOOK_SECRET). Ver DECISIONES.md
