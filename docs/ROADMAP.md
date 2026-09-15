@@ -2,7 +2,7 @@
 
 Stack actual: **Next.js 14 (App Router) + TypeScript + Tailwind CSS + Supabase**
 
-Última actualización: 14 de septiembre de 2026
+Última actualización: 15 de septiembre de 2026
 
 ---
 
@@ -14,7 +14,7 @@ Stack actual: **Next.js 14 (App Router) + TypeScript + Tailwind CSS + Supabase**
 | Sprint 2 — Engagement | ✅ Completo (reminder diario: 1x/día por plan Hobby) |
 | Sprint 3 — Monetización (Mercado Pago, suscripción mensual) | ❌ Retirada — reemplazada por Sprint 5 |
 | Juegos (evolución) | ✅ 6 juegos, metadata rica, Momentos, historial, personalización — ver sección propia |
-| Sprint 4 — IA | ✅ Verdad o Reto con IA (Groq, tab picante) desde 13/09 — resto de Sprint 4 sigue pendiente |
+| Sprint 4 — IA e insights | ✅ Completo (15/09) — Verdad o Reto con IA, Ritual con IA, insights emocionales |
 | Sprint 5 — Sistema de créditos | ✅ Completo y en producción (14/09) — backend, UI, pago único, cutover y anti-farmeo |
 
 ---
@@ -74,7 +74,9 @@ Stack actual: **Next.js 14 (App Router) + TypeScript + Tailwind CSS + Supabase**
 - [x] Cron diario en Vercel (`/api/cron/daily-reminder`, `0 23 * * *` = 20:00 ART)
 - [x] `VAPID_*`, `SUPABASE_SERVICE_ROLE_KEY` y `CRON_SECRET` en Vercel
 - [x] Diseño técnico: `docs/notificaciones-design.md`
-- [ ] Iconos PWA (`icon-192.png`, `badge-72.png`) — opcional
+- [x] Iconos PWA — ya resueltos con generación dinámica (`app/icon.tsx`, `app/icons/[size]/route.tsx`,
+      `app/manifest.ts`), no PNGs estáticos. `icon`/`badge` agregados al `showNotification` del
+      service worker (15/09) para que las notificaciones también los usen.
 - [ ] Reminder por hora custom requiere Vercel Pro (Hobby = 1 cron/día)
 
 ### Mejoras de pareja (no planificadas aún)
@@ -159,7 +161,7 @@ propia, solo el texto ya copiado — el historial de juegos puede mostrar qué s
 
 ---
 
-## Sprint 4 — IA y personalización ⚠️ PARCIAL
+## Sprint 4 — IA y personalización ✅ COMPLETO (15/09/2026)
 
 ### Verdad o Reto con IA ✅
 - [x] Generación de consignas con IA en la tab picante (Groq) — ver "Sprint 4: IA en Verdad o Reto" en memoria del proyecto
@@ -171,9 +173,36 @@ propia, solo el texto ya copiado — el historial de juegos puede mostrar qué s
 - [x] Modo "sorpresa" por estado de ánimo declarado — chip "Ánimo" en `/ritual-ia`
 - [ ] Sugerencias de temas no explorados — no se construyó
 
-### Insights emocionales ❌ sigue pendiente
-- [ ] Resumen semanal de la pareja ("Esta semana conectaron en intimidad")
-- [ ] Detección de patrones (categorías que evitan, temas recurrentes)
+### Insights emocionales ✅ (15/09/2026)
+- [x] Resumen semanal de la pareja: `get_couple_insights()` (migración `069`) cuenta rituales
+      revelados en los últimos 7 días, la categoría que más eligieron esa semana, y compara contra
+      la semana anterior (más/menos/igual). Sección "Esta semana" en `/perfil`
+      (`app/actions/insights.ts`), oculta si la pareja todavía no tiene actividad.
+- [x] Detección de patrones: entre las categorías de rituales elegibles para la pareja, identifica
+      la que menos jugaron en los últimos 30 días (piso de 8 rituales revelados en el mes para no
+      generar ruido con parejas nuevas). Se muestra como sugerencia suave, no como alerta.
+- Deliberadamente scoped a rituales (no juegos): los 6 juegos usan taxonomías de categoría propias
+  y dispares entre sí, mezclar ambas fuentes en un solo "patrón" hubiera sido confuso — candidato a
+  v2 si se pide.
+
+### rituals.premium: split gratis/créditos (15/09/2026, resuelve deuda técnica preexistente)
+Los 30 rituales de viajes/planes/fantasías (migración `013`) habían quedado sin ningún mecanismo que
+los sirviera desde que se retiró `subscriptions` (ver `docs/DEUDA-TECNICA.md`). Resuelto con un split
+mitad y mitad (migración `069`):
+- [x] 15 (5 por categoría) pasan a `premium = false` — gratis para siempre, ya entraron a la
+      rotación diaria determinística normal (`get_ritual_page_data`).
+- [x] Los otros 15 quedan reservados detrás de `unlock_rituales_especiales()`: desbloqueo
+      **permanente por pareja**, pagado una sola vez con 30 créditos (`lib/credits.ts`,
+      `RITUALES_ESPECIALES_COST`). Tarjeta en `/perfil` (`app/actions/rituales-especiales.ts`).
+      Elegido en vez de un "sorteo bajo demanda" separado porque encaja directo en el mecanismo
+      determinístico ya existente (mismo día → mismo ritual para toda la pareja) sin inventar un
+      flujo de juego nuevo para simple contenido curado.
+- [x] De paso se corrigió un bug latente en `get_ritual_page_data()`: el chequeo de "no repetir el
+      ritual de ayer" tomaba la sesión de *cualquier* pareja al azar (inofensivo mientras el pool
+      era 100% global e idéntico para todos); ahora que el pool puede diferir según si la pareja
+      desbloqueó, quedó scoped a `couple_id`.
+- `RitualCard.tsx`, `/historial` (filtro y labels) y `/perfil` (categoría favorita) ya tenían las
+  labels/colores de viajes/planes/fantasías escritos de antes, sin usar — solo faltaba esta pieza.
 
 ---
 
@@ -255,10 +284,10 @@ los 6 juegos, picante, historial) es gratis para siempre — ver `docs/DECISIONE
       (migración `061`), el límite no vivía solo en el cliente
 - [x] `app/LandingPage.tsx`, `/perfil`, `/terminos`, `/privacidad`: copy actualizada (incluye mención
       a Groq como procesador de datos para la IA, que antes faltaba)
-- Deliberadamente NO tocado: `get_ritual_page_data` sigue seleccionando `WHERE premium = false` para
-  el ritual del día -- los ~30 rituales `premium = true` (migración 013) nunca se sirvieron ni antes
-  ni ahora, es deuda técnica preexistente y separada, no algo que este retiro haya roto
-- `get_perfil_page_data()` todavía calcula un campo `isPremium` que ya no usa ninguna UI -- inofensivo
+- ~~Deliberadamente NO tocado: `get_ritual_page_data` sigue seleccionando `WHERE premium = false`~~
+  RESUELTO el 15/09 — ver "rituals.premium: split gratis/créditos" en Sprint 4 más arriba.
+- ~~`get_perfil_page_data()` todavía calcula un campo `isPremium`~~ RESUELTO el 14/09 junto con el
+  retiro completo de `subscriptions` — ver `docs/DEUDA-TECNICA.md`.
 
 ### Bugs reales encontrados y corregidos en el camino (no solo leídos — probados)
 - **RLS recursivo preexistente, no relacionado a Sprint 5**: `couple_members_select` (migración 006)
@@ -298,13 +327,14 @@ simplificación de `mp-webhook`).
       join automático → reveal compartido. Bono de 150 créditos se otorga normal (`risk_flagged: false`),
       confirmado por SQL -- el anti-farmeo de la 056 solo dispara en el *segundo* uso del mismo
       dispositivo, no en el primer vínculo real.
-- [ ] Decidir qué hacer con `get-gift-status`/`claim-gift`/`create-mp-gift`/`gifts` (ver hallazgo arriba)
+- [x] `get-gift-status`/`claim-gift`/`create-mp-gift`/`gifts` — borradas (ver "Retiro de infraestructura huérfana" en `docs/DEUDA-TECNICA.md`)
 
 ---
 
 ## Backlog sin sprint asignado
 
-- [ ] Landing pública en Next.js (hoy `/` solo redirige según estado)
+- [x] Landing pública en Next.js — ya existe (`app/LandingPage.tsx`, servida desde `/` para
+      visitantes sin sesión vía `AuthHashRedirect`), esta nota estaba desactualizada
 - [ ] Recuperación de contraseña / OAuth (recovery desde `/auth` ✅; OAuth pendiente)
 - [ ] Cambiar el ritual del día (una vez por semana) si no les gustó
 - [ ] Modo offline / PWA

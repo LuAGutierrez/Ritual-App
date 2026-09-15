@@ -35,6 +35,9 @@ const CATEGORIAS: { id: string; label: string }[] = [
   { id: 'diversion', label: 'Diversión' },
   { id: 'intimidad', label: 'Intimidad' },
   { id: 'reto', label: 'Reto' },
+  { id: 'viajes', label: 'Viajes' },
+  { id: 'planes', label: 'Planes' },
+  { id: 'fantasias', label: 'Fantasías' },
 ]
 
 const CATEGORY_COLORS: Record<RitualCategory, string> = {

@@ -9,6 +9,13 @@ import { getCoupleMomentosAction } from '@/app/actions/momentos'
 import { getJuegosStatsSummaryAction } from '@/app/actions/juegos-stats'
 import { getRondasJugadasCountAction } from '@/app/actions/rondas-jugadas'
 import { getIntensidadMaximaAction, setIntensidadMaximaAction } from '@/app/actions/perfil-preferencias'
+import { getCoupleInsightsAction, type CoupleInsights } from '@/app/actions/insights'
+import {
+  getRitualesEspecialesStatusAction,
+  unlockRitualesEspecialesAction,
+  type RitualesEspecialesStatus,
+} from '@/app/actions/rituales-especiales'
+import { RITUALES_ESPECIALES_COST } from '@/lib/credits'
 import { nivelActual } from '@/lib/niveles'
 import type { Intensidad } from '@/lib/intensidad'
 import type { Momento } from '@/types'
@@ -81,6 +88,15 @@ const CATEGORY_LABELS: Record<string, string> = {
   diversion: 'Diversión',
   intimidad: 'Intimidad',
   reto: 'Reto',
+  viajes: 'Viajes',
+  planes: 'Planes',
+  fantasias: 'Fantasías',
+}
+
+const TENDENCIA_COPY: Record<NonNullable<CoupleInsights['tendencia']>, string> = {
+  mas: 'Más que la semana pasada 📈',
+  menos: 'Un poco menos que la semana pasada',
+  igual: 'Igual que la semana pasada',
 }
 
 export default function PerfilPage() {
@@ -98,6 +114,10 @@ export default function PerfilPage() {
   const [copiedInvite, setCopiedInvite] = useState(false)
   const [confirmarSalir, setConfirmarSalir] = useState(false)
   const [saliendoDePareja, setSaliendoDePareja] = useState(false)
+  const [insights, setInsights] = useState<CoupleInsights | null>(null)
+  const [ritualesEspeciales, setRitualesEspeciales] = useState<RitualesEspecialesStatus | null>(null)
+  const [desbloqueando, setDesbloqueando] = useState(false)
+  const [errorDesbloqueo, setErrorDesbloqueo] = useState<string | null>(null)
 
   useEffect(() => {
     getPerfilAction().then(d => {
@@ -109,6 +129,8 @@ export default function PerfilPage() {
     })
     getCoupleMomentosAction().then(setMomentos)
     getIntensidadMaximaAction().then(setIntensidadMaximaState)
+    getCoupleInsightsAction().then(setInsights)
+    getRitualesEspecialesStatusAction().then(setRitualesEspeciales)
     Promise.all([getJuegosStatsSummaryAction(), getRondasJugadasCountAction()]).then(([stats, rondas]) => {
       const total =
         (stats?.eleccion?.intentos ?? 0) +
@@ -168,6 +190,23 @@ export default function PerfilPage() {
   async function cambiarIntensidadMaxima(intensidad: Intensidad) {
     setIntensidadMaximaState(intensidad)
     await setIntensidadMaximaAction(intensidad)
+  }
+
+  async function handleDesbloquearEspeciales() {
+    setDesbloqueando(true)
+    setErrorDesbloqueo(null)
+    const result = await unlockRitualesEspecialesAction()
+    if (!result.ok) {
+      setErrorDesbloqueo(
+        result.error === 'insufficient_credits'
+          ? `Te faltan créditos (tenés ${result.balance ?? 0}).`
+          : 'No se pudo desbloquear. Probá de nuevo.'
+      )
+      setDesbloqueando(false)
+      return
+    }
+    setRitualesEspeciales(prev => (prev ? { ...prev, desbloqueados: true } : prev))
+    setDesbloqueando(false)
   }
 
   if (loading) {
@@ -382,6 +421,40 @@ export default function PerfilPage() {
           )}
         </div>
 
+        {/* Esta semana -- resumen + detección de patrones (Sprint 4).
+            Se oculta si no hay nada que decir todavía (pareja nueva). */}
+        {insights && (insights.semanaCompletados > 0 || insights.categoriaEvitada) && (
+          <div className="pt-2">
+            <h2 className="text-ritual-muted text-xs font-body uppercase tracking-wider mb-4">
+              Esta semana
+            </h2>
+            <div className="bg-ritual-bg-soft border border-white/8 rounded-2xl p-4 space-y-2">
+              {insights.semanaCompletados > 0 ? (
+                <>
+                  <p className="text-ritual-text font-body text-sm">
+                    Respondieron {insights.semanaCompletados} ritual{insights.semanaCompletados !== 1 ? 'es' : ''} juntos.
+                    {insights.categoriaTop && (
+                      <> La categoría que más eligieron: <span className="text-ritual-gold">{CATEGORY_LABELS[insights.categoriaTop] ?? insights.categoriaTop}</span>.</>
+                    )}
+                  </p>
+                  {insights.tendencia && (
+                    <p className="text-ritual-muted text-xs font-body">{TENDENCIA_COPY[insights.tendencia]}</p>
+                  )}
+                </>
+              ) : (
+                <p className="text-ritual-muted font-body text-sm">
+                  Todavía no respondieron ningún ritual esta semana.
+                </p>
+              )}
+              {insights.categoriaEvitada && (
+                <p className="text-ritual-muted text-xs font-body pt-1 border-t border-white/8">
+                  Hace rato no exploran {CATEGORY_LABELS[insights.categoriaEvitada] ?? insights.categoriaEvitada} — ¿le dan una vuelta?
+                </p>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Momentos -- hitos de los juegos, no solo del ritual */}
         {momentos.length > 0 && (
           <div className="pt-2">
@@ -408,6 +481,32 @@ export default function PerfilPage() {
                 )
               })}
             </div>
+          </div>
+        )}
+
+        {/* Rituales especiales -- los 15 de viajes/planes/fantasías que
+            quedaron con premium=true tras el split (migración 069). Se
+            desbloquean una sola vez por pareja, gastando créditos. */}
+        {ritualesEspeciales?.tienePareja && !ritualesEspeciales.desbloqueados && (
+          <div className="bg-ritual-gold/8 border border-ritual-gold/25 rounded-2xl p-4 space-y-3">
+            <div>
+              <p className="text-ritual-gold font-body text-sm font-medium">
+                Rituales especiales 🔒
+              </p>
+              <p className="text-ritual-muted text-xs font-body mt-1 leading-relaxed">
+                15 rituales extra de viajes, planes y fantasías se suman para siempre a la rotación diaria de la pareja.
+              </p>
+            </div>
+            {errorDesbloqueo && (
+              <p className="text-red-400/80 text-xs font-body">{errorDesbloqueo}</p>
+            )}
+            <button
+              onClick={handleDesbloquearEspeciales}
+              disabled={desbloqueando}
+              className="w-full bg-ritual-gold text-ritual-bg font-body text-sm font-medium py-3 rounded-xl hover:bg-ritual-cream active:scale-[0.98] transition-all duration-300 disabled:opacity-50"
+            >
+              {desbloqueando ? 'Desbloqueando...' : `Desbloquear por ${RITUALES_ESPECIALES_COST} créditos`}
+            </button>
           </div>
         )}
 

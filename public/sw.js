@@ -9,6 +9,8 @@ self.addEventListener('push', (event) => {
   event.waitUntil(
     self.registration.showNotification(data.title, {
       body: data.body,
+      icon: '/icons/192',
+      badge: '/icons/192',
       data: { url: data.url ?? '/ritual' },
     })
   )
