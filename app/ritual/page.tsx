@@ -25,6 +25,7 @@ import VincularAhoraMismoTelefono from '@/components/VincularAhoraMismoTelefono'
 import { getNotificationPrefsAction } from '@/app/actions/notifications'
 import { usePushNotifications } from '@/hooks/usePushNotifications'
 import { isPushPromptDismissed } from '@/lib/push/client'
+import { saveOfflineRitualCache, loadOfflineRitualCache, type OfflineRitualCache } from '@/lib/offlineCache'
 
 // Cargados solo cuando hacen falta (reveal / prompt de push) en vez de ir
 // en el bundle inicial de /ritual -- son las dos piezas mas pesadas de la
@@ -66,6 +67,8 @@ export default function RitualPage() {
   const [vinculandoAhora, setVinculandoAhora] = useState(false)
   const [cambiandoRitual, setCambiandoRitual] = useState(false)
   const [errorCambioRitual, setErrorCambioRitual] = useState<string | null>(null)
+  const [offlineCache, setOfflineCache] = useState<OfflineRitualCache | null>(null)
+  const [isOffline, setIsOffline] = useState(false)
   const { subscribe, loading: pushLoading, isSupported } = usePushNotifications()
   const ctxRef = useRef<UserContext | null>(null)
 
@@ -213,7 +216,25 @@ export default function RitualPage() {
     async function init() {
       setError(null)
 
-      const pageData = await getRitualPageDataAction()
+      let pageData: Awaited<ReturnType<typeof getRitualPageDataAction>>
+      try {
+        pageData = await getRitualPageDataAction()
+      } catch {
+        // El Server Action ni llegó a alcanzar el servidor -- sin conexión
+        // real, a diferencia de pageData === null (usuario no autenticado,
+        // caso distinto que sí redirige a /auth). Modo offline simple:
+        // mostrar el último ritual guardado, en solo lectura.
+        const cached = loadOfflineRitualCache()
+        setOfflineCache(cached)
+        if (cached) {
+          setCtx(cached.context)
+          setSession(cached.session)
+          setStreak(cached.streak)
+        }
+        setIsOffline(true)
+        return
+      }
+
       if (!pageData) { router.replace('/auth'); return }
 
       const { context, session: ritualSession, streak: initialStreak } = pageData
@@ -233,6 +254,7 @@ export default function RitualPage() {
       }
 
       setSession(ritualSession)
+      saveOfflineRitualCache({ context, session: ritualSession, streak: initialStreak })
       const sessionState = resolveState(ritualSession, context.userId, true)
       setState(sessionState)
 
@@ -342,6 +364,50 @@ export default function RitualPage() {
     day: 'numeric',
     month: 'long',
   })
+
+  if (isOffline) {
+    const ritual = offlineCache?.session?.ritual
+    const myResponse = offlineCache?.session
+      ? offlineCache.context.userId === offlineCache.session.user1_id
+        ? offlineCache.session.user1_response
+        : offlineCache.session.user2_response
+      : null
+
+    return (
+      <div className="min-h-dvh bg-ritual-bg flex flex-col">
+        <header className="px-5 pt-8 pb-4">
+          <h1 className="font-display text-xl text-ritual-cream tracking-wide">Rituales</h1>
+        </header>
+        <main className="flex-1 px-5 pb-28 flex flex-col justify-center max-w-md mx-auto w-full">
+          <div className="text-center space-y-6 animate-fade-up">
+            <span className="inline-block bg-white/5 border border-white/10 rounded-full px-4 py-1.5 text-ritual-muted text-xs font-body">
+              Sin conexión — mostrando lo último guardado
+            </span>
+            {ritual ? (
+              <div className="bg-ritual-bg-soft border border-white/10 rounded-3xl p-6 text-left space-y-4">
+                <p className="text-ritual-gold text-xs font-body uppercase tracking-widest">Ritual de hoy</p>
+                <p className="font-display text-xl text-ritual-cream leading-snug">{ritual.prompt}</p>
+                {myResponse && (
+                  <div className="pt-3 border-t border-white/8">
+                    <p className="text-ritual-muted text-xs font-body mb-1">Tu respuesta</p>
+                    <p className="text-ritual-text font-body text-sm">{myResponse}</p>
+                  </div>
+                )}
+                <p className="text-ritual-muted text-xs font-body pt-2">
+                  Conectate para responder o ver si tu pareja ya lo hizo.
+                </p>
+              </div>
+            ) : (
+              <p className="text-ritual-muted font-body text-sm leading-relaxed">
+                No hay nada guardado todavía. Abrí la app una vez con conexión para que quede disponible sin internet.
+              </p>
+            )}
+          </div>
+        </main>
+        <BottomNav />
+      </div>
+    )
+  }
 
   if (state === 'loading') {
     return <PageLoader />

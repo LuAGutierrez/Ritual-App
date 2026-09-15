@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next'
 import './globals.css'
+import ServiceWorkerRegister from '@/components/ServiceWorkerRegister'
 
 export const metadata: Metadata = {
   title: 'Rituales — Momentos que acercan',
@@ -31,6 +32,7 @@ export default function RootLayout({
   return (
     <html lang="es" className="dark">
       <body className="font-body antialiased">
+        <ServiceWorkerRegister />
         {children}
       </body>
     </html>

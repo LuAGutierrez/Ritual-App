@@ -342,7 +342,18 @@ simplificación de `mp-webhook`).
       después dejaría una respuesta ya dada apuntando a otra pregunta) y máximo 1 vez por semana por
       pareja (`couples.ritual_changed_at`). Ritual nuevo elegido al azar (no determinístico como el
       del día, acá el pedido es explícitamente "otra cosa") entre los elegibles para la pareja.
-- [ ] Modo offline / PWA
+- [x] Modo offline (versión simple, 15/09/2026) — `public/sw.js` ahora cachea el shell: HTML de
+      navegación (red primero, cache como respaldo) y assets estáticos de `_next/static` (cache
+      primero, son inmutables por el hash en el nombre). Se registra siempre desde
+      `components/ServiceWorkerRegister.tsx` (antes solo se registraba al activar notificaciones
+      push). `/ritual` guarda el último contexto/sesión/racha cargado con éxito en `localStorage`
+      (`lib/offlineCache.ts`) y, si el Server Action de carga falla por falta de conexión (no por
+      "no autenticado", son casos distintos), muestra ese último ritual en **solo lectura** con un
+      aviso "Sin conexión" — sin poder responder ni cambiar de ritual, eso sigue requiriendo red.
+      Probado de verdad: build de producción, apagar el server y recargar — la landing cargó
+      completa desde cache sin backend disponible. No implementado: cola de escrituras offline
+      (responder sin conexión y sincronizar después) ni offline para el resto de las páginas
+      (`/juegos`, `/historial`) — alcance explícitamente acotado a "ver tu ritual de hoy sin señal".
 - [x] Invitar a un amigo / referido (15/09/2026) — sistema separado del invite de pareja
       (`couples.invite_code`): cada usuario tiene su propio `profiles.referral_code` (6
       caracteres, mismo patrón), compartible como `/auth?tab=registro&ref=CODE`. El referente
