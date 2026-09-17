@@ -2,7 +2,7 @@
 
 Stack actual: **Next.js 14 (App Router) + TypeScript + Tailwind CSS + Supabase**
 
-Última actualización: 15 de septiembre de 2026
+Última actualización: 16 de septiembre de 2026
 
 ---
 
@@ -158,6 +158,30 @@ intensidad, variedad, detección de "Momentos" y personalización por categoría
 propia, solo el texto ya copiado — el historial de juegos puede mostrar qué se jugó y el resultado para esos
 4 juegos, pero no su categoría (sí para Verdad o Reto/Ruleta Picante, vía join a su tabla de contenido). Ver
 `docs/DEUDA-TECNICA.md`.
+
+### Insight con IA en "¿Cuánto me conoces?" (16/09/2026)
+Repaso de los 6 juegos para ver dónde sumar IA de forma "didáctica" (no solo picante) — este es el
+primer resultado. En el reveal de una ronda, botón "✨ Generar insight" (5 créditos, tarifa
+`conoces_insight` en `lib/credits.ts`) que le pide al modelo un párrafo corto comentando el
+acierto/desacuerdo de esa ronda puntual.
+- [x] Tabla `couple_conoces_insights` (migración `073`): una fila por ronda (`round_id` UNIQUE) —
+  si cualquiera de los dos ya lo generó, el otro lo ve sin pagar de nuevo, y sobrevive a un refresh
+  (`get_conoces_page_data()` lo devuelve junto al `round`/`stats`).
+- [x] `app/actions/conoces-insight.ts`: mismo patrón cobro-antes-de-generar + refund-on-failure que
+  `ritual-ia.ts`, pero sin la capa de caché genérica por tags — el insight es específico de una
+  ronda, no de una combinación de contexto reutilizable entre parejas.
+- [x] Prompt sin nombres reales ("Persona A" / "Persona B"), mismo criterio de privacidad que el
+  resto de las features de IA — no se manda quién es quién a Groq.
+- [x] `¿Quién de los dos?` queda como candidato natural para el mismo patrón después — no se tocó en
+  este cambio a propósito, para no meter dos features nuevas juntas.
+
+**Bug encontrado y corregido de paso**: probando `ritual_profundo` con la misma combinación de
+ánimo/tiempo/objetivo dos veces seguidas, siempre devolvía el mismo ritual. Causa: `generarConIAAction`
+cachea por `(feature, context_key)` exacto en `ai_content_cache` — la segunda vez ni llamaba a la IA,
+servía la fila cacheada. Fix en migración `074`: la clave pasa a `(feature, context_key, variant)` con
+`variant` elegido al azar entre 5 opciones en cada pedido (`CACHE_VARIANTS` en `app/actions/ritual-ia.ts`)
+— sigue ahorrando tokens una vez que las 5 variantes de una combinación popular ya existen, pero dos
+pedidos seguidos con el mismo contexto ya no devuelven necesariamente lo mismo.
 
 ---
 

@@ -7,14 +7,14 @@ import CreditsBadge from '@/components/CreditsBadge'
 import PageLoader from '@/components/PageLoader'
 import { generarConIAAction } from '@/app/actions/ritual-ia'
 import { useCredits, notifyCreditsChanged } from '@/hooks/useCredits'
-import { CREDIT_FEATURES, type CreditFeature } from '@/lib/credits'
+import { CREDIT_FEATURES, type GenericCreditFeature } from '@/lib/credits'
 import type { IAGeneratedContent } from '@/lib/ai/parse-generated-content'
 
 const ANIMOS = ['Cansados', 'Con ganas', 'Jugando', 'Relajados'] as const
 const TIEMPOS = ['5m', '15m', '30m+'] as const
 const OBJETIVOS = ['Risas', 'Conexión', 'Deseo', 'Sorpresa'] as const
 
-const ETIQUETA_ITEM: Record<CreditFeature, string> = {
+const ETIQUETA_ITEM: Record<GenericCreditFeature, string> = {
   ritual_simple: 'Paso',
   ritual_profundo: 'Paso',
   dinamica_ia: 'Pregunta',
@@ -23,7 +23,7 @@ const ETIQUETA_ITEM: Record<CreditFeature, string> = {
 export default function RitualIAPage() {
   const router = useRouter()
   const { credits, loading, refetch } = useCredits()
-  const [feature, setFeature] = useState<CreditFeature>('ritual_simple')
+  const [feature, setFeature] = useState<GenericCreditFeature>('ritual_simple')
   const [animo, setAnimo] = useState<(typeof ANIMOS)[number]>('Con ganas')
   const [tiempo, setTiempo] = useState<(typeof TIEMPOS)[number]>('15m')
   const [objetivo, setObjetivo] = useState<(typeof OBJETIVOS)[number]>('Conexión')

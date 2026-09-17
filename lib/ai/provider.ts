@@ -36,4 +36,5 @@ export const AI_MODEL_BY_TIER = {
   ritual_simple: 'openai/gpt-oss-20b',    // tags cortas -> output corto, modelo chico alcanza
   ritual_profundo: 'openai/gpt-oss-120b', // necesita "razonar" sobre historial real de la pareja
   dinamica_ia: 'openai/gpt-oss-120b',
+  conoces_insight: 'openai/gpt-oss-20b',  // un párrafo corto sobre una ronda ya resuelta
 } as const

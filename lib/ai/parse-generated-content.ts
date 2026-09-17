@@ -27,3 +27,15 @@ export function parseContenido(raw: string): IAGeneratedContent | null {
     return null
   }
 }
+
+export function parseConocesInsight(raw: string): string | null {
+  try {
+    const limpio = raw.trim().replace(/^```(json)?/i, '').replace(/```$/, '').trim()
+    const parsed = JSON.parse(limpio) as Record<string, unknown>
+    const { insight } = parsed
+    if (typeof insight !== 'string' || !insight.trim()) return null
+    return insight.trim()
+  } catch {
+    return null
+  }
+}

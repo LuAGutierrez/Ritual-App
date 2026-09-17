@@ -9,6 +9,9 @@ import {
   submitConocesSubjectChoiceAction,
   submitConocesGuessAction,
 } from '@/app/actions/conoces'
+import { generarConocesInsightAction } from '@/app/actions/conoces-insight'
+import { useCredits, notifyCreditsChanged } from '@/hooks/useCredits'
+import { CREDIT_COST } from '@/lib/credits'
 import { useDobleONada } from '@/lib/hooks/useDobleONada'
 import { getCategoriaPreferida } from '@/lib/categoriaPreferida'
 import type { ConocesRound, ConocesStats, UserContext } from '@/types'
@@ -28,6 +31,12 @@ export default function ConocesPage() {
   const [error, setError] = useState<string | null>(null)
   const [copiedInvite, setCopiedInvite] = useState(false)
   const vistosRef = useRef<string[]>([])
+  const roundIdRef = useRef<string | undefined>(undefined)
+
+  const [insight, setInsight] = useState<string | null>(null)
+  const [insightLoading, setInsightLoading] = useState(false)
+  const [insightError, setInsightError] = useState<string | null>(null)
+  const { credits, refetch: refetchCredits } = useCredits()
 
   // Pareja creada pero sin unir a nadie: startConocesRoundAction fallaba con
   // un error generico ("No se pudo empezar la ronda") porque siguienteTurno()
@@ -70,6 +79,14 @@ export default function ConocesPage() {
           setStats(payload.new as ConocesStats)
         }
       )
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'couple_conoces_insights', filter: `couple_id=eq.${coupleId}` },
+        (payload) => {
+          const inserted = payload.new as { round_id: string; texto: string }
+          if (inserted.round_id === roundIdRef.current) setInsight(inserted.texto)
+        }
+      )
       .subscribe()
 
     channelRef.current = channel
@@ -84,6 +101,7 @@ export default function ConocesPage() {
       setCtx(pageData.context)
       setRound(pageData.round)
       setStats(pageData.stats)
+      setInsight(pageData.insight)
       subscribeToCouple(pageData.context.couple.id)
       setLoading(false)
     }
@@ -104,11 +122,36 @@ export default function ConocesPage() {
       setError('No se pudo empezar la ronda. Intentá de nuevo.')
     } else {
       setRound(nuevo)
+      setInsight(null)
+      setInsightError(null)
       vistosRef.current = [...vistosRef.current, nuevo.pregunta]
       if (esDobleONada) doble.aceptar()
       else doble.reset()
     }
     setStarting(false)
+  }
+
+  async function generarInsight() {
+    if (!round) return
+    setInsightLoading(true)
+    setInsightError(null)
+    const res = await generarConocesInsightAction(round.id)
+    setInsightLoading(false)
+    if (!res.ok) {
+      setInsightError(
+        res.error === 'insufficient_credits'
+          ? 'No alcanzan los créditos para esto.'
+          : res.error === 'not_authenticated'
+            ? 'Iniciá sesión de nuevo para generar el insight.'
+            : 'No se pudo generar el insight. Probá de nuevo en un rato.'
+      )
+      return
+    }
+    setInsight(res.insight)
+    if (!res.fromCache) {
+      refetchCredits()
+      notifyCreditsChanged()
+    }
   }
 
   async function handleResponder(choice: number) {
@@ -127,6 +170,14 @@ export default function ConocesPage() {
   const revelado = !!round?.revealed_at
   const acerto = revelado && round?.subject_choice === round?.guesser_choice
   const doble = useDobleONada(revelado, acerto, round?.id)
+  const saldoInsuficiente = !!credits && credits.total < CREDIT_COST.conoces_insight
+
+  // Le da al listener de Realtime de couple_conoces_insights (arriba, en
+  // subscribeToCouple) la ronda actual sin que ese callback -- armado una
+  // sola vez al montar -- quede con un closure viejo de `round`.
+  useEffect(() => {
+    roundIdRef.current = round?.id
+  }, [round?.id])
 
   // Evento especial "Cambio de Roles": si el sujeto de esta ronda es
   // el mismo que el de la anterior, siguienteTurno() (lib/turnos.ts)
@@ -312,6 +363,33 @@ export default function ConocesPage() {
                 {guesserNombre} adivinó: {round.opciones[round.guesser_choice!]}
               </span>
             </div>
+
+            {insight ? (
+              <div className="bg-ritual-bg-soft border border-ritual-gold/25 rounded-2xl p-4 text-left">
+                <p className="text-ritual-gold text-[11px] font-body uppercase tracking-wider mb-2">✨ Insight</p>
+                <p className="text-ritual-cream font-body text-sm leading-relaxed">{insight}</p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <button
+                  onClick={generarInsight}
+                  disabled={insightLoading || saldoInsuficiente}
+                  className="w-full bg-ritual-bg-soft border border-ritual-gold/30 text-ritual-gold font-body text-sm font-medium py-3.5 rounded-2xl hover:bg-ritual-gold/10 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  {insightLoading ? 'Pensando...' : `✨ Generar insight (${CREDIT_COST.conoces_insight} créditos)`}
+                </button>
+                {saldoInsuficiente && !insightLoading && (
+                  <p className="text-ritual-muted text-xs font-body text-center">
+                    Te faltan créditos.{' '}
+                    <button onClick={() => router.push('/precios')} className="text-ritual-gold underline">
+                      Comprar más
+                    </button>
+                  </p>
+                )}
+                {insightError && <p className="text-ritual-muted text-xs font-body text-center">{insightError}</p>}
+              </div>
+            )}
+
             {doble.ofrecer && (
               <button
                 onClick={() => empezarRonda(true)}
@@ -321,7 +399,7 @@ export default function ConocesPage() {
               </button>
             )}
             <button
-              onClick={() => { doble.reset(); setRound(null) }}
+              onClick={() => { doble.reset(); setRound(null); setInsight(null); setInsightError(null) }}
               className="w-full bg-ritual-gold text-ritual-bg font-body font-medium py-4 rounded-2xl"
             >
               Jugar de nuevo

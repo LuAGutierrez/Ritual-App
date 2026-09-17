@@ -6,7 +6,7 @@ import { getIntensidadMaximaAction } from './perfil-preferencias'
 import { getAIProvider, AI_MODEL_BY_TIER } from '@/lib/ai/provider'
 import { buildContextTags, type ContextInput } from '@/lib/ai/context'
 import { buildCreditFeatureSystemPrompt } from '@/lib/ai/prompts-creditos'
-import { CREDIT_COST, type CreditFeature } from '@/lib/credits'
+import { CREDIT_COST, type GenericCreditFeature } from '@/lib/credits'
 import { notifyPartnerCreditsSpent } from '@/lib/push/notify'
 import { parseContenido, type IAGeneratedContent } from '@/lib/ai/parse-generated-content'
 
@@ -14,22 +14,31 @@ export type GenerarConIAResult =
   | { ok: true; content: IAGeneratedContent; balance: number; fromCache: boolean }
   | { ok: false; error: 'insufficient_credits' | 'generation_failed' | 'not_authenticated'; balance?: number }
 
+// Cuántas variantes puede tener cacheada una misma combinación de
+// (feature, tags de contexto). Se elige una al azar en cada pedido --
+// migración 074: cachear por contexto exacto sin esto hacía que pedir
+// la misma combinación (mismo ánimo/tiempo/objetivo/racha) devolviera
+// SIEMPRE el mismo contenido, ni con la IA se estaba llamando la
+// segunda vez. Con 5 variantes, una combinación necesita 5 pedidos
+// para "agotar" la variedad y recién ahí empezar a repetir.
+const CACHE_VARIANTS = 5
+
 // Genera contenido con IA para una de las 3 features del sistema de
 // créditos. Cobra ANTES de llamar al modelo (nunca al revés -- ver la
 // nota de concurrencia en la migración 057): si el modelo falla o
 // devuelve algo que no matchea el schema esperado, se refunda acá
 // mismo en vez de dejar a alguien pagado sin contenido.
 //
-// Caché por (feature, tags de contexto): si otra pareja ya generó
-// exactamente lo mismo, se sirve esa respuesta sin llamar al modelo de
-// nuevo -- ahorro real de tokens, no solo de latencia. No se trackea
-// "ya generado para ESTA pareja" para evitar repetición entre pedidos
-// (como sí hace couple_ia_contenido para Verdad o Reto, migración 054)
-// -- estas features se piden por ocasión, no en ráfaga, así que el
-// riesgo de repetición inmediata es bajo y no se justificaba una tabla
-// nueva para eso.
+// Caché por (feature, tags de contexto, variant): si otra pareja ya
+// generó exactamente la misma variante, se sirve esa respuesta sin
+// llamar al modelo de nuevo -- ahorro real de tokens, no solo de
+// latencia. No se trackea "ya generado para ESTA pareja" para evitar
+// repetición entre pedidos (como sí hace couple_ia_contenido para
+// Verdad o Reto, migración 054) -- con 5 variantes por combinación el
+// riesgo de que la MISMA pareja repita la misma variante dos veces
+// seguidas ya es bajo, y no se justificaba una tabla nueva para eso.
 export async function generarConIAAction(
-  feature: CreditFeature,
+  feature: GenericCreditFeature,
   context: Omit<ContextInput, 'rachaActual'>
 ): Promise<GenerarConIAResult> {
   const supabase = await createClient()
@@ -55,12 +64,14 @@ export async function generarConIAAction(
 
   const intensidad = await getIntensidadMaximaAction()
   const tags = buildContextTags({ ...context, rachaActual })
+  const variant = Math.floor(Math.random() * CACHE_VARIANTS)
 
   const { data: cached } = await supabase
     .from('ai_content_cache')
     .select('id, output, hits')
     .eq('feature', feature)
     .eq('context_key', tags)
+    .eq('variant', variant)
     .maybeSingle()
 
   const cobrado = await consumeCreditsAction(feature)
@@ -133,7 +144,7 @@ export async function generarConIAAction(
   // ya existe el contenido cacheado, no hace falta reintentar nada.
   const { error: cacheError } = await supabase
     .from('ai_content_cache')
-    .insert({ feature, context_key: tags, model: AI_MODEL_BY_TIER[feature], output: content })
+    .insert({ feature, context_key: tags, variant, model: AI_MODEL_BY_TIER[feature], output: content })
   if (cacheError && cacheError.code !== '23505') {
     console.error('[ritual-ia] No se pudo cachear el contenido:', cacheError)
   }

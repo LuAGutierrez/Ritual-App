@@ -18,16 +18,21 @@
 
 Los archivos en `docs/archivo-anterior/` corresponden a la versión HTML/vanilla JS del proyecto, previa a la migración a Next.js. Se conservan como referencia histórica.
 
-## Estado actual (17 de agosto de 2026)
+## Estado actual (16 de septiembre de 2026)
 
-- Sprint 1 (Core) y Sprint 2 (Engagement) completados.
-- Sprint 3 (Monetización): **Mercado Pago en producción real** (no sandbox) — `MP_BACK_URL` apunta a
-  `rituales.site`, `MP_ACCESS_TOKEN` es un token de producción, el checkout de `/precios` procesa
-  cobros reales.
-- Registro por email/contraseña y Google Sign-In con branding "Rituales" funcionando correctamente
-  para cualquier usuario (antes rotos por falta de dominio propio verificado en Resend y en Google
-  Brand Verification respectivamente — ambos resueltos esta sesión, ver `DEUDA-TECNICA.md`).
+- Sprint 1 (Core) y Sprint 2 (Engagement): completados.
+- Sprint 3 (Monetización, Mercado Pago con suscripción mensual): **retirada** — reemplazada por el
+  Sprint 5 (sistema de créditos). Se deja como registro histórico en `ROADMAP.md`.
+- Sprint 4 (IA e insights): completo (15/09) — Verdad o Reto con IA (Groq, tab picante), Ritual con
+  IA (`/ritual-ia`, pago con créditos), insights emocionales semanales en `/perfil`.
+- Sprint 5 (sistema de créditos): completo y en producción (14/09) — reemplaza la suscripción de
+  Mercado Pago por un pozo de créditos compartido por pareja (pago único vía Checkout Pro), con
+  anti-farmeo por device fingerprint. Es la única monetización activa.
 - Juegos: 6 juegos (Elección, Esto o Aquello, ¿Cuánto me conoces?, ¿Quién de los dos?, Verdad o Reto,
-  Ruleta Picante) con metadata rica, techo de intensidad configurable, variedad y categoría preferida
-  "pegajosa", sistema de Momentos, e historial combinado dentro de `/historial`.
+  Ruleta Picante) con metadata rica, techo de intensidad configurable, sistema de Momentos, e
+  historial combinado dentro de `/historial`.
+- Registro por email/contraseña y Google Sign-In con branding "Rituales" funcionando correctamente
+  para cualquier usuario.
+- Backlog reciente sin sprint asignado (15-16/09): cambiar el ritual del día, modo offline simple,
+  sistema de referidos ("invitá a un amigo", incluye Google OAuth).
 - Ver `ROADMAP.md` para el detalle punto por punto.

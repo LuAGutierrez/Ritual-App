@@ -9,13 +9,14 @@ export async function getConocesPageDataAction(): Promise<{
   context: UserContext
   round: ConocesRound | null
   stats: ConocesStats | null
+  insight: string | null
 } | null> {
   const supabase = await createClient()
   const { data, error } = await supabase.rpc('get_conoces_page_data')
 
   if (error || !data) return null
 
-  return data as { context: UserContext; round: ConocesRound | null; stats: ConocesStats | null }
+  return data as { context: UserContext; round: ConocesRound | null; stats: ConocesStats | null; insight: string | null }
 }
 
 // Probabilidad del evento especial "Cambio de Roles": en vez de
