@@ -12,10 +12,13 @@ import { getPicanteHabilitadoAction, habilitarPicanteAction } from '@/app/action
 import { useDobleONada } from '@/lib/hooks/useDobleONada'
 import { getCategoriaPreferida } from '@/lib/categoriaPreferida'
 import type { EstoAquelloRound, MatchStats, UserContext } from '@/types'
+import type { Intensidad as Techo } from '@/lib/intensidad'
 import PageLoader from '@/components/PageLoader'
 import PicanteConsentGate from '@/components/PicanteConsentGate'
+import ChipGroup from '@/components/ChipGroup'
 
 type Intensidad = 'normal' | 'picante'
+const TECHOS = ['Liviana', 'Media', 'Intensa'] as const
 
 export default function EstoOAquelloPage() {
   const router = useRouter()
@@ -31,6 +34,7 @@ export default function EstoOAquelloPage() {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [intensidad, setIntensidad] = useState<Intensidad>('normal')
+  const [techoLabel, setTechoLabel] = useState<(typeof TECHOS)[number]>('Intensa')
   const [picanteHabilitado, setPicanteHabilitado] = useState(false)
   const [mostrarConsentimiento, setMostrarConsentimiento] = useState(false)
   const [copiedInvite, setCopiedInvite] = useState(false)
@@ -105,7 +109,8 @@ export default function EstoOAquelloPage() {
     if (!ctx?.couple) return
     setStarting(true)
     setError(null)
-    const nuevo = await startEstoAquelloRoundAction(ctx.couple.id, intensidad, vistosRef.current, getCategoriaPreferida())
+    const techo = techoLabel.toLowerCase() as Techo
+    const nuevo = await startEstoAquelloRoundAction(ctx.couple.id, intensidad, techo, vistosRef.current, getCategoriaPreferida())
     if (!nuevo) {
       setError('No se pudo empezar la ronda. Intentá de nuevo.')
     } else {
@@ -264,6 +269,9 @@ export default function EstoOAquelloPage() {
                 <p className="text-ritual-muted font-body text-sm leading-relaxed">
                   Cada uno elige en secreto. Después ven si coincidieron.
                 </p>
+                <div className="text-left">
+                  <ChipGroup label="Intensidad" opciones={TECHOS} valor={techoLabel} onChange={setTechoLabel} />
+                </div>
                 <button
                   onClick={() => empezarRonda(false)}
                   disabled={starting}

@@ -2,13 +2,13 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { consumeCreditsAction, refundCreditsAction } from './credits'
-import { getIntensidadMaximaAction } from './perfil-preferencias'
 import { getAIProvider, AI_MODEL_BY_TIER } from '@/lib/ai/provider'
 import { buildContextTags, type ContextInput } from '@/lib/ai/context'
 import { buildCreditFeatureSystemPrompt } from '@/lib/ai/prompts-creditos'
 import { CREDIT_COST, type GenericCreditFeature } from '@/lib/credits'
 import { notifyPartnerCreditsSpent } from '@/lib/push/notify'
 import { parseContenido, type IAGeneratedContent } from '@/lib/ai/parse-generated-content'
+import type { Intensidad } from '@/lib/intensidad'
 
 export type GenerarConIAResult =
   | { ok: true; content: IAGeneratedContent; balance: number; fromCache: boolean }
@@ -62,7 +62,12 @@ export async function generarConIAAction(
     rachaActual = streak?.current_streak ?? 0
   }
 
-  const intensidad = await getIntensidadMaximaAction()
+  // Antes leía couples.intensidad_maxima (configurado en /perfil) --
+  // ese mecanismo se sacó (17/09/2026, ver docs/DECISIONES.md): casi
+  // ninguna pareja real lo tocaba, así que en la práctica siempre daba
+  // 'intensa'. El chip "Objetivo" (Risas/Conexión/Deseo/Sorpresa) ya
+  // cubre buena parte de ese mismo eje para esta feature puntual.
+  const intensidad: Intensidad = 'intensa'
   const tags = buildContextTags({ ...context, rachaActual })
   const variant = Math.floor(Math.random() * CACHE_VARIANTS)
 

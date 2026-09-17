@@ -5,6 +5,7 @@ import { useState } from 'react'
 import BottomNav from '@/components/BottomNav'
 import CreditsBadge from '@/components/CreditsBadge'
 import PageLoader from '@/components/PageLoader'
+import ChipGroup from '@/components/ChipGroup'
 import { generarConIAAction } from '@/app/actions/ritual-ia'
 import { useCredits, notifyCreditsChanged } from '@/hooks/useCredits'
 import { CREDIT_FEATURES, type GenericCreditFeature } from '@/lib/credits'
@@ -163,39 +164,6 @@ export default function RitualIAPage() {
       </main>
 
       <BottomNav />
-    </div>
-  )
-}
-
-function ChipGroup<T extends string>({
-  label,
-  opciones,
-  valor,
-  onChange,
-}: {
-  label: string
-  opciones: readonly T[]
-  valor: T
-  onChange: (v: T) => void
-}) {
-  return (
-    <div className="space-y-2">
-      <p className="text-ritual-muted text-[11px] font-body uppercase tracking-wider">{label}</p>
-      <div className="flex flex-wrap gap-2">
-        {opciones.map(op => (
-          <button
-            key={op}
-            onClick={() => onChange(op)}
-            className={`px-3.5 py-2 rounded-full border text-xs font-body transition-all ${
-              valor === op
-                ? 'bg-ritual-gold text-ritual-bg border-ritual-gold'
-                : 'bg-ritual-bg-soft border-white/10 text-ritual-muted hover:border-white/20'
-            }`}
-          >
-            {op}
-          </button>
-        ))}
-      </div>
     </div>
   )
 }

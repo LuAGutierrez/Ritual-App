@@ -5,10 +5,12 @@ import { useRouter } from 'next/navigation'
 import { getRuletaPicanteItemsAction } from '@/app/actions/ruleta-picante'
 import { logContenidoRechazadoAction, getRechazadosAction } from '@/app/actions/contenido-rechazado'
 import { logRondaJugadaAction, getUltimaCategoriaRondaAction } from '@/app/actions/rondas-jugadas'
-import { getIntensidadMaximaAction } from '@/app/actions/perfil-preferencias'
 import { dentroDelTecho, type Intensidad } from '@/lib/intensidad'
 import { getCategoriaPreferida } from '@/lib/categoriaPreferida'
 import type { RuletaPicanteItem } from '@/types'
+import ChipGroup from '@/components/ChipGroup'
+
+const TECHOS = ['Liviana', 'Media', 'Intensa'] as const
 
 function pickIndex(total: number, vistos: Set<number>): number {
   const disponibles = Array.from({ length: total }, (_, i) => i).filter(i => !vistos.has(i))
@@ -24,25 +26,28 @@ export default function RuletaPicantePage() {
   const [vistos, setVistos] = useState<Set<number>>(new Set())
   const [items, setItems] = useState<RuletaPicanteItem[]>([])
   const [rechazados, setRechazados] = useState<Set<string>>(new Set())
-  const [intensidadMaxima, setIntensidadMaxima] = useState<Intensidad>('intensa')
+  const [techoLabel, setTechoLabel] = useState<(typeof TECHOS)[number]>('Intensa')
   const ultimaCategoriaRef = useRef<string | null>(null)
 
   useEffect(() => {
     getRuletaPicanteItemsAction().then(setItems)
     getRechazadosAction('ruleta_picante').then(ids => setRechazados(new Set(ids)))
-    getIntensidadMaximaAction().then(setIntensidadMaxima)
     getUltimaCategoriaRondaAction('ruleta_picante').then(c => { ultimaCategoriaRef.current = c })
   }, [])
+
+  const techo = techoLabel.toLowerCase() as Intensidad
 
   // Evita repetir lo que ya pasaron -- pero si eso deja muy pocas
   // opciones (el pool es chico, 12 en total), se prioriza variedad y
   // se gira sobre la lista completa. Después aplica el techo de
-  // intensidad de la pareja y evita repetir la categoría del último
-  // giro, con el mismo criterio de fallback si quedan pocas opciones.
+  // intensidad elegido en esta misma pantalla (antes vivía en /perfil,
+  // migración 038 -- se sacó el 17/09/2026, ver docs/DECISIONES.md) y
+  // evita repetir la categoría del último giro, con el mismo criterio
+  // de fallback si quedan pocas opciones.
   const itemsDisponibles = (() => {
     const sinRechazados = items.filter(item => !rechazados.has(item.id))
     const porRechazo = sinRechazados.length >= 3 ? sinRechazados : items
-    const porTecho = porRechazo.filter(item => dentroDelTecho(item.intensidad, intensidadMaxima))
+    const porTecho = porRechazo.filter(item => dentroDelTecho(item.intensidad, techo))
     const porTechoFinal = porTecho.length >= 3 ? porTecho : porRechazo
     const porVariedad = ultimaCategoriaRef.current
       ? (() => {
@@ -126,15 +131,18 @@ export default function RuletaPicantePage() {
 
       <main className="flex-1 px-5 pb-28 flex flex-col justify-center max-w-md mx-auto w-full">
         {!promptItem ? (
-          <div className="text-center animate-fade-up">
-            <button
-              onClick={girar}
-              disabled={items.length === 0}
-              className="w-full bg-[#D4A5A5]/10 border border-[#D4A5A5]/30 rounded-3xl py-16 hover:border-[#D4A5A5]/50 transition-all disabled:opacity-50"
-            >
-              <span className="text-4xl">🎡</span>
-              <p className="font-display text-xl text-ritual-cream mt-4">Tocá para girar</p>
-            </button>
+          <div className="space-y-6 animate-fade-up">
+            <ChipGroup label="Intensidad" opciones={TECHOS} valor={techoLabel} onChange={setTechoLabel} />
+            <div className="text-center">
+              <button
+                onClick={girar}
+                disabled={items.length === 0}
+                className="w-full bg-[#D4A5A5]/10 border border-[#D4A5A5]/30 rounded-3xl py-16 hover:border-[#D4A5A5]/50 transition-all disabled:opacity-50"
+              >
+                <span className="text-4xl">🎡</span>
+                <p className="font-display text-xl text-ritual-cream mt-4">Tocá para girar</p>
+              </button>
+            </div>
           </div>
         ) : (
           <div className="space-y-6 animate-fade-up">

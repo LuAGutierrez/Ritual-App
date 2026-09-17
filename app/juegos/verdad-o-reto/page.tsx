@@ -4,7 +4,6 @@ import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { getVerdadORetoItemsAction } from '@/app/actions/verdad-o-reto'
 import { getPicanteHabilitadoAction, habilitarPicanteAction } from '@/app/actions/picante-consent'
-import { getIntensidadMaximaAction } from '@/app/actions/perfil-preferencias'
 import { logContenidoRechazadoAction, getRechazadosAction } from '@/app/actions/contenido-rechazado'
 import { logRondaJugadaAction, getUltimaCategoriaRondaAction } from '@/app/actions/rondas-jugadas'
 import { registrarRetoDobleCompletadoAction } from '@/app/actions/momentos'
@@ -14,9 +13,11 @@ import { dentroDelTecho, type Intensidad as Techo } from '@/lib/intensidad'
 import type { VerdadORetoItem } from '@/types'
 import PicanteConsentGate from '@/components/PicanteConsentGate'
 import PageLoader from '@/components/PageLoader'
+import ChipGroup from '@/components/ChipGroup'
 
 type Modo = 'verdad' | 'reto'
 type Intensidad = 'normal' | 'picante'
+const TECHOS = ['Liviana', 'Media', 'Intensa'] as const
 
 function pickIndex(list: VerdadORetoItem[], vistos: Set<number>): number {
   const disponibles = list.map((_, i) => i).filter(i => !vistos.has(i))
@@ -36,14 +37,15 @@ export default function VerdadORetoPage() {
   const [picanteHabilitado, setPicanteHabilitado] = useState(false)
   const [mostrarConsentimiento, setMostrarConsentimiento] = useState(false)
   const [retoDobleExtra, setRetoDobleExtra] = useState<VerdadORetoItem | null>(null)
-  const [intensidadMaxima, setIntensidadMaxima] = useState<Techo>('intensa')
+  const [techoLabel, setTechoLabel] = useState<(typeof TECHOS)[number]>('Intensa')
   const [generandoIA, setGenerandoIA] = useState(false)
   const [errorIA, setErrorIA] = useState<string | null>(null)
   const ultimaCategoriaRef = useRef<string | null>(null)
 
+  const techo = techoLabel.toLowerCase() as Techo
+
   useEffect(() => {
     getPicanteHabilitadoAction().then(setPicanteHabilitado)
-    getIntensidadMaximaAction().then(setIntensidadMaxima)
     getVerdadORetoItemsAction().then(data => {
       setItems(data)
       setLoading(false)
@@ -53,15 +55,16 @@ export default function VerdadORetoPage() {
   }, [])
 
   // Evita repetir lo que ya pasaron, respeta el techo de intensidad
-  // elegido por la pareja (/perfil, migración 038) y prefiere variedad
-  // de categoría respecto de la última mostrada en la sesión -- en ese
-  // orden, cada filtro con el mismo criterio de fallback: si deja muy
-  // pocas opciones, se ignora y se usa el pool anterior.
+  // elegido en esta misma pantalla (antes vivía en /perfil, migración
+  // 038 -- se sacó el 17/09/2026, ver docs/DECISIONES.md) y prefiere
+  // variedad de categoría respecto de la última mostrada en la sesión
+  // -- en ese orden, cada filtro con el mismo criterio de fallback: si
+  // deja muy pocas opciones, se ignora y se usa el pool anterior.
   function listaFiltrada(m: Modo, ints: Intensidad): VerdadORetoItem[] {
     const base = items.filter(item => item.modo === m && (ints === 'picante' ? item.picante : !item.picante))
     const sinRechazados = base.filter(item => !rechazados.has(item.id))
     const porRechazo = sinRechazados.length >= 3 ? sinRechazados : base
-    const porTecho = porRechazo.filter(item => dentroDelTecho(item.intensidad as Techo, intensidadMaxima))
+    const porTecho = porRechazo.filter(item => dentroDelTecho(item.intensidad as Techo, techo))
     const porTechoFinal = porTecho.length >= 3 ? porTecho : porRechazo
     const porVariedad = ultimaCategoriaRef.current
       ? (() => {
@@ -169,7 +172,7 @@ export default function VerdadORetoPage() {
     if (!modo) return
     setGenerandoIA(true)
     setErrorIA(null)
-    const resultado = await generarVerdadORetoConIAAction(modo, intensidadMaxima)
+    const resultado = await generarVerdadORetoConIAAction(modo, techo)
     setGenerandoIA(false)
     if (!resultado.ok) {
       setErrorIA(resultado.error)
@@ -256,21 +259,24 @@ export default function VerdadORetoPage() {
             onCancelar={() => setMostrarConsentimiento(false)}
           />
         ) : !modo ? (
-          <div className="grid grid-cols-2 gap-4 animate-fade-up">
-            <button
-              onClick={() => jugar('verdad')}
-              className="bg-ritual-bg-soft border border-ritual-gold/30 rounded-3xl py-10 flex flex-col items-center gap-2 hover:border-ritual-gold/50 transition-all"
-            >
-              <span className="text-3xl">💬</span>
-              <span className="font-display text-lg text-ritual-cream">Verdad</span>
-            </button>
-            <button
-              onClick={() => jugar('reto')}
-              className="bg-ritual-bg-soft border border-white/10 rounded-3xl py-10 flex flex-col items-center gap-2 hover:border-white/20 transition-all"
-            >
-              <span className="text-3xl">🔥</span>
-              <span className="font-display text-lg text-ritual-cream">Reto</span>
-            </button>
+          <div className="space-y-6 animate-fade-up">
+            <ChipGroup label="Intensidad" opciones={TECHOS} valor={techoLabel} onChange={setTechoLabel} />
+            <div className="grid grid-cols-2 gap-4">
+              <button
+                onClick={() => jugar('verdad')}
+                className="bg-ritual-bg-soft border border-ritual-gold/30 rounded-3xl py-10 flex flex-col items-center gap-2 hover:border-ritual-gold/50 transition-all"
+              >
+                <span className="text-3xl">💬</span>
+                <span className="font-display text-lg text-ritual-cream">Verdad</span>
+              </button>
+              <button
+                onClick={() => jugar('reto')}
+                className="bg-ritual-bg-soft border border-white/10 rounded-3xl py-10 flex flex-col items-center gap-2 hover:border-white/20 transition-all"
+              >
+                <span className="text-3xl">🔥</span>
+                <span className="font-display text-lg text-ritual-cream">Reto</span>
+              </button>
+            </div>
           </div>
         ) : (
           <div className="animate-fade-up space-y-6">

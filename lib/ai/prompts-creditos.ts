@@ -1,4 +1,4 @@
-import { buildGameSystemPrompt } from './prompts'
+import { buildGameSystemPrompt, buildNeutralSystemPrompt } from './prompts'
 import type { Intensidad } from '@/lib/intensidad'
 import type { GenericCreditFeature } from '@/lib/credits'
 
@@ -41,8 +41,15 @@ No agregues campos. No agregues explicación. Solo el JSON.
 // comentando un acierto/desacuerdo puntual, no contenido nuevo para jugar.
 // Sin nombres reales (mismo criterio de privacidad que ritual-ia.ts): se
 // etiqueta a la pareja como "Persona A" / "Persona B".
+//
+// A propósito NO usa buildGameSystemPrompt/intensidad -- conoces_items
+// siempre tiene picante=false (ver app/actions/conoces.ts), así que este
+// insight no debe sonar romántico/sensorial ni aunque la pareja tenga
+// couples.intensidad_maxima en 'intensa' (eso describe qué tan picante
+// puede ser un JUEGO, no el tono de un comentario analítico). Usa
+// buildNeutralSystemPrompt, que mantiene el guardrail de seguridad de
+// contenido pero sin la guía de tono por intensidad.
 export function buildConocesInsightSystemPrompt(
-  intensidad: Intensidad,
   pregunta: string,
   respuestaSujeto: string,
   respuestaAdivinador: string,
@@ -57,9 +64,13 @@ Persona A respondió: "${respuestaSujeto}"
 Persona B adivinó: "${respuestaAdivinador}"
 Resultado: ${acerto ? 'Persona B acertó' : 'Persona B no acertó'}
 
-Escribí un comentario breve, cálido y liviano sobre lo que este resultado puede decir de la
-pareja -- no expliques el juego ni repitas la pregunta, andá directo a la reflexión. No suena a
-diagnóstico psicológico ni es solemne, es un comentario de complicidad.
+Tono: cálido y liviano, pero NO romántico ni sensorial -- pensalo como el comentario de une amigue
+perspicaz mirando desde afuera, no como una línea de seducción ni de pareja. Nada de "deseo",
+"conexión íntima" ni lenguaje sensorial. Podés ser gracioso, curioso u observador.
+
+Escribí un comentario breve sobre lo que este resultado puede decir de qué tan bien se conocen --
+no expliques el juego ni repitas la pregunta, andá directo a la reflexión. No suena a diagnóstico
+psicológico ni es solemne.
 
 Devolvé SOLO un JSON con este schema exacto, sin texto fuera del JSON:
 {"insight": "string, máx 45 palabras"}
@@ -67,5 +78,5 @@ Devolvé SOLO un JSON con este schema exacto, sin texto fuera del JSON:
 No agregues campos. No agregues explicación. Solo el JSON.
 `.trim()
 
-  return buildGameSystemPrompt(intensidad, featurePrompt)
+  return buildNeutralSystemPrompt(featurePrompt)
 }

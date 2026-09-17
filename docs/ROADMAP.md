@@ -134,8 +134,14 @@ intensidad, variedad, detección de "Momentos" y personalización por categoría
 
 ### Metadata, progresión y variedad
 - [x] Metadata rica (`intensidad`, `categoria`) en el contenido de los 6 juegos (migración `037`)
-- [x] **Techo de intensidad por pareja**: `couples.intensidad_maxima` (`liviana`/`media`/`intensa`, default `intensa`), configurable desde `/perfil`, filtra el contenido elegible en los 6 juegos (`lib/intensidad.ts`, migración `038`)
-- [x] **Sugerencia de subir el techo**: si `intensidad_maxima = 'liviana'` y la pareja ya jugó 10+ rondas, `/perfil` sugiere probar Media (sin schema nuevo, reusa datos ya cargados)
+- [x] **Techo de intensidad por juego** (`liviana`/`media`/`intensa`, default `intensa`), elegido con
+      chips en la propia pantalla de cada uno de los 6 juegos, filtra el contenido elegible
+      (`lib/intensidad.ts`). Originalmente vivía como `couples.intensidad_maxima` configurable desde
+      `/perfil` (migración `038`) — revertido el 17/09/2026 porque casi nadie entraba a `/perfil` a
+      configurarlo antes de jugar. Ver `docs/DECISIONES.md`.
+- ~~**Sugerencia de subir el techo**: si `intensidad_maxima = 'liviana'` y la pareja ya jugó 10+
+  rondas, `/perfil` sugiere probar Media~~ retirado junto con el punto anterior (17/09/2026): sin un
+  techo persistido por pareja, no hay "sugerencia" que dar.
 - [x] Variedad por categoría: evita repetir la última categoría jugada dentro de la sesión (con fallback si el filtro deja <3 opciones), mismo patrón replicado en los 6 juegos
 - [~] **Categoría preferida "pegajosa"**: se construyó (chips en el hub `/juegos`, sessionStorage vía `lib/categoriaPreferida.ts`, filtro en los 6 juegos) pero **los chips se sacaron de la UI el 17/08** — decisión de producto: darle al usuario la opción de elegir categoría hace que se enfoque solo en esa, en contra del espíritu de variedad/sorpresa de los juegos. El mecanismo (`lib/categoriaPreferida.ts` y el parámetro `categoriaPreferida` en las 6 acciones) queda intacto sin UI que lo dispare — sin chips, `getCategoriaPreferida()` siempre devuelve `null`, así que la cadena de selección de contenido queda funcionando solo con techo de intensidad + variedad. Ver `docs/DECISIONES.md`.
 - [x] Rondas de Verdad o Reto y Ruleta Picante registradas server-side (`couple_rondas_jugadas`, migración `040`) — antes no sumaban al nivel de progresión emocional ni persistían variedad entre sesiones
@@ -174,6 +180,12 @@ acierto/desacuerdo de esa ronda puntual.
   resto de las features de IA — no se manda quién es quién a Groq.
 - [x] `¿Quién de los dos?` queda como candidato natural para el mismo patrón después — no se tocó en
   este cambio a propósito, para no meter dos features nuevas juntas.
+- [x] Ajuste de tono (mismo día): el insight salía "romántico" con `couples.intensidad_maxima =
+  'intensa'` porque heredaba `GUIA_POR_INTENSIDAD` (guía de tono sensorial de `lib/ai/prompts.ts`,
+  pensada para los juegos picantes) aunque `conoces_items` nunca es picante. Se agregó
+  `buildNeutralSystemPrompt()` (mismo guardrail de seguridad, sin la guía romántica) y
+  `buildConocesInsightSystemPrompt` ya no recibe `intensidad` -- el insight suena igual sin
+  importar el techo de intensidad configurado.
 
 **Bug encontrado y corregido de paso**: probando `ritual_profundo` con la misma combinación de
 ánimo/tiempo/objetivo dos veces seguidas, siempre devolvía el mismo ritual. Causa: `generarConIAAction`
@@ -443,7 +455,6 @@ app/
     couple.ts              ← Crear / unirse a pareja
     ritual.ts              ← Ritual, streak, historial, contexto de usuario
     perfil.ts              ← Perfil y estadísticas
-    perfil-preferencias.ts ← Intensidad máxima y preferencias desde /perfil
     notifications.ts       ← Preferencias de notificaciones
     subscription.ts        ← Estado de Premium
     eleccion.ts / esto-aquello.ts / conoces.ts / quien-de-los-dos.ts
@@ -465,7 +476,7 @@ lib/
     client.ts              ← Browser client (Realtime, signOut)
     server.ts              ← Server client (Server Actions, middleware)
   plans.ts                 ← Límites del plan free/premium
-  intensidad.ts            ← Filtro por techo de intensidad de la pareja
+  intensidad.ts            ← Filtro por techo de intensidad elegido por juego (chips, no persistido)
   categoriaPreferida.ts    ← Categoría "pegajosa" por sesión (sessionStorage)
   turnos.ts                ← Utilidades de turnos entre miembros de la pareja
   niveles.ts               ← Nivel de progresión emocional de la pareja (mensaje adaptativo del hub)

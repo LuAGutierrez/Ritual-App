@@ -60,7 +60,6 @@ app/
     ritual.ts               <- getUserContext, getRitualOfDay, submitResponse, streak, historial
     couple.ts               <- crearPareja, verificarInvitacion, unirseAPareja
     perfil.ts               <- getPerfilData, updatePerfil
-    perfil-preferencias.ts  <- Intensidad máxima de la pareja (couples.intensidad_maxima)
     notifications.ts        <- get/update NotificationPrefs, setPushEnabled
     subscription.ts         <- isPremium, isCouplePremium
     eleccion.ts              <- start/submit ronda de Elección
@@ -104,7 +103,7 @@ lib/
     notify.ts               <- notifyPartnerResponded, isReminderHour
     client.ts               <- Browser: suscripción push, isPushPromptDismissed
   plans.ts                  <- FREE_HISTORIAL_LIMIT, listas de features, PREMIUM_PRICE
-  intensidad.ts             <- Filtro de contenido por techo de intensidad de la pareja
+  intensidad.ts             <- Filtro de contenido por techo de intensidad elegido por juego (chips, efímero)
   categoriaPreferida.ts     <- Categoría "pegajosa" por sesión, sessionStorage (client-only)
   turnos.ts                 <- Utilidades para alternar turnos entre miembros de la pareja
   niveles.ts                <- Nivel de progresión emocional de la pareja (mensaje adaptativo del hub)
@@ -146,6 +145,7 @@ supabase/
     035_picante_consent.sql <- Consentimiento explícito contenido +18
     037_metadata_contenido.sql <- columnas intensidad/categoria en el contenido de los 6 juegos
     038_intensidad_maxima_pareja.sql <- couples.intensidad_maxima, couples.picante_habilitado
+                             (columna intensidad_maxima retirada en la 075, ver docs/DECISIONES.md)
     040_rondas_jugadas.sql  <- couple_rondas_jugadas (VoR/Ruleta Picante, alimenta niveles y variedad)
     041/042_momento_primera_partida_*.sql <- Momento "primera partida" para VoR y Ruleta Picante
     043_historial_juegos.sql <- get_historial_juegos(): historial combinado de los 6 juegos
@@ -231,8 +231,9 @@ notification_log
 
 -- Juegos (además de couples arriba, columnas agregadas por 038):
 couples
-  + intensidad_maxima (liviana | media | intensa, default intensa)
   + picante_habilitado (bool)
+  (intensidad_maxima existió acá, migración 038 -> retirada en la 075: el techo pasó a elegirse
+   por juego con chips, no persiste por pareja, ver docs/DECISIONES.md)
 
 couple_eleccion_rounds / couple_esto_aquello_rounds / couple_conoces_rounds / couple_quien_de_los_dos_rounds
   id, couple_id, option_a / option_b / pregunta (texto ya copiado del item, NO item_id)

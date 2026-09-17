@@ -24,6 +24,7 @@ export async function getEleccionPageDataAction(): Promise<{
 export async function startEleccionRoundAction(
   coupleId: string,
   intensidad: 'normal' | 'picante' = 'normal',
+  techo: Intensidad = 'intensa',
   excluir: string[] = [],
   categoriaPreferida: string | null = null
 ): Promise<EleccionRound | null> {
@@ -36,16 +37,11 @@ export async function startEleccionRoundAction(
 
   if (!filtrados || filtrados.length === 0) return null
 
-  // Techo de intensidad elegido por la pareja (couples.intensidad_maxima,
-  // migración 038) -- si deja muy pocas opciones, se ignora (mismo
-  // criterio de fallback que ya se usa para rechazados/vistos en todos
-  // los juegos).
-  const { data: couple } = await supabase
-    .from('couples')
-    .select('intensidad_maxima')
-    .eq('id', coupleId)
-    .single()
-  const techo = (couple?.intensidad_maxima as Intensidad) ?? 'intensa'
+  // Techo de intensidad elegido en la propia pantalla del juego (antes
+  // vivía en couples.intensidad_maxima, configurado en /perfil -- se
+  // sacó el 17/09/2026, ver docs/DECISIONES.md) -- si deja muy pocas
+  // opciones, se ignora (mismo criterio de fallback que ya se usa para
+  // rechazados/vistos en todos los juegos).
   const dentroDeTecho = filtrados.filter(p => dentroDelTecho(p.intensidad as Intensidad, techo))
   const porTecho = dentroDeTecho.length >= 3 ? dentroDeTecho : filtrados
 

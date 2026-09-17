@@ -15,7 +15,11 @@ import { CREDIT_COST } from '@/lib/credits'
 import { useDobleONada } from '@/lib/hooks/useDobleONada'
 import { getCategoriaPreferida } from '@/lib/categoriaPreferida'
 import type { ConocesRound, ConocesStats, UserContext } from '@/types'
+import type { Intensidad } from '@/lib/intensidad'
 import PageLoader from '@/components/PageLoader'
+import ChipGroup from '@/components/ChipGroup'
+
+const TECHOS = ['Liviana', 'Media', 'Intensa'] as const
 
 export default function ConocesPage() {
   const router = useRouter()
@@ -30,6 +34,7 @@ export default function ConocesPage() {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [copiedInvite, setCopiedInvite] = useState(false)
+  const [techoLabel, setTechoLabel] = useState<(typeof TECHOS)[number]>('Intensa')
   const vistosRef = useRef<string[]>([])
   const roundIdRef = useRef<string | undefined>(undefined)
 
@@ -117,7 +122,8 @@ export default function ConocesPage() {
     if (!ctx?.couple) return
     setStarting(true)
     setError(null)
-    const nuevo = await startConocesRoundAction(ctx.couple.id, vistosRef.current, getCategoriaPreferida())
+    const techo = techoLabel.toLowerCase() as Intensidad
+    const nuevo = await startConocesRoundAction(ctx.couple.id, techo, vistosRef.current, getCategoriaPreferida())
     if (!nuevo) {
       setError('No se pudo empezar la ronda. Intentá de nuevo.')
     } else {
@@ -287,6 +293,9 @@ export default function ConocesPage() {
               <p className="text-ritual-muted font-body text-sm leading-relaxed">
                 Cada ronda, uno responde algo sobre sí mismo y el otro adivina en secreto. Se turnan solos, ronda a ronda.
               </p>
+            </div>
+            <div className="text-left">
+              <ChipGroup label="Intensidad" opciones={TECHOS} valor={techoLabel} onChange={setTechoLabel} />
             </div>
             <button
               onClick={() => empezarRonda(false)}

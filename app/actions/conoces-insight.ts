@@ -2,7 +2,6 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { consumeCreditsAction, refundCreditsAction } from './credits'
-import { getIntensidadMaximaAction } from './perfil-preferencias'
 import { getAIProvider, AI_MODEL_BY_TIER } from '@/lib/ai/provider'
 import { buildConocesInsightSystemPrompt } from '@/lib/ai/prompts-creditos'
 import { parseConocesInsight } from '@/lib/ai/parse-generated-content'
@@ -70,10 +69,8 @@ export async function generarConocesInsightAction(roundId: string): Promise<Gene
     await notifyPartnerCreditsSpent(partner.user_id, CREDIT_COST.conoces_insight, cobrado.balance)
   }
 
-  const intensidad = await getIntensidadMaximaAction()
   const opciones = round.opciones as string[]
   const systemPrompt = buildConocesInsightSystemPrompt(
-    intensidad,
     round.pregunta as string,
     opciones[round.subject_choice as number],
     opciones[round.guesser_choice as number],

@@ -176,7 +176,11 @@ El modelo `user1_id / user2_id` en `couple_ritual_sessions` asume exactamente 2 
 **Solución** (no hecha, deliberadamente fuera de la pasada de agosto 2026): ampliar las 4 tablas con `item_id`/`categoria`, tocando los 4 `submit_*_choice` (`SECURITY DEFINER`) + backfill. Beneficio marginal frente al costo, se dejó documentado como límite conocido.
 
 ### Sin tracking de intensidad por ronda jugada
-No existe ningún lugar que registre qué intensidad tuvo cada ronda individual (solo el techo máximo configurado por la pareja, `couples.intensidad_maxima`). "Sugerir subir el techo" en `/perfil` usa una señal más simple ya disponible (`totalJuegos >= 10` con techo en `liviana`) en vez de "cuántas rondas jugaron ya en Liviana", que requeriría este tracking.
+Desde el 17/09/2026 el techo de intensidad se elige por juego, en la propia pantalla, en vez de un
+valor único configurado en `/perfil` (ver `docs/DECISIONES.md`) — pero esa elección no se persiste
+en ningún lado: no queda guardada en `couple_eleccion_rounds`/`couple_esto_aquello_rounds`/etc, así
+que el historial no puede mostrar con qué techo se jugó cada ronda pasada, y no hay forma de sugerir
+nada del estilo "veníamos jugando siempre en Liviana" sin agregar esa columna.
 
 ### Momento "nueva categoría descubierta" no implementado
 De los tipos de Momento posibles, se implementaron sorpresa, reto doble, gran desacuerdo y primera partida (VoR/Ruleta Picante) — un Momento por "la pareja probó una categoría que nunca había jugado" quedó deliberadamente fuera, sin fecha planeada.

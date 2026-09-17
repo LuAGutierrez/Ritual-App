@@ -11,10 +11,13 @@ import {
 import { getPicanteHabilitadoAction, habilitarPicanteAction } from '@/app/actions/picante-consent'
 import { getCategoriaPreferida } from '@/lib/categoriaPreferida'
 import type { QuienDeLosDosRound, MatchStats, UserContext } from '@/types'
+import type { Intensidad as Techo } from '@/lib/intensidad'
 import PageLoader from '@/components/PageLoader'
 import PicanteConsentGate from '@/components/PicanteConsentGate'
+import ChipGroup from '@/components/ChipGroup'
 
 type Intensidad = 'normal' | 'picante'
+const TECHOS = ['Liviana', 'Media', 'Intensa'] as const
 
 // Evento especial "Todos los Ojos": puro encuadre, sin cambiar la
 // mecánica (que ya es "ambos eligen y se revela junto"). Se deriva
@@ -41,6 +44,7 @@ export default function QuienDeLosDosPage() {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [intensidad, setIntensidad] = useState<Intensidad>('normal')
+  const [techoLabel, setTechoLabel] = useState<(typeof TECHOS)[number]>('Intensa')
   const [picanteHabilitado, setPicanteHabilitado] = useState(false)
   const [mostrarConsentimiento, setMostrarConsentimiento] = useState(false)
   const [copiedInvite, setCopiedInvite] = useState(false)
@@ -117,7 +121,8 @@ export default function QuienDeLosDosPage() {
     if (!ctx?.couple) return
     setStarting(true)
     setError(null)
-    const nuevo = await startQuienDeLosDosRoundAction(ctx.couple.id, intensidad, vistosRef.current, getCategoriaPreferida())
+    const techo = techoLabel.toLowerCase() as Techo
+    const nuevo = await startQuienDeLosDosRoundAction(ctx.couple.id, intensidad, techo, vistosRef.current, getCategoriaPreferida())
     if (!nuevo) {
       setError('No se pudo empezar la ronda. Intentá de nuevo.')
     } else {
@@ -277,6 +282,9 @@ export default function QuienDeLosDosPage() {
                 <p className="text-ritual-muted font-body text-sm leading-relaxed">
                   Una pregunta comparativa. Cada uno elige en secreto quién cree que es. Si coinciden, se conocen bien.
                 </p>
+                <div className="text-left">
+                  <ChipGroup label="Intensidad" opciones={TECHOS} valor={techoLabel} onChange={setTechoLabel} />
+                </div>
                 <button
                   onClick={empezarRonda}
                   disabled={starting}

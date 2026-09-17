@@ -31,6 +31,7 @@ const PROBABILIDAD_CAMBIO_DE_ROLES = 0.2
 // mira el actor real de la última ronda, no un conteo.
 export async function startConocesRoundAction(
   coupleId: string,
+  techo: Intensidad = 'intensa',
   excluir: string[] = [],
   categoriaPreferida: string | null = null
 ): Promise<ConocesRound | null> {
@@ -43,12 +44,8 @@ export async function startConocesRoundAction(
 
   if (!items || items.length === 0) return null
 
-  const { data: couple } = await supabase
-    .from('couples')
-    .select('intensidad_maxima')
-    .eq('id', coupleId)
-    .single()
-  const techo = (couple?.intensidad_maxima as Intensidad) ?? 'intensa'
+  // Techo elegido en la propia pantalla del juego -- ver comentario en
+  // app/actions/eleccion.ts.
   const dentroDeTecho = items.filter(i => dentroDelTecho(i.intensidad as Intensidad, techo))
   const porTecho = dentroDeTecho.length >= 3 ? dentroDeTecho : items
 

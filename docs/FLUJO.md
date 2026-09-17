@@ -179,9 +179,10 @@ Se repite igual en Elección, Esto o Aquello, ¿Cuánto me conoces?, ¿Quién de
 Verdad o Reto y Ruleta Picante — solo cambia dónde vive el filtro (server action para los primeros 4,
 client-side para VoR/Ruleta que ya cargan su lista completa):
 
-  1. Techo de intensidad: descarta items con intensidad > couples.intensidad_maxima
-     (lib/intensidad.ts) — si el filtro deja 0 opciones, se relaja (no debería pasar salvo
-     catálogo muy chico)
+  1. Techo de intensidad: descarta items con intensidad > el techo elegido con chips en la propia
+     pantalla del juego (lib/intensidad.ts) — efímero por sesión, no couples.intensidad_maxima
+     (esa columna se retiró el 17/09/2026, ver docs/DECISIONES.md). Si el filtro deja 0 opciones,
+     se relaja (no debería pasar salvo catálogo muy chico)
   2. Variedad: descarta la última categoría jugada en la sesión (ultimaCategoriaRef /
      sessionStorage) — SOLO si quedan >= 3 opciones después de descartar; si no, se ignora
      este filtro (evita quedarse sin contenido)

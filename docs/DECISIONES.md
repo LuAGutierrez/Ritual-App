@@ -153,19 +153,25 @@ sin pasar por la función real no dispara el reveal — hay que invocar la funci
 
 ---
 
-## Techo de intensidad por pareja, no por ronda
+## Techo de intensidad por juego, no por pareja (revertido 17/09/2026)
 
-**Decisión**: `couples.intensidad_maxima` (`liviana`/`media`/`intensa`, default `intensa`) es un único
-valor configurable desde `/perfil` que filtra el contenido elegible en los 6 juegos, en vez de pedir
-la intensidad deseada en cada ronda.
+**Decisión actual**: el techo de intensidad (`liviana`/`media`/`intensa`) se elige con chips en la
+propia pantalla de cada uno de los 6 juegos, antes de empezar una ronda — estado de React efímero
+(no persiste en DB), arranca siempre en `Intensa` y dura mientras la pantalla esté abierta. Se borró
+`couples.intensidad_maxima` (migración `038`) y todo lo que lo leía/escribía, incluida la sección
+"Intensidad de los juegos" de `/perfil`.
 
-**Motivación**: menos fricción — la pareja lo configura una vez y no tiene que decidirlo en cada
-partida. El default es `intensa` (sin restringir) para no imponer un techo que nadie pidió.
+**Motivación**: feedback real de uso — casi ninguna pareja entraba a `/perfil` a configurar esto
+antes de jugar, así que en la práctica el default `intensa` nunca se tocaba. Es, de hecho, una
+vuelta al diseño *original*: el comentario de la migración `038` ya decía "la pareja puede elegir el
+nivel permitido **al comenzar**" — se había implementado como config de perfil por reducir fricción,
+y esa apuesta no funcionó.
 
-**Limitación conocida**: no hay tracking de qué intensidad tuvo cada ronda jugada individualmente,
-solo el techo configurado. La sugerencia de "subir el techo" en `/perfil` usa una señal más simple ya
-disponible (`totalJuegos >= 10` con techo en `liviana`) en vez de contar rondas por intensidad real,
-justamente porque ese dato no existe. Ver `docs/DEUDA-TECNICA.md`.
+**Decisión histórica (retirada)**: durante Sprint de juegos (agosto 2026) se había elegido un único
+valor configurable desde `/perfil` en vez de pedir la intensidad en cada ronda, justamente para
+evitar decidirlo en cada partida — la limitación que eso generaba (sin tracking de qué intensidad
+tuvo cada ronda individual, solo el techo configurado) quedó resuelta sola al pasar a elegirlo por
+ronda: ahora el valor elegido en la pantalla ES la intensidad de esa ronda.
 
 ---
 

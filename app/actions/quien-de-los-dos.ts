@@ -22,6 +22,7 @@ export async function getQuienDeLosDosPageDataAction(): Promise<{
 export async function startQuienDeLosDosRoundAction(
   coupleId: string,
   intensidad: 'normal' | 'picante' = 'normal',
+  techo: Intensidad = 'intensa',
   excluir: string[] = [],
   categoriaPreferida: string | null = null
 ): Promise<QuienDeLosDosRound | null> {
@@ -34,12 +35,8 @@ export async function startQuienDeLosDosRoundAction(
 
   if (!items || items.length === 0) return null
 
-  const { data: couple } = await supabase
-    .from('couples')
-    .select('intensidad_maxima')
-    .eq('id', coupleId)
-    .single()
-  const techo = (couple?.intensidad_maxima as Intensidad) ?? 'intensa'
+  // Techo elegido en la propia pantalla del juego -- ver comentario en
+  // app/actions/eleccion.ts.
   const dentroDeTecho = items.filter(i => dentroDelTecho(i.intensidad as Intensidad, techo))
   const porTecho = dentroDeTecho.length >= 3 ? dentroDeTecho : items
 

@@ -51,3 +51,16 @@ export function buildGameSystemPrompt(
     '\n\n'
   )
 }
+
+/**
+ * Mismo guardrail de seguridad de contenido que buildGameSystemPrompt, pero
+ * SIN la guía de tono romántico/sensorial por intensidad -- para features que
+ * no generan contenido de juego sino que comentan/analizan algo ya jugado
+ * (ej. el insight de "¿Cuánto me conoces?"). Esas features deben sonar igual
+ * sin importar si la pareja tiene couples.intensidad_maxima en 'intensa': ese
+ * campo describe qué tan picante puede ser un JUEGO, no el tono de un
+ * comentario analítico.
+ */
+export function buildNeutralSystemPrompt(promptDeFeature: string): string {
+  return [GUARDRAIL_COMUN, promptDeFeature.trim()].join('\n\n')
+}

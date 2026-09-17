@@ -8,7 +8,6 @@ import { salirDeParejaAction } from '@/app/actions/couple'
 import { getCoupleMomentosAction } from '@/app/actions/momentos'
 import { getJuegosStatsSummaryAction } from '@/app/actions/juegos-stats'
 import { getRondasJugadasCountAction } from '@/app/actions/rondas-jugadas'
-import { getIntensidadMaximaAction, setIntensidadMaximaAction } from '@/app/actions/perfil-preferencias'
 import { getCoupleInsightsAction, type CoupleInsights } from '@/app/actions/insights'
 import {
   getRitualesEspecialesStatusAction,
@@ -18,7 +17,6 @@ import {
 import { RITUALES_ESPECIALES_COST } from '@/lib/credits'
 import { getReferralInfoAction, type ReferralInfo } from '@/app/actions/referrals'
 import { nivelActual } from '@/lib/niveles'
-import type { Intensidad } from '@/lib/intensidad'
 import type { Momento } from '@/types'
 import NotificationPrefsSection from '@/components/NotificationPrefsSection'
 import BottomNav from '@/components/BottomNav'
@@ -111,7 +109,6 @@ export default function PerfilPage() {
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [intensidadMaxima, setIntensidadMaximaState] = useState<Intensidad>('intensa')
   const [copiedInvite, setCopiedInvite] = useState(false)
   const [confirmarSalir, setConfirmarSalir] = useState(false)
   const [saliendoDePareja, setSaliendoDePareja] = useState(false)
@@ -131,7 +128,6 @@ export default function PerfilPage() {
       setLoading(false)
     })
     getCoupleMomentosAction().then(setMomentos)
-    getIntensidadMaximaAction().then(setIntensidadMaximaState)
     getCoupleInsightsAction().then(setInsights)
     getRitualesEspecialesStatusAction().then(setRitualesEspeciales)
     getReferralInfoAction().then(setReferralInfo)
@@ -200,11 +196,6 @@ export default function PerfilPage() {
       return
     }
     router.push('/onboarding')
-  }
-
-  async function cambiarIntensidadMaxima(intensidad: Intensidad) {
-    setIntensidadMaximaState(intensidad)
-    await setIntensidadMaximaAction(intensidad)
   }
 
   async function handleDesbloquearEspeciales() {
@@ -338,44 +329,6 @@ export default function PerfilPage() {
             <p className="text-ritual-gold text-xs font-body mt-3">
               A {faltan} de llegar a {siguiente.emoji} {siguiente.nombre}
             </p>
-          )}
-        </div>
-
-        {/* Techo de intensidad -- qué tan a fondo van los juegos, aparte
-            del gate de picante que ya existe */}
-        <div className="pt-2">
-          <h2 className="text-ritual-muted text-xs font-body uppercase tracking-wider mb-3">
-            Intensidad de los juegos
-          </h2>
-          <div className="flex bg-ritual-bg-soft rounded-2xl p-1">
-            {([
-              { valor: 'liviana', emoji: '🌱', label: 'Liviana' },
-              { valor: 'media', emoji: '❤️', label: 'Media' },
-              { valor: 'intensa', emoji: '🔥', label: 'Intensa' },
-            ] as const).map(({ valor, emoji, label }) => (
-              <button
-                key={valor}
-                onClick={() => cambiarIntensidadMaxima(valor)}
-                className={`flex-1 py-2.5 rounded-xl text-sm font-body font-medium transition-all duration-300 ${
-                  intensidadMaxima === valor ? 'bg-ritual-gold text-ritual-bg' : 'text-ritual-muted hover:text-ritual-text'
-                }`}
-              >
-                {emoji} {label}
-              </button>
-            ))}
-          </div>
-          {intensidadMaxima === 'liviana' && totalJuegos >= 10 && (
-            <div className="mt-3 bg-ritual-bg-soft border border-white/8 rounded-2xl p-4 flex items-center justify-between gap-3">
-              <p className="text-ritual-muted text-xs font-body leading-relaxed">
-                Ya llevan varias rondas jugando en Liviana. ¿Probamos Media?
-              </p>
-              <button
-                onClick={() => cambiarIntensidadMaxima('media')}
-                className="shrink-0 bg-ritual-gold text-ritual-bg font-body text-xs font-medium py-2 px-3 rounded-xl hover:opacity-90 transition-all"
-              >
-                Probar Media
-              </button>
-            </div>
           )}
         </div>
 
