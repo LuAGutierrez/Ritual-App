@@ -18,7 +18,7 @@
 
 Los archivos en `docs/archivo-anterior/` corresponden a la versión HTML/vanilla JS del proyecto, previa a la migración a Next.js. Se conservan como referencia histórica.
 
-## Estado actual (16 de septiembre de 2026)
+## Estado actual (17 de septiembre de 2026)
 
 - Sprint 1 (Core) y Sprint 2 (Engagement): completados.
 - Sprint 3 (Monetización, Mercado Pago con suscripción mensual): **retirada** — reemplazada por el
@@ -29,8 +29,10 @@ Los archivos en `docs/archivo-anterior/` corresponden a la versión HTML/vanilla
   Mercado Pago por un pozo de créditos compartido por pareja (pago único vía Checkout Pro), con
   anti-farmeo por device fingerprint. Es la única monetización activa.
 - Juegos: 6 juegos (Elección, Esto o Aquello, ¿Cuánto me conoces?, ¿Quién de los dos?, Verdad o Reto,
-  Ruleta Picante) con metadata rica, techo de intensidad configurable, sistema de Momentos, e
-  historial combinado dentro de `/historial`.
+  Ruleta Picante) con metadata rica, sistema de Momentos, e historial combinado dentro de
+  `/historial`. Insight con IA post-reveal en ¿Cuánto me conoces? (16/09, 5 créditos). Techo de
+  intensidad elegido con chips en la propia pantalla de cada juego (17/09) — ya no vive como config
+  de `/perfil` (`couples.intensidad_maxima` se retiró, migración `075`), ver `docs/DECISIONES.md`.
 - Registro por email/contraseña y Google Sign-In con branding "Rituales" funcionando correctamente
   para cualquier usuario.
 - Backlog reciente sin sprint asignado (15-16/09): cambiar el ritual del día, modo offline simple,
