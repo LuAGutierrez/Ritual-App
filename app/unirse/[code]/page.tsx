@@ -18,6 +18,10 @@ export default function UnirsePareja() {
   const [joining, setJoining] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [alreadyMember, setAlreadyMember] = useState(false)
+  const [userId, setUserId] = useState<string | null>(null)
+  const [pidiendoNombre, setPidiendoNombre] = useState(false)
+  const [nombre, setNombre] = useState('')
+  const [guardandoNombre, setGuardandoNombre] = useState(false)
 
   useEffect(() => {
     async function init() {
@@ -58,12 +62,36 @@ export default function UnirsePareja() {
 
       if (result.alreadyMember) setAlreadyMember(true)
 
+      // Quien llega por link de invitación nunca pasa por /onboarding, así
+      // que si todavía no tiene nombre se lo pedimos acá antes de unirse.
+      setUserId(user.id)
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('display_name')
+        .eq('id', user.id)
+        .single()
+
+      if (!profile?.display_name) setPidiendoNombre(true)
+
       setLoading(false)
     }
 
     init()
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [code])
+
+  async function handleNombre(e: React.FormEvent) {
+    e.preventDefault()
+    if (!nombre.trim() || !userId) return
+
+    setGuardandoNombre(true)
+    await supabase
+      .from('profiles')
+      .update({ display_name: nombre.trim() })
+      .eq('id', userId)
+    setGuardandoNombre(false)
+    setPidiendoNombre(false)
+  }
 
   async function handleUnirse() {
     setJoining(true)
@@ -88,7 +116,37 @@ export default function UnirsePareja() {
     <div className="min-h-dvh bg-ritual-bg flex flex-col items-center justify-center px-6 py-12">
       <div className="w-full max-w-sm animate-fade-up text-center">
 
-        {error ? (
+        {!error && pidiendoNombre ? (
+          <>
+            <div className="mb-10">
+              <h1 className="font-display text-3xl text-ritual-cream tracking-wide mb-3">
+                Rituales
+              </h1>
+              <p className="text-ritual-muted font-body text-sm leading-relaxed">
+                Antes de empezar,<br />¿cómo te llamás?
+              </p>
+            </div>
+
+            <form onSubmit={handleNombre} className="space-y-6">
+              <input
+                type="text"
+                value={nombre}
+                onChange={e => setNombre(e.target.value)}
+                placeholder="Tu nombre o apodo"
+                required
+                autoFocus
+                className="w-full bg-ritual-bg-soft border border-white/10 rounded-2xl px-5 py-4 text-ritual-text placeholder-ritual-muted/40 font-body text-base focus:outline-none focus:border-ritual-gold/50 transition-colors text-center"
+              />
+              <button
+                type="submit"
+                disabled={!nombre.trim() || guardandoNombre}
+                className="w-full bg-ritual-gold text-ritual-bg font-body font-medium py-4 rounded-2xl transition-all duration-300 hover:bg-ritual-cream active:scale-[0.98] disabled:opacity-40"
+              >
+                Continuar
+              </button>
+            </form>
+          </>
+        ) : error ? (
           <>
             <div className="w-16 h-16 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center mx-auto mb-6">
               <span className="text-2xl">✗</span>
