@@ -200,9 +200,13 @@ function AuthForm() {
     setError(null)
     setLoading(true)
     const refParam = refCode ? `&ref=${encodeURIComponent(refCode)}` : ''
+    // Sin un redirect explícito (ej. venir de un link de invitación), mandamos
+    // a "/" en vez de directo a "/ritual": Google no llena display_name, y "/"
+    // es lo único que chequea si falta el nombre y manda a /onboarding a pedirlo.
+    const target = searchParams.get('redirect') || '/'
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: `${window.location.origin}/auth/callback?redirect=${encodeURIComponent(redirect)}${refParam}` },
+      options: { redirectTo: `${window.location.origin}/auth/callback?redirect=${encodeURIComponent(target)}${refParam}` },
     })
     if (error) {
       setError('No se pudo iniciar sesión con Google. Intentá de nuevo.')
