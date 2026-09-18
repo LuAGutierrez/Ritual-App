@@ -9,15 +9,13 @@ import { logRondaJugadaAction, getUltimaCategoriaRondaAction } from '@/app/actio
 import { registrarRetoDobleCompletadoAction } from '@/app/actions/momentos'
 import { generarVerdadORetoConIAAction } from '@/app/actions/verdad-o-reto-ia'
 import { getCategoriaPreferida } from '@/lib/categoriaPreferida'
+import { getIntensidadTab, getTecho, type IntensidadTab as Intensidad, type TechoLabel } from '@/lib/juegosConfig'
 import { dentroDelTecho, type Intensidad as Techo } from '@/lib/intensidad'
 import type { VerdadORetoItem } from '@/types'
 import PicanteConsentGate from '@/components/PicanteConsentGate'
 import PageLoader from '@/components/PageLoader'
-import ChipGroup from '@/components/ChipGroup'
 
 type Modo = 'verdad' | 'reto'
-type Intensidad = 'normal' | 'picante'
-const TECHOS = ['Liviana', 'Media', 'Intensa'] as const
 
 function pickIndex(list: VerdadORetoItem[], vistos: Set<number>): number {
   const disponibles = list.map((_, i) => i).filter(i => !vistos.has(i))
@@ -37,7 +35,7 @@ export default function VerdadORetoPage() {
   const [picanteHabilitado, setPicanteHabilitado] = useState(false)
   const [mostrarConsentimiento, setMostrarConsentimiento] = useState(false)
   const [retoDobleExtra, setRetoDobleExtra] = useState<VerdadORetoItem | null>(null)
-  const [techoLabel, setTechoLabel] = useState<(typeof TECHOS)[number]>('Intensa')
+  const [techoLabel, setTechoLabel] = useState<TechoLabel>('Intensa')
   const [generandoIA, setGenerandoIA] = useState(false)
   const [errorIA, setErrorIA] = useState<string | null>(null)
   const ultimaCategoriaRef = useRef<string | null>(null)
@@ -53,6 +51,10 @@ export default function VerdadORetoPage() {
     })
     getRechazadosAction('verdad_o_reto').then(ids => setRechazados(new Set(ids)))
     getUltimaCategoriaRondaAction('verdad_o_reto').then(c => { ultimaCategoriaRef.current = c })
+    // Normal/Picante e Intensidad ya se eligieron en /juegos, ver
+    // lib/juegosConfig.ts -- acá solo se leen.
+    setIntensidad(getIntensidadTab())
+    setTechoLabel(getTecho())
   }, [])
 
   // Evita repetir lo que ya pasaron, respeta el techo de intensidad
@@ -112,10 +114,11 @@ export default function VerdadORetoPage() {
     setRetoDobleExtra(extra)
   }
 
-  // Cada ronda se vuelve a elegir Normal/Picante y Verdad/Reto -- "Siguiente"
-  // ya no repite el mismo modo indefinidamente, vuelve a la pantalla de
-  // selección (jugar() arranca fresco: vistos se recalcula ahí, no hace
-  // falta tocarlo acá).
+  // Cada ronda se vuelve a elegir Verdad o Reto -- "Siguiente" ya no repite
+  // el mismo modo indefinidamente, vuelve a la pantalla de selección
+  // (jugar() arranca fresco: vistos se recalcula ahí, no hace falta
+  // tocarlo acá). Normal/Picante e Intensidad no se repreguntan, quedan
+  // fijos para la sesión desde /juegos (ver lib/juegosConfig.ts).
   function siguiente() {
     setModo(null)
     setPromptItem(null)
@@ -128,17 +131,6 @@ export default function VerdadORetoPage() {
   function completarRetoDoble() {
     registrarRetoDobleCompletadoAction()
     siguiente()
-  }
-
-  function cambiarIntensidad(ints: Intensidad) {
-    if (ints === 'picante' && !picanteHabilitado) {
-      setMostrarConsentimiento(true)
-      return
-    }
-    setIntensidad(ints)
-    setModo(null)
-    setRetoDobleExtra(null)
-    setVistos(new Set())
   }
 
   async function confirmarPicante() {
@@ -235,25 +227,6 @@ export default function VerdadORetoPage() {
       </header>
 
       <main className="flex-1 px-5 pb-28 flex flex-col justify-center max-w-md mx-auto w-full">
-        <div className="flex bg-ritual-bg-soft rounded-2xl p-1 mb-6">
-          <button
-            onClick={() => cambiarIntensidad('normal')}
-            className={`flex-1 py-2.5 rounded-xl text-sm font-body font-medium transition-all duration-300 ${
-              intensidad === 'normal' ? 'bg-ritual-gold text-ritual-bg' : 'text-ritual-muted hover:text-ritual-text'
-            }`}
-          >
-            Normal
-          </button>
-          <button
-            onClick={() => cambiarIntensidad('picante')}
-            className={`flex-1 py-2.5 rounded-xl text-sm font-body font-medium transition-all duration-300 ${
-              intensidad === 'picante' ? 'bg-[#D4A5A5] text-ritual-bg' : 'text-ritual-muted hover:text-ritual-text'
-            }`}
-          >
-            🔥 Picante
-          </button>
-        </div>
-
         {mostrarConsentimiento ? (
           <PicanteConsentGate
             onConfirmar={confirmarPicante}
@@ -261,7 +234,6 @@ export default function VerdadORetoPage() {
           />
         ) : !modo ? (
           <div className="space-y-6 animate-fade-up">
-            <ChipGroup label="Intensidad" opciones={TECHOS} valor={techoLabel} onChange={setTechoLabel} />
             <div className="grid grid-cols-2 gap-4">
               <button
                 onClick={() => jugar('verdad')}

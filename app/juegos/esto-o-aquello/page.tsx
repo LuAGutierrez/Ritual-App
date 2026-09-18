@@ -8,17 +8,12 @@ import {
   startEstoAquelloRoundAction,
   submitEstoAquelloChoiceAction,
 } from '@/app/actions/esto-aquello'
-import { getPicanteHabilitadoAction, habilitarPicanteAction } from '@/app/actions/picante-consent'
 import { useDobleONada } from '@/lib/hooks/useDobleONada'
 import { getCategoriaPreferida } from '@/lib/categoriaPreferida'
+import { getIntensidadTab, getTecho, type IntensidadTab as Intensidad, type TechoLabel } from '@/lib/juegosConfig'
 import type { EstoAquelloRound, MatchStats, UserContext } from '@/types'
 import type { Intensidad as Techo } from '@/lib/intensidad'
 import PageLoader from '@/components/PageLoader'
-import PicanteConsentGate from '@/components/PicanteConsentGate'
-import ChipGroup from '@/components/ChipGroup'
-
-type Intensidad = 'normal' | 'picante'
-const TECHOS = ['Liviana', 'Media', 'Intensa'] as const
 
 export default function EstoOAquelloPage() {
   const router = useRouter()
@@ -34,9 +29,7 @@ export default function EstoOAquelloPage() {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [intensidad, setIntensidad] = useState<Intensidad>('normal')
-  const [techoLabel, setTechoLabel] = useState<(typeof TECHOS)[number]>('Intensa')
-  const [picanteHabilitado, setPicanteHabilitado] = useState(false)
-  const [mostrarConsentimiento, setMostrarConsentimiento] = useState(false)
+  const [techoLabel, setTechoLabel] = useState<TechoLabel>('Intensa')
   const [copiedInvite, setCopiedInvite] = useState(false)
 
   // Pareja creada pero sin unir a nadie: startEstoAquelloRoundAction crea
@@ -97,7 +90,11 @@ export default function EstoOAquelloPage() {
       setLoading(false)
     }
     init()
-    getPicanteHabilitadoAction().then(setPicanteHabilitado)
+    // Normal/Picante e Intensidad ya se eligieron en /juegos, ver
+    // lib/juegosConfig.ts -- el consentimiento +18 también se resuelve ahí
+    // antes de que este juego sea alcanzable en modo picante.
+    setIntensidad(getIntensidadTab())
+    setTechoLabel(getTecho())
 
     return () => {
       if (channelRef.current) supabase.removeChannel(channelRef.current)
@@ -120,21 +117,6 @@ export default function EstoOAquelloPage() {
       else doble.reset()
     }
     setStarting(false)
-  }
-
-  function cambiarIntensidad(ints: Intensidad) {
-    if (ints === 'picante' && !picanteHabilitado) {
-      setMostrarConsentimiento(true)
-      return
-    }
-    setIntensidad(ints)
-  }
-
-  async function confirmarPicante() {
-    await habilitarPicanteAction()
-    setPicanteHabilitado(true)
-    setMostrarConsentimiento(false)
-    setIntensidad('picante')
   }
 
   async function handleElegir(choice: 0 | 1) {
@@ -223,64 +205,35 @@ export default function EstoOAquelloPage() {
 
         {!round && (
           <div className="space-y-6 animate-fade-up">
-            <div className="flex bg-ritual-bg-soft rounded-2xl p-1">
+            <div className="text-center space-y-6">
+              {stats && stats.intentos > 0 && (
+                <div className="flex items-center justify-center gap-8">
+                  <div>
+                    <p className="font-display text-4xl text-ritual-cream">{stats.racha_actual}</p>
+                    <p className="text-ritual-muted text-[11px] font-body uppercase tracking-wider mt-1">racha actual</p>
+                  </div>
+                  <div className="w-px h-10 bg-white/10" />
+                  <div>
+                    <p className="font-display text-4xl text-ritual-cream">
+                      {Math.round((stats.coincidencias / stats.intentos) * 100)}%
+                    </p>
+                    <p className="text-ritual-muted text-[11px] font-body uppercase tracking-wider mt-1">coincidencias</p>
+                  </div>
+                </div>
+              )}
+              <p className="text-3xl">✦</p>
+              <p className="font-display text-2xl text-ritual-cream">¿Se conocen tan bien?</p>
+              <p className="text-ritual-muted font-body text-sm leading-relaxed">
+                Cada uno elige en secreto. Después ven si coincidieron.
+              </p>
               <button
-                onClick={() => cambiarIntensidad('normal')}
-                className={`flex-1 py-2.5 rounded-xl text-sm font-body font-medium transition-all duration-300 ${
-                  intensidad === 'normal' ? 'bg-ritual-gold text-ritual-bg' : 'text-ritual-muted hover:text-ritual-text'
-                }`}
+                onClick={() => empezarRonda(false)}
+                disabled={starting}
+                className="w-full bg-ritual-gold text-ritual-bg font-body font-medium py-4 rounded-2xl disabled:opacity-50"
               >
-                Normal
-              </button>
-              <button
-                onClick={() => cambiarIntensidad('picante')}
-                className={`flex-1 py-2.5 rounded-xl text-sm font-body font-medium transition-all duration-300 ${
-                  intensidad === 'picante' ? 'bg-[#D4A5A5] text-ritual-bg' : 'text-ritual-muted hover:text-ritual-text'
-                }`}
-              >
-                🔥 Picante
+                {starting ? 'Empezando...' : 'Empezar ronda'}
               </button>
             </div>
-
-            {mostrarConsentimiento ? (
-              <PicanteConsentGate
-                onConfirmar={confirmarPicante}
-                onCancelar={() => setMostrarConsentimiento(false)}
-              />
-            ) : (
-              <div className="text-center space-y-6">
-                {stats && stats.intentos > 0 && (
-                  <div className="flex items-center justify-center gap-8">
-                    <div>
-                      <p className="font-display text-4xl text-ritual-cream">{stats.racha_actual}</p>
-                      <p className="text-ritual-muted text-[11px] font-body uppercase tracking-wider mt-1">racha actual</p>
-                    </div>
-                    <div className="w-px h-10 bg-white/10" />
-                    <div>
-                      <p className="font-display text-4xl text-ritual-cream">
-                        {Math.round((stats.coincidencias / stats.intentos) * 100)}%
-                      </p>
-                      <p className="text-ritual-muted text-[11px] font-body uppercase tracking-wider mt-1">coincidencias</p>
-                    </div>
-                  </div>
-                )}
-                <p className="text-3xl">✦</p>
-                <p className="font-display text-2xl text-ritual-cream">¿Se conocen tan bien?</p>
-                <p className="text-ritual-muted font-body text-sm leading-relaxed">
-                  Cada uno elige en secreto. Después ven si coincidieron.
-                </p>
-                <div className="text-left">
-                  <ChipGroup label="Intensidad" opciones={TECHOS} valor={techoLabel} onChange={setTechoLabel} />
-                </div>
-                <button
-                  onClick={() => empezarRonda(false)}
-                  disabled={starting}
-                  className="w-full bg-ritual-gold text-ritual-bg font-body font-medium py-4 rounded-2xl disabled:opacity-50"
-                >
-                  {starting ? 'Empezando...' : 'Empezar ronda'}
-                </button>
-              </div>
-            )}
           </div>
         )}
 

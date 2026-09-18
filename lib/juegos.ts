@@ -21,9 +21,10 @@ export interface JuegoDef {
   Icono: ComponentType
   variante: JuegoVariante
   badge?: JuegoBadge
-  // En qué tab(s) de /juegos aparece. Los juegos con ambos ('normal' y
-  // 'picante') salen en las dos tabs -- adentro siguen teniendo su
-  // propio toggle de intensidad, esto solo decide en qué tab entran.
+  // En qué tab(s) de /juegos aparece. Normal/Picante se elige acá, en el
+  // hub (ver lib/juegosConfig.ts) -- un juego con 'picante' en la lista
+  // solo es alcanzable en ese modo entrando por esa tab, ya no tiene su
+  // propio toggle interno.
   modos: JuegoModo[]
 }
 
@@ -66,7 +67,11 @@ export const JUEGOS: JuegoDef[] = [
     Icono: IconBalanza,
     variante: 'destacado',
     badge: { texto: 'Nosotros' },
-    modos: ['normal'],
+    // 'picante' agregado junto con el config compartido de /juegos (ver
+    // lib/juegosConfig.ts): el juego ya tenía su propio toggle interno de
+    // intensidad con contenido picante real, pero al sacarlo de acá se
+    // volvía inalcanzable -- no aparecía en la tab Picante del hub.
+    modos: ['normal', 'picante'],
   },
   {
     id: 'verdad-o-reto',

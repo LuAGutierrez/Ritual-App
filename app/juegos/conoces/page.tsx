@@ -14,12 +14,10 @@ import { useCredits, notifyCreditsChanged } from '@/hooks/useCredits'
 import { CREDIT_COST } from '@/lib/credits'
 import { useDobleONada } from '@/lib/hooks/useDobleONada'
 import { getCategoriaPreferida } from '@/lib/categoriaPreferida'
+import { getTecho, type TechoLabel } from '@/lib/juegosConfig'
 import type { ConocesRound, ConocesStats, UserContext } from '@/types'
 import type { Intensidad } from '@/lib/intensidad'
 import PageLoader from '@/components/PageLoader'
-import ChipGroup from '@/components/ChipGroup'
-
-const TECHOS = ['Liviana', 'Media', 'Intensa'] as const
 
 export default function ConocesPage() {
   const router = useRouter()
@@ -34,7 +32,7 @@ export default function ConocesPage() {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [copiedInvite, setCopiedInvite] = useState(false)
-  const [techoLabel, setTechoLabel] = useState<(typeof TECHOS)[number]>('Intensa')
+  const [techoLabel, setTechoLabel] = useState<TechoLabel>('Intensa')
   const vistosRef = useRef<string[]>([])
   const roundIdRef = useRef<string | undefined>(undefined)
 
@@ -111,6 +109,8 @@ export default function ConocesPage() {
       setLoading(false)
     }
     init()
+    // Intensidad ya se eligió en /juegos, ver lib/juegosConfig.ts.
+    setTechoLabel(getTecho())
 
     return () => {
       if (channelRef.current) supabase.removeChannel(channelRef.current)
@@ -293,9 +293,6 @@ export default function ConocesPage() {
               <p className="text-ritual-muted font-body text-sm leading-relaxed">
                 Cada ronda, uno responde algo sobre sí mismo y el otro adivina en secreto. Se turnan solos, ronda a ronda.
               </p>
-            </div>
-            <div className="text-left">
-              <ChipGroup label="Intensidad" opciones={TECHOS} valor={techoLabel} onChange={setTechoLabel} />
             </div>
             <button
               onClick={() => empezarRonda(false)}

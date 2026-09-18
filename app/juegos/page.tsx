@@ -10,7 +10,11 @@ import PicanteConsentGate from '@/components/PicanteConsentGate'
 import { getJuegosStatsSummaryAction, type JuegosStatsSummary } from '@/app/actions/juegos-stats'
 import { getPicanteHabilitadoAction, habilitarPicanteAction } from '@/app/actions/picante-consent'
 import { JUEGOS, type JuegoModo } from '@/lib/juegos'
+import { getIntensidadTab, setIntensidadTab, getTecho, setTecho, type TechoLabel } from '@/lib/juegosConfig'
 import { IconLlama } from '@/components/icons/juegos'
+import ChipGroup from '@/components/ChipGroup'
+
+const TECHOS = ['Liviana', 'Media', 'Intensa'] as const
 
 // La lógica de QUÉ mensaje mostrar vive acá, no en la base -- la RPC
 // (get_juegos_stats_summary, migración 029) solo trae los números
@@ -104,12 +108,19 @@ export default function JuegosPage() {
   const [isPending, startTransition] = useTransition()
   const [stats, setStats] = useState<JuegosStatsSummary | null>(null)
   const [tab, setTab] = useState<JuegoModo>('normal')
+  const [techoLabel, setTechoLabel] = useState<TechoLabel>('Intensa')
   const [picanteHabilitado, setPicanteHabilitado] = useState(false)
   const [mostrarConsentimiento, setMostrarConsentimiento] = useState(false)
 
+  // Normal/Picante e Intensidad se eligen acá, una sola vez al entrar, y
+  // quedan pegajosos (sessionStorage, ver lib/juegosConfig.ts) para los 6
+  // juegos que los usan durante esta sesión -- antes cada juego repreguntaba
+  // lo mismo cada vez que se entraba, fricción repetida sin aportar nada.
   useEffect(() => {
     getJuegosStatsSummaryAction().then(setStats)
     getPicanteHabilitadoAction().then(setPicanteHabilitado)
+    setTab(getIntensidadTab())
+    setTechoLabel(getTecho())
   }, [])
 
   function handleClick(e: React.MouseEvent, href: string) {
@@ -125,6 +136,7 @@ export default function JuegosPage() {
       return
     }
     setTab(nuevoTab)
+    setIntensidadTab(nuevoTab)
   }
 
   async function confirmarPicante() {
@@ -132,6 +144,12 @@ export default function JuegosPage() {
     setPicanteHabilitado(true)
     setMostrarConsentimiento(false)
     setTab('picante')
+    setIntensidadTab('picante')
+  }
+
+  function cambiarTecho(label: TechoLabel) {
+    setTechoLabel(label)
+    setTecho(label)
   }
 
   const mensaje = mensajeAdaptativo(stats)
@@ -186,6 +204,10 @@ export default function JuegosPage() {
             onConfirmar={confirmarPicante}
             onCancelar={() => setMostrarConsentimiento(false)}
           />
+        )}
+
+        {!mostrarConsentimiento && (
+          <ChipGroup label="Intensidad" opciones={TECHOS} valor={techoLabel} onChange={cambiarTecho} />
         )}
 
         {/* Destacados: cards grandes, un juego por fila */}

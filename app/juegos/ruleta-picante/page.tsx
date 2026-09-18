@@ -7,10 +7,8 @@ import { logContenidoRechazadoAction, getRechazadosAction } from '@/app/actions/
 import { logRondaJugadaAction, getUltimaCategoriaRondaAction } from '@/app/actions/rondas-jugadas'
 import { dentroDelTecho, type Intensidad } from '@/lib/intensidad'
 import { getCategoriaPreferida } from '@/lib/categoriaPreferida'
+import { getTecho, type TechoLabel } from '@/lib/juegosConfig'
 import type { RuletaPicanteItem } from '@/types'
-import ChipGroup from '@/components/ChipGroup'
-
-const TECHOS = ['Liviana', 'Media', 'Intensa'] as const
 
 function pickIndex(total: number, vistos: Set<number>): number {
   const disponibles = Array.from({ length: total }, (_, i) => i).filter(i => !vistos.has(i))
@@ -26,13 +24,15 @@ export default function RuletaPicantePage() {
   const [vistos, setVistos] = useState<Set<number>>(new Set())
   const [items, setItems] = useState<RuletaPicanteItem[]>([])
   const [rechazados, setRechazados] = useState<Set<string>>(new Set())
-  const [techoLabel, setTechoLabel] = useState<(typeof TECHOS)[number]>('Intensa')
+  const [techoLabel, setTechoLabel] = useState<TechoLabel>('Intensa')
   const ultimaCategoriaRef = useRef<string | null>(null)
 
   useEffect(() => {
     getRuletaPicanteItemsAction().then(setItems)
     getRechazadosAction('ruleta_picante').then(ids => setRechazados(new Set(ids)))
     getUltimaCategoriaRondaAction('ruleta_picante').then(c => { ultimaCategoriaRef.current = c })
+    // Intensidad ya se eligió en /juegos, ver lib/juegosConfig.ts.
+    setTechoLabel(getTecho())
   }, [])
 
   const techo = techoLabel.toLowerCase() as Intensidad
@@ -132,7 +132,6 @@ export default function RuletaPicantePage() {
       <main className="flex-1 px-5 pb-28 flex flex-col justify-center max-w-md mx-auto w-full">
         {!promptItem ? (
           <div className="space-y-6 animate-fade-up">
-            <ChipGroup label="Intensidad" opciones={TECHOS} valor={techoLabel} onChange={setTechoLabel} />
             <div className="text-center">
               <button
                 onClick={girar}
