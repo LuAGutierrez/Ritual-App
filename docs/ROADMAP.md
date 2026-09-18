@@ -2,7 +2,7 @@
 
 Stack actual: **Next.js 14 (App Router) + TypeScript + Tailwind CSS + Supabase**
 
-Última actualización: 16 de septiembre de 2026
+Última actualización: 18 de septiembre de 2026
 
 ---
 
@@ -134,11 +134,14 @@ intensidad, variedad, detección de "Momentos" y personalización por categoría
 
 ### Metadata, progresión y variedad
 - [x] Metadata rica (`intensidad`, `categoria`) en el contenido de los 6 juegos (migración `037`)
-- [x] **Techo de intensidad por juego** (`liviana`/`media`/`intensa`, default `intensa`), elegido con
-      chips en la propia pantalla de cada uno de los 6 juegos, filtra el contenido elegible
-      (`lib/intensidad.ts`). Originalmente vivía como `couples.intensidad_maxima` configurable desde
-      `/perfil` (migración `038`) — revertido el 17/09/2026 porque casi nadie entraba a `/perfil` a
-      configurarlo antes de jugar. Ver `docs/DECISIONES.md`.
+- [x] **Techo de intensidad por juego** (`liviana`/`media`/`intensa`, default `intensa`), filtra el
+      contenido elegible (`lib/intensidad.ts`). Originalmente vivía como `couples.intensidad_maxima`
+      configurable desde `/perfil` (migración `038`) — revertido el 17/09/2026 a chips elegidos en la
+      propia pantalla de cada uno de los 6 juegos porque casi nadie entraba a `/perfil` a configurarlo
+      antes de jugar. Un día después (18/09) se movió de nuevo, esta vez al hub `/juegos`: Normal/Picante
+      e Intensidad se eligen una sola vez al entrar y quedan pegajosos por sesión (`sessionStorage` vía
+      `lib/juegosConfig.ts`, mismo patrón que `categoriaPreferida.ts`) para los 6 juegos — repreguntar en
+      cada juego individual era fricción repetida sin aportar nada. Ver `docs/DECISIONES.md`.
 - ~~**Sugerencia de subir el techo**: si `intensidad_maxima = 'liviana'` y la pareja ya jugó 10+
   rondas, `/perfil` sugiere probar Media~~ retirado junto con el punto anterior (17/09/2026): sin un
   techo persistido por pareja, no hay "sugerencia" que dar.
@@ -194,6 +197,28 @@ servía la fila cacheada. Fix en migración `074`: la clave pasa a `(feature, co
 `variant` elegido al azar entre 5 opciones en cada pedido (`CACHE_VARIANTS` en `app/actions/ritual-ia.ts`)
 — sigue ahorrando tokens una vez que las 5 variantes de una combinación popular ya existen, pero dos
 pedidos seguidos con el mismo contexto ya no devuelven necesariamente lo mismo.
+
+### Bugs de onboarding/perfil y rediseño de Verdad o Reto (17-18/09/2026)
+Reportado por el usuario probando su propia cuenta: entraba a `/perfil` y veía "Tu pareja todavía no
+se unió" con su pareja ya vinculada, y sin nombre propio guardado.
+- [x] **Bug real, no de datos**: `get_perfil_page_data()` decidía si mostrar el link de invitación
+      pendiente mirando si el `display_name` del otro miembro era `null` — confundía "mi pareja no
+      completó su nombre" con "mi pareja no se unió". Corregido (migración `076`) para chequear
+      directamente si existe una segunda fila en `couple_members`.
+- [x] **Dos caminos que nunca pedían el nombre**, ambos corregidos: unirse por link de invitación
+      (`/unirse/[code]`) nunca pasaba por `/onboarding`, así que ahora pide el nombre ahí mismo si
+      falta; y "Continuar con Google" mandaba siempre a `/ritual` (o al `redirect` explícito) sin
+      pasar nunca por `/` — la única ruta que detecta `display_name` faltante y manda a `/onboarding`
+      (`app/page.tsx`). Como Google no llena ese campo (`handle_new_user()` solo lee
+      `raw_user_meta_data->>'display_name'`, que solo llena el form de email/contraseña), quien se
+      registraba con Google quedaba sin nombre para siempre. Ahora, sin un `redirect` explícito (ej.
+      un link de invitación), Google manda a `/` para que decida.
+- [x] **Verdad o Reto**: antes se elegía Verdad o Reto una sola vez al arrancar y "Siguiente" repetía
+      ese mismo modo indefinidamente, con un botón "Cambiar modo" como único escape manual. Ahora cada
+      "Siguiente" vuelve a preguntar Verdad o Reto. El hint de "Versión picante" (cada 3 rondas) pasó a
+      depender de un contador propio (antes usaba `vistos.size`, que ya no crece igual con este flujo).
+- [x] Testeado borrando y recreando las 2 cuentas de prueba en producción varias veces durante la
+      sesión — ver también el punto de Intensidad/Normal-Picante más arriba, mismo día.
 
 ---
 
@@ -444,7 +469,7 @@ app/
   perfil/page.tsx          ← Perfil, stats, comodín, intensidad máxima, sugerencia de techo
   precios/page.tsx         ← Checkout Premium (Mercado Pago)
   juegos/
-    page.tsx               ← Hub: 6 juegos + chips de categoría preferida
+    page.tsx               ← Hub: 6 juegos + Normal/Picante e Intensidad (una vez por sesión)
     eleccion/page.tsx
     esto-o-aquello/page.tsx
     conoces/page.tsx
@@ -476,7 +501,8 @@ lib/
     client.ts              ← Browser client (Realtime, signOut)
     server.ts              ← Server client (Server Actions, middleware)
   plans.ts                 ← Límites del plan free/premium
-  intensidad.ts            ← Filtro por techo de intensidad elegido por juego (chips, no persistido)
+  intensidad.ts            ← Filtro por techo de intensidad (`dentroDelTecho`)
+  juegosConfig.ts          ← Normal/Picante e Intensidad "pegajosos" por sesión (sessionStorage), elegidos en el hub
   categoriaPreferida.ts    ← Categoría "pegajosa" por sesión (sessionStorage)
   turnos.ts                ← Utilidades de turnos entre miembros de la pareja
   niveles.ts               ← Nivel de progresión emocional de la pareja (mensaje adaptativo del hub)

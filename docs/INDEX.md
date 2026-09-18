@@ -18,7 +18,7 @@
 
 Los archivos en `docs/archivo-anterior/` corresponden a la versión HTML/vanilla JS del proyecto, previa a la migración a Next.js. Se conservan como referencia histórica.
 
-## Estado actual (17 de septiembre de 2026)
+## Estado actual (18 de septiembre de 2026)
 
 - Sprint 1 (Core) y Sprint 2 (Engagement): completados.
 - Sprint 3 (Monetización, Mercado Pago con suscripción mensual): **retirada** — reemplazada por el
@@ -30,11 +30,15 @@ Los archivos en `docs/archivo-anterior/` corresponden a la versión HTML/vanilla
   anti-farmeo por device fingerprint. Es la única monetización activa.
 - Juegos: 6 juegos (Elección, Esto o Aquello, ¿Cuánto me conoces?, ¿Quién de los dos?, Verdad o Reto,
   Ruleta Picante) con metadata rica, sistema de Momentos, e historial combinado dentro de
-  `/historial`. Insight con IA post-reveal en ¿Cuánto me conoces? (16/09, 5 créditos). Techo de
-  intensidad elegido con chips en la propia pantalla de cada juego (17/09) — ya no vive como config
-  de `/perfil` (`couples.intensidad_maxima` se retiró, migración `075`), ver `docs/DECISIONES.md`.
+  `/historial`. Insight con IA post-reveal en ¿Cuánto me conoces? (16/09, 5 créditos). Normal/Picante
+  e Intensidad ya no se preguntan en cada juego: se eligen una sola vez al entrar al hub `/juegos` y
+  quedan pegajosos por sesión (`lib/juegosConfig.ts`, 18/09) — pasaron antes por `/perfil`
+  (`couples.intensidad_maxima`, retirado en la `075`) y por chips en cada pantalla (17/09), ver
+  `docs/DECISIONES.md`. Verdad o Reto vuelve a preguntar Verdad/Reto en cada ronda (18/09).
 - Registro por email/contraseña y Google Sign-In con branding "Rituales" funcionando correctamente
-  para cualquier usuario.
+  para cualquier usuario. Dos bugs de onboarding corregidos el 18/09: unirse por link de invitación y
+  registrarse con Google podían dejar a alguien sin `display_name` para siempre, lo que además hacía
+  que `/perfil` mostrara "Tu pareja todavía no se unió" con la pareja ya vinculada (migración `076`).
 - Backlog reciente sin sprint asignado (15-16/09): cambiar el ritual del día, modo offline simple,
   sistema de referidos ("invitá a un amigo", incluye Google OAuth).
 - Ver `ROADMAP.md` para el detalle punto por punto.
