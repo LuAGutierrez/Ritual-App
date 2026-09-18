@@ -41,6 +41,7 @@ export default function VerdadORetoPage() {
   const [generandoIA, setGenerandoIA] = useState(false)
   const [errorIA, setErrorIA] = useState<string | null>(null)
   const ultimaCategoriaRef = useRef<string | null>(null)
+  const rondaCountRef = useRef(0)
 
   const techo = techoLabel.toLowerCase() as Techo
 
@@ -102,6 +103,7 @@ export default function VerdadORetoPage() {
     const lista = listaFiltrada(m, intensidad)
     const idx = pickIndex(lista, new Set())
     const { extra, vistos: nuevosVistos } = elegirRetoDoble(m, intensidad, lista, new Set([idx]))
+    rondaCountRef.current += 1
     setModo(m)
     setVistos(nuevosVistos)
     setPromptItem(lista[idx])
@@ -110,17 +112,14 @@ export default function VerdadORetoPage() {
     setRetoDobleExtra(extra)
   }
 
+  // Cada ronda se vuelve a elegir Normal/Picante y Verdad/Reto -- "Siguiente"
+  // ya no repite el mismo modo indefinidamente, vuelve a la pantalla de
+  // selección (jugar() arranca fresco: vistos se recalcula ahí, no hace
+  // falta tocarlo acá).
   function siguiente() {
-    if (!modo) return
-    const lista = listaFiltrada(modo, intensidad)
-    const idx = pickIndex(lista, vistos)
-    const vistosConPrimario = vistos.size >= lista.length ? new Set([idx]) : new Set(vistos).add(idx)
-    const { extra, vistos: nuevosVistos } = elegirRetoDoble(modo, intensidad, lista, vistosConPrimario)
-    setVistos(nuevosVistos)
-    setPromptItem(lista[idx])
-    ultimaCategoriaRef.current = lista[idx].categoria
-    logRondaJugadaAction('verdad_o_reto', lista[idx].id, lista[idx].categoria)
-    setRetoDobleExtra(extra)
+    setModo(null)
+    setPromptItem(null)
+    setRetoDobleExtra(null)
   }
 
   // Distinto de "Siguiente" normal y de "Paso": solo se llama desde el
@@ -167,7 +166,8 @@ export default function VerdadORetoPage() {
   // solo en la tab picante (ver migración 054: el historial que evita
   // repeticiones vive en couple_ia_contenido, separado del pool de
   // verdad_o_reto_items). Complementa el flujo existente, no lo
-  // reemplaza: "Siguiente" después de esto vuelve a sacar del pool.
+  // reemplaza: "Siguiente" después de esto vuelve a la selección, y de
+  // ahí en más se sigue sacando del pool normal.
   async function generarConIA() {
     if (!modo) return
     setGenerandoIA(true)
@@ -191,12 +191,13 @@ export default function VerdadORetoPage() {
   const parPicante = promptItem?.par_picante_id
     ? items.find(i => i.id === promptItem.par_picante_id)
     : undefined
-  const mostrarHintPicante = intensidad === 'normal' && vistos.size % 3 === 0 && !!parPicante
+  const mostrarHintPicante = intensidad === 'normal' && rondaCountRef.current % 3 === 0 && !!parPicante
 
   function verPicante() {
     if (!parPicante) return
     const lista = listaFiltrada(parPicante.modo, 'picante')
     const idx = lista.findIndex(i => i.id === parPicante.id)
+    rondaCountRef.current += 1
     setIntensidad('picante')
     setModo(parPicante.modo)
     setPromptItem(parPicante)
@@ -308,20 +309,12 @@ export default function VerdadORetoPage() {
               </button>
             )}
 
-            <div className="grid grid-cols-2 gap-3">
-              <button
-                onClick={() => setModo(null)}
-                className="bg-transparent border border-white/10 text-ritual-muted font-body text-sm py-4 rounded-2xl hover:border-white/20 hover:text-ritual-text transition-all"
-              >
-                Cambiar modo
-              </button>
-              <button
-                onClick={retoDobleExtra ? completarRetoDoble : siguiente}
-                className="bg-ritual-gold text-ritual-bg font-body font-medium text-sm py-4 rounded-2xl hover:bg-ritual-cream transition-all"
-              >
-                {retoDobleExtra ? 'Hecho, los dos' : 'Siguiente'}
-              </button>
-            </div>
+            <button
+              onClick={retoDobleExtra ? completarRetoDoble : siguiente}
+              className="w-full bg-ritual-gold text-ritual-bg font-body font-medium text-sm py-4 rounded-2xl hover:bg-ritual-cream transition-all"
+            >
+              {retoDobleExtra ? 'Hecho, los dos' : 'Siguiente'}
+            </button>
 
             {intensidad === 'picante' && (
               <div className="space-y-1.5">
