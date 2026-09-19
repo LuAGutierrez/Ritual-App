@@ -2,6 +2,8 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { dentroDelTecho, type Intensidad } from '@/lib/intensidad'
+import { consumeCreditsAction, refundCreditsAction } from './credits'
+import { type StartRoundResult } from '@/lib/credits'
 import type { QuienDeLosDosRound, MatchStats, UserContext } from '@/types'
 
 // Junta contexto + ronda activa + stats en un solo round-trip, mismo
@@ -25,7 +27,7 @@ export async function startQuienDeLosDosRoundAction(
   techo: Intensidad = 'intensa',
   excluir: string[] = [],
   categoriaPreferida: string | null = null
-): Promise<QuienDeLosDosRound | null> {
+): Promise<StartRoundResult<QuienDeLosDosRound>> {
   const supabase = await createClient()
 
   const { data: items } = await supabase
@@ -33,7 +35,7 @@ export async function startQuienDeLosDosRoundAction(
     .select('pregunta, intensidad, categoria')
     .eq('picante', intensidad === 'picante')
 
-  if (!items || items.length === 0) return null
+  if (!items || items.length === 0) return { round: null, error: 'no_content' }
 
   // Techo elegido en la propia pantalla del juego -- ver comentario en
   // app/actions/eleccion.ts.
@@ -66,6 +68,13 @@ export async function startQuienDeLosDosRoundAction(
 
   const item = pool[Math.floor(Math.random() * pool.length)]
 
+  // Cobro antes de crear la ronda -- ver comentario equivalente en
+  // startEleccionRoundAction.
+  const cobrado = await consumeCreditsAction('quien_de_los_dos_ronda')
+  if (!cobrado.ok) {
+    return { round: null, error: cobrado.error === 'insufficient_credits' ? 'insufficient_credits' : 'unknown', balance: cobrado.balance }
+  }
+
   const { data: members } = await supabase
     .from('couple_members')
     .select('user_id')
@@ -85,18 +94,25 @@ export async function startQuienDeLosDosRoundAction(
     .single()
 
   // couple_quien_de_los_dos_rounds_one_active (migración 047): mismo
-  // caso que Elección -- la pareja ya tenía una ronda sin revelar.
+  // caso que Elección -- la pareja ya tenía una ronda sin revelar. Se
+  // refunda porque esta llamada no creó una ronda nueva.
   if (error?.code === '23505') {
+    await refundCreditsAction(cobrado.idempotencyKey)
     const { data: existente } = await supabase
       .from('couple_quien_de_los_dos_rounds')
       .select('*')
       .eq('couple_id', coupleId)
       .is('revealed_at', null)
       .single()
-    return existente as QuienDeLosDosRound | null
+    return { round: existente as QuienDeLosDosRound }
   }
 
-  return data as QuienDeLosDosRound | null
+  if (error || !data) {
+    await refundCreditsAction(cobrado.idempotencyKey)
+    return { round: null, error: 'unknown' }
+  }
+
+  return { round: data as QuienDeLosDosRound }
 }
 
 // Escritura pasa por submit_quien_de_los_dos_choice (SECURITY

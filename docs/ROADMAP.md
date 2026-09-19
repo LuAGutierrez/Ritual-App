@@ -337,6 +337,37 @@ los 6 juegos, picante, historial) es gratis para siempre — ver `docs/DECISIONE
 - Se mantiene Groq como proveedor (ya integrado, gratis en su tier actual) con miras a migrar a
   Together AI cuando se necesiten modelos sin las restricciones de contenido de Groq
 
+### Pivot (18/09/2026): los 6 juegos dejan de ser gratis para siempre
+Revierte parcialmente la decisión de "Retiro del gating..." de más abajo -- se mantiene el gancho de
+créditos gratis de bienvenida/vinculación, pero ya no alcanza para jugar sin límite. Cada ronda jugada
+en Elección, Esto o Aquello, ¿Cuánto me conoces?, ¿Quién de los dos?, Verdad o Reto y Ruleta Picante
+cuesta `GAME_ROUND_COST` = 5 créditos (`lib/credits.ts`), cobrados server-side:
+- [x] Los 4 juegos con match (Elección/Esto o Aquello/Conoces/Quién de los dos) cobran dentro de
+      `startXRoundAction`, justo antes de crear la ronda -- mismo criterio "cobro antes de generar" que
+      `generarConIAAction`. Si el insert choca con `..._one_active` (23505, la pareja ya tenía una ronda
+      sin revelar), se refunda: esa llamada no creó una ronda nueva. Nuevo tipo compartido
+      `StartRoundResult<T>` en `lib/credits.ts`.
+- [x] Verdad o Reto y Ruleta Picante no tienen ronda server-side (el pool completo se trae una sola vez,
+      `getVerdadORetoItemsAction`/`getRuletaPicanteItemsAction`, selección client-side) -- se cobra en el
+      único punto donde se elige y muestra contenido nuevo (`jugar()`/`verPicante()` en Verdad o Reto,
+      `girar()` en Ruleta Picante), llamando a `consumeCreditsAction` directo desde la page.
+- [x] `CreditsBadge` agregado a los 6 headers (antes solo en `/ritual-ia`, `/juegos` y Conoces) + mensaje
+      "Te faltan créditos / Comprar más" con link a `/precios`, mismo patrón que `/ritual-ia`.
+- [x] "Dado Picante" (`app/juegos/dado-picante`, `lib/juegos.ts`) es un 7mo juego del hub que esta
+      sección del roadmap nunca contempló como parte de "los 6 juegos" -- tiene 2 tiradas
+      independientes por ronda (lugar+posición o acción+zona). Se decidió cobrar 5 créditos por ronda
+      completa: la primera tirada del par cobra, y deja gratis específicamente al *otro* dado del par
+      (`dadoGratisPendiente`, guarda cuál tipo puntual quedó pendiente, no solo un booleano "ronda
+      abierta"). Volver a tirar el mismo dado sin tocar el otro cobra de nuevo cada vez.
+  - **Bug encontrado y corregido el mismo día**: la primera versión usaba un booleano por modo en vez
+    de guardar qué dado específico quedaba gratis -- alternaba cobro/gratis tirando siempre el MISMO
+    botón, sin tocar nunca el otro dado del par (reportado por el usuario probándolo: "son 7 tiradas
+    por 5 créditos"). Corregido para que la tirada gratis sea siempre la del dado específico que falta.
+- **Gap encontrado, no resuelto**: en la tab picante de Verdad o Reto, "✨ Quiero otra"
+  (`generarVerdadORetoConIAAction`, `app/actions/verdad-o-reto-ia.ts`) genera contenido nuevo con Groq
+  sin pasar por `consumeCreditsAction` -- ya era gratis antes de este cambio (nunca curseaba por el
+  tarifario de créditos) y ahora además funciona como atajo sin cargo alrededor del cobro por ronda.
+
 ### Retiro del gating de suscripción vieja (completo, catálogo estático 100% gratis)
 - [x] `lib/plans.ts`, `app/actions/subscription.ts`, `app/actions/picante-trial.ts`,
       `components/PicanteUpsell.tsx` — borrados enteros, sin código muerto

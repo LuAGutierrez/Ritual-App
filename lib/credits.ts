@@ -1,5 +1,14 @@
 // Tarifario del sistema de créditos. Reemplaza a lib/plans.ts (borrado
 // junto con el resto del gating de suscripción -- ver docs/ROADMAP.md).
+//
+// 18/09/2026: el catálogo estático (los 6 juegos) deja de ser gratis para
+// siempre -- pivot de producto, "el gancho son los créditos gratis de
+// bienvenida/vinculación, no el catálogo ilimitado". Cada ronda jugada
+// cuesta GAME_ROUND_COST, cobrado server-side en el mismo punto donde
+// hoy se crea la ronda (startXRoundAction) o se elige el próximo ítem
+// (Verdad o Reto / Ruleta Picante, que no tienen ronda server-side).
+export const GAME_ROUND_COST = 5
+
 export const CREDIT_COST = {
   ritual_simple: 5,
   ritual_profundo: 10,
@@ -9,9 +18,27 @@ export const CREDIT_COST = {
   // lista alimenta el selector de /ritual-ia, esta feature se dispara
   // desde el juego, no ahí.
   conoces_insight: 5,
+  eleccion_ronda: GAME_ROUND_COST,
+  esto_aquello_ronda: GAME_ROUND_COST,
+  conoces_ronda: GAME_ROUND_COST,
+  quien_de_los_dos_ronda: GAME_ROUND_COST,
+  verdad_o_reto_ronda: GAME_ROUND_COST,
+  ruleta_picante_ronda: GAME_ROUND_COST,
+  // Dado Picante tiene 2 tiradas por ronda (lugar+posición o acción+zona)
+  // -- se cobra en la primera tirada del par, la segunda es gratis. Ver
+  // app/juegos/dado-picante/page.tsx.
+  dado_picante_ronda: GAME_ROUND_COST,
 } as const
 
 export type CreditFeature = keyof typeof CREDIT_COST
+
+// Resultado común de las 4 startXRoundAction (Elección, Esto o Aquello,
+// ¿Cuánto me conoces?, ¿Quién de los dos?) -- cobran GAME_ROUND_COST
+// antes de crear la ronda, mismo patrón "cobro antes de generar" que
+// generarConIAAction (app/actions/ritual-ia.ts).
+export type StartRoundResult<T> =
+  | { round: T; error?: undefined; balance?: undefined }
+  | { round: null; error: 'insufficient_credits' | 'no_content' | 'unknown'; balance?: number }
 
 export const WELCOME_CREDITS = 50
 export const PAIRING_BONUS_CREDITS = 150

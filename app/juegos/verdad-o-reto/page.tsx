@@ -8,12 +8,16 @@ import { logContenidoRechazadoAction, getRechazadosAction } from '@/app/actions/
 import { logRondaJugadaAction, getUltimaCategoriaRondaAction } from '@/app/actions/rondas-jugadas'
 import { registrarRetoDobleCompletadoAction } from '@/app/actions/momentos'
 import { generarVerdadORetoConIAAction } from '@/app/actions/verdad-o-reto-ia'
+import { consumeCreditsAction } from '@/app/actions/credits'
+import { useCredits, notifyCreditsChanged } from '@/hooks/useCredits'
+import { GAME_ROUND_COST } from '@/lib/credits'
 import { getCategoriaPreferida } from '@/lib/categoriaPreferida'
 import { getIntensidadTab, getTecho, type IntensidadTab as Intensidad, type TechoLabel } from '@/lib/juegosConfig'
 import { dentroDelTecho, type Intensidad as Techo } from '@/lib/intensidad'
 import type { VerdadORetoItem } from '@/types'
 import PicanteConsentGate from '@/components/PicanteConsentGate'
 import PageLoader from '@/components/PageLoader'
+import CreditsBadge from '@/components/CreditsBadge'
 
 type Modo = 'verdad' | 'reto'
 
@@ -38,8 +42,12 @@ export default function VerdadORetoPage() {
   const [techoLabel, setTechoLabel] = useState<TechoLabel>('Intensa')
   const [generandoIA, setGenerandoIA] = useState(false)
   const [errorIA, setErrorIA] = useState<string | null>(null)
+  const [cobrando, setCobrando] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const ultimaCategoriaRef = useRef<string | null>(null)
   const rondaCountRef = useRef(0)
+  const { credits, refetch: refetchCredits } = useCredits()
+  const saldoInsuficiente = !!credits && credits.total < GAME_ROUND_COST
 
   const techo = techoLabel.toLowerCase() as Techo
 
@@ -101,7 +109,23 @@ export default function VerdadORetoPage() {
     return { extra: lista[idx2], vistos: new Set(vistosConPrimario).add(idx2) }
   }
 
-  function jugar(m: Modo) {
+  // Cobro antes de mostrar la consigna (18/09/2026, ver GAME_ROUND_COST en
+  // lib/credits.ts) -- a diferencia de los 4 juegos con match, acá no hay
+  // una ronda server-side donde enganchar el cobro (el pool completo se
+  // trae una sola vez, ver getVerdadORetoItemsAction), así que se cobra
+  // acá mismo, en el único punto donde se elige y muestra contenido nuevo.
+  async function jugar(m: Modo) {
+    setError(null)
+    setCobrando(true)
+    const cobrado = await consumeCreditsAction('verdad_o_reto_ronda')
+    setCobrando(false)
+    if (!cobrado.ok) {
+      setError(cobrado.error === 'insufficient_credits' ? 'No te alcanzan los créditos para jugar esta ronda.' : 'No se pudo empezar la ronda. Intentá de nuevo.')
+      return
+    }
+    refetchCredits()
+    notifyCreditsChanged()
+
     const lista = listaFiltrada(m, intensidad)
     const idx = pickIndex(lista, new Set())
     const { extra, vistos: nuevosVistos } = elegirRetoDoble(m, intensidad, lista, new Set([idx]))
@@ -185,8 +209,22 @@ export default function VerdadORetoPage() {
     : undefined
   const mostrarHintPicante = intensidad === 'normal' && rondaCountRef.current % 3 === 0 && !!parPicante
 
-  function verPicante() {
+  // Mismo cobro que jugar() -- también muestra una consigna nueva, así
+  // que sin esto era un atajo gratis alrededor del cobro (cada 3 rondas
+  // en modo normal, ver mostrarHintPicante más abajo).
+  async function verPicante() {
     if (!parPicante) return
+    setError(null)
+    setCobrando(true)
+    const cobrado = await consumeCreditsAction('verdad_o_reto_ronda')
+    setCobrando(false)
+    if (!cobrado.ok) {
+      setError(cobrado.error === 'insufficient_credits' ? 'No te alcanzan los créditos para ver esta versión.' : 'No se pudo cargar. Intentá de nuevo.')
+      return
+    }
+    refetchCredits()
+    notifyCreditsChanged()
+
     const lista = listaFiltrada(parPicante.modo, 'picante')
     const idx = lista.findIndex(i => i.id === parPicante.id)
     rondaCountRef.current += 1
@@ -218,15 +256,31 @@ export default function VerdadORetoPage() {
           <h1 className="font-display text-xl text-ritual-cream tracking-wide">🎲 Verdad o Reto</h1>
           <p className="text-ritual-muted text-xs font-body mt-0.5">Se van turnando en elegir</p>
         </div>
-        <button
-          onClick={() => router.push('/juegos')}
-          className="text-ritual-muted text-xs font-body hover:text-ritual-text transition-colors py-2 px-2"
-        >
-          ← Juegos
-        </button>
+        <div className="flex items-center gap-2">
+          <CreditsBadge />
+          <button
+            onClick={() => router.push('/juegos')}
+            className="text-ritual-muted text-xs font-body hover:text-ritual-text transition-colors py-2 px-2"
+          >
+            ← Juegos
+          </button>
+        </div>
       </header>
 
       <main className="flex-1 px-5 pb-28 flex flex-col justify-center max-w-md mx-auto w-full">
+        {error && (
+          <div className="bg-red-500/10 border border-red-500/20 rounded-2xl p-4 mb-6">
+            <p className="text-red-400/80 text-sm font-body text-center">{error}</p>
+            {saldoInsuficiente && (
+              <p className="text-ritual-muted text-xs font-body text-center mt-2">
+                <button onClick={() => router.push('/precios')} className="text-ritual-gold underline">
+                  Comprar créditos
+                </button>
+              </p>
+            )}
+          </div>
+        )}
+
         {mostrarConsentimiento ? (
           <PicanteConsentGate
             onConfirmar={confirmarPicante}
@@ -234,17 +288,20 @@ export default function VerdadORetoPage() {
           />
         ) : !modo ? (
           <div className="space-y-6 animate-fade-up">
+            <p className="text-ritual-muted text-xs font-body text-center">{GAME_ROUND_COST} créditos por ronda</p>
             <div className="grid grid-cols-2 gap-4">
               <button
                 onClick={() => jugar('verdad')}
-                className="bg-ritual-bg-soft border border-ritual-gold/30 rounded-3xl py-10 flex flex-col items-center gap-2 hover:border-ritual-gold/50 transition-all"
+                disabled={cobrando || saldoInsuficiente}
+                className="bg-ritual-bg-soft border border-ritual-gold/30 rounded-3xl py-10 flex flex-col items-center gap-2 hover:border-ritual-gold/50 transition-all disabled:opacity-50"
               >
                 <span className="text-3xl">💬</span>
                 <span className="font-display text-lg text-ritual-cream">Verdad</span>
               </button>
               <button
                 onClick={() => jugar('reto')}
-                className="bg-ritual-bg-soft border border-white/10 rounded-3xl py-10 flex flex-col items-center gap-2 hover:border-white/20 transition-all"
+                disabled={cobrando || saldoInsuficiente}
+                className="bg-ritual-bg-soft border border-white/10 rounded-3xl py-10 flex flex-col items-center gap-2 hover:border-white/20 transition-all disabled:opacity-50"
               >
                 <span className="text-3xl">🔥</span>
                 <span className="font-display text-lg text-ritual-cream">Reto</span>
@@ -274,7 +331,8 @@ export default function VerdadORetoPage() {
             {mostrarHintPicante && parPicante && (
               <button
                 onClick={handleHintClick}
-                className="w-full bg-[#D4A5A5]/8 border border-[#D4A5A5]/25 rounded-2xl p-4 text-left space-y-1.5 hover:border-[#D4A5A5]/40 transition-all"
+                disabled={cobrando}
+                className="w-full bg-[#D4A5A5]/8 border border-[#D4A5A5]/25 rounded-2xl p-4 text-left space-y-1.5 hover:border-[#D4A5A5]/40 transition-all disabled:opacity-50"
               >
                 <p className="text-[#D4A5A5] text-[10px] font-body uppercase tracking-wider">🔥 Versión picante</p>
                 <p className="font-body text-sm text-ritual-cream leading-snug">{parPicante.texto}</p>

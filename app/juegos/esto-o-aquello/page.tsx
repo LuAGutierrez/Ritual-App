@@ -11,15 +11,19 @@ import {
 import { useDobleONada } from '@/lib/hooks/useDobleONada'
 import { getCategoriaPreferida } from '@/lib/categoriaPreferida'
 import { getIntensidadTab, getTecho, type IntensidadTab as Intensidad, type TechoLabel } from '@/lib/juegosConfig'
+import { useCredits, notifyCreditsChanged } from '@/hooks/useCredits'
+import { GAME_ROUND_COST } from '@/lib/credits'
 import type { EstoAquelloRound, MatchStats, UserContext } from '@/types'
 import type { Intensidad as Techo } from '@/lib/intensidad'
 import PageLoader from '@/components/PageLoader'
+import CreditsBadge from '@/components/CreditsBadge'
 
 export default function EstoOAquelloPage() {
   const router = useRouter()
   const supabase = createClient()
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null)
   const vistosRef = useRef<string[]>([])
+  const { credits, refetch: refetchCredits } = useCredits()
 
   const [ctx, setCtx] = useState<UserContext | null>(null)
   const [round, setRound] = useState<EstoAquelloRound | null>(null)
@@ -107,17 +111,23 @@ export default function EstoOAquelloPage() {
     setStarting(true)
     setError(null)
     const techo = techoLabel.toLowerCase() as Techo
-    const nuevo = await startEstoAquelloRoundAction(ctx.couple.id, intensidad, techo, vistosRef.current, getCategoriaPreferida())
-    if (!nuevo) {
+    const resultado = await startEstoAquelloRoundAction(ctx.couple.id, intensidad, techo, vistosRef.current, getCategoriaPreferida())
+    if (resultado.error === 'insufficient_credits') {
+      setError('No te alcanzan los créditos para jugar esta ronda.')
+    } else if (!resultado.round) {
       setError('No se pudo empezar la ronda. Intentá de nuevo.')
     } else {
-      setRound(nuevo)
-      vistosRef.current = [...vistosRef.current, `${nuevo.option_a}|${nuevo.option_b}`]
+      setRound(resultado.round)
+      vistosRef.current = [...vistosRef.current, `${resultado.round.option_a}|${resultado.round.option_b}`]
       if (esDobleONada) doble.aceptar()
       else doble.reset()
+      refetchCredits()
+      notifyCreditsChanged()
     }
     setStarting(false)
   }
+
+  const saldoInsuficiente = !!credits && credits.total < GAME_ROUND_COST
 
   async function handleElegir(choice: 0 | 1) {
     if (!round) return
@@ -188,12 +198,15 @@ export default function EstoOAquelloPage() {
           <h1 className="font-display text-xl text-ritual-cream tracking-wide">⚡ Esto o Aquello</h1>
           <p className="text-ritual-muted text-xs font-body mt-0.5">Elijan en secreto y comparen</p>
         </div>
-        <button
-          onClick={() => router.push('/juegos')}
-          className="text-ritual-muted text-xs font-body hover:text-ritual-text transition-colors py-2 px-2"
-        >
-          ← Juegos
-        </button>
+        <div className="flex items-center gap-2">
+          <CreditsBadge />
+          <button
+            onClick={() => router.push('/juegos')}
+            className="text-ritual-muted text-xs font-body hover:text-ritual-text transition-colors py-2 px-2"
+          >
+            ← Juegos
+          </button>
+        </div>
       </header>
 
       <main className="flex-1 px-5 pb-28 flex flex-col justify-center max-w-md mx-auto w-full">
@@ -228,11 +241,19 @@ export default function EstoOAquelloPage() {
               </p>
               <button
                 onClick={() => empezarRonda(false)}
-                disabled={starting}
+                disabled={starting || saldoInsuficiente}
                 className="w-full bg-ritual-gold text-ritual-bg font-body font-medium py-4 rounded-2xl disabled:opacity-50"
               >
-                {starting ? 'Empezando...' : 'Empezar ronda'}
+                {starting ? 'Empezando...' : `Empezar ronda (${GAME_ROUND_COST} créditos)`}
               </button>
+              {saldoInsuficiente && (
+                <p className="text-ritual-muted text-xs font-body text-center">
+                  Te faltan créditos.{' '}
+                  <button onClick={() => router.push('/precios')} className="text-ritual-gold underline">
+                    Comprar más
+                  </button>
+                </p>
+              )}
             </div>
           </div>
         )}
@@ -286,9 +307,10 @@ export default function EstoOAquelloPage() {
             {doble.ofrecer && (
               <button
                 onClick={() => empezarRonda(true)}
-                className="w-full bg-ritual-gold/15 border border-ritual-gold/40 text-ritual-gold font-body font-medium py-4 rounded-2xl hover:bg-ritual-gold/20 transition-all"
+                disabled={saldoInsuficiente}
+                className="w-full bg-ritual-gold/15 border border-ritual-gold/40 text-ritual-gold font-body font-medium py-4 rounded-2xl hover:bg-ritual-gold/20 transition-all disabled:opacity-50"
               >
-                ¿Van doble o nada?
+                ¿Van doble o nada? ({GAME_ROUND_COST} créditos)
               </button>
             )}
             <button

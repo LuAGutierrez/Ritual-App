@@ -3,7 +3,11 @@
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { getDadoPicanteItemsAction } from '@/app/actions/dado-picante'
+import { consumeCreditsAction } from '@/app/actions/credits'
+import { useCredits, notifyCreditsChanged } from '@/hooks/useCredits'
+import { GAME_ROUND_COST } from '@/lib/credits'
 import type { DadoPicanteItem } from '@/types'
+import CreditsBadge from '@/components/CreditsBadge'
 
 type Tipo = 'lugar' | 'posicion' | 'accion' | 'zona'
 type Modo = 'posiciones' | 'caricias'
@@ -77,6 +81,19 @@ export default function DadoPicantePage() {
   const intervalsRef = useRef<Record<Tipo, ReturnType<typeof setInterval> | null>>({
     lugar: null, posicion: null, accion: null, zona: null,
   })
+  const [error, setError] = useState<string | null>(null)
+  // Guarda, por modo, CUÁL de los dos dados del par quedó gratis después
+  // de cobrar el otro (null = nada pendiente, la próxima tirada de
+  // cualquiera de los dos cobra). No alcanza con un booleano "ronda
+  // abierta": eso permitía tirar el MISMO dado una y otra vez alternando
+  // cobro/gratis sin tocar nunca el otro dado del par (bug encontrado en
+  // producción, 18/09/2026) -- guardar el tipo específico que quedó
+  // pendiente cierra ese atajo, porque solo ESE dado puntual es gratis.
+  const [dadoGratisPendiente, setDadoGratisPendiente] = useState<Record<Modo, Tipo | null>>({
+    posiciones: null, caricias: null,
+  })
+  const { credits, refetch: refetchCredits } = useCredits()
+  const saldoInsuficiente = !!credits && credits.total < GAME_ROUND_COST
 
   useEffect(() => {
     getDadoPicanteItemsAction().then(setItems)
@@ -93,9 +110,31 @@ export default function DadoPicantePage() {
     zona: items.filter(i => i.tipo === 'zona'),
   }
 
-  function tirar(tipo: Tipo) {
+  async function tirar(tipo: Tipo) {
     const pool = itemsPorTipo[tipo]
     if (pool.length === 0) return
+
+    const modoDelDado: Modo = (tipo === 'lugar' || tipo === 'posicion') ? 'posiciones' : 'caricias'
+    const [tipoParA, tipoParB] = DADOS_POR_MODO[modoDelDado]
+    const otroDado = tipo === tipoParA ? tipoParB : tipoParA
+
+    if (dadoGratisPendiente[modoDelDado] === tipo) {
+      // Este dado puntual es el que quedó gratis tras cobrar el otro --
+      // se consume y no queda nada pendiente hasta la próxima tirada.
+      setDadoGratisPendiente(prev => ({ ...prev, [modoDelDado]: null }))
+    } else {
+      setError(null)
+      const cobrado = await consumeCreditsAction('dado_picante_ronda')
+      if (!cobrado.ok) {
+        setError(cobrado.error === 'insufficient_credits' ? 'No te alcanzan los créditos para tirar.' : 'No se pudo tirar. Intentá de nuevo.')
+        return
+      }
+      refetchCredits()
+      notifyCreditsChanged()
+      // Deja gratis específicamente al OTRO dado del par -- volver a
+      // tirar este mismo dado antes de tirar el otro cobra de nuevo.
+      setDadoGratisPendiente(prev => ({ ...prev, [modoDelDado]: otroDado }))
+    }
 
     setGirando(prev => ({ ...prev, [tipo]: true }))
     intervalsRef.current[tipo] = setInterval(() => {
@@ -146,15 +185,33 @@ export default function DadoPicantePage() {
     <div className="min-h-dvh bg-ritual-bg flex flex-col">
       <header className="px-5 pt-8 pb-4 flex items-center justify-between">
         <h1 className="font-display text-xl text-ritual-cream tracking-wide">🎲 Dado Picante</h1>
-        <button
-          onClick={() => router.push('/juegos')}
-          className="text-ritual-muted text-xs font-body hover:text-ritual-text transition-colors py-2 px-2"
-        >
-          ← Juegos
-        </button>
+        <div className="flex items-center gap-2">
+          <CreditsBadge />
+          <button
+            onClick={() => router.push('/juegos')}
+            className="text-ritual-muted text-xs font-body hover:text-ritual-text transition-colors py-2 px-2"
+          >
+            ← Juegos
+          </button>
+        </div>
       </header>
 
       <main className="flex-1 px-5 pb-28 flex flex-col justify-center max-w-md mx-auto w-full">
+        {error && (
+          <div className="bg-red-500/10 border border-red-500/20 rounded-2xl p-4 mb-6">
+            <p className="text-red-400/80 text-sm font-body text-center">{error}</p>
+            {saldoInsuficiente && (
+              <p className="text-ritual-muted text-xs font-body text-center mt-2">
+                <button onClick={() => router.push('/precios')} className="text-ritual-gold underline">
+                  Comprar créditos
+                </button>
+              </p>
+            )}
+          </div>
+        )}
+
+        <p className="text-ritual-muted text-xs font-body text-center mb-4">{GAME_ROUND_COST} créditos por ronda (2 tiradas)</p>
+
         <div className="flex bg-ritual-bg-soft rounded-2xl p-1 mb-8">
           <button
             onClick={() => setModo('posiciones')}
@@ -188,7 +245,7 @@ export default function DadoPicantePage() {
                   </p>
                   <button
                     onClick={() => tirar(tipo)}
-                    disabled={girando[tipo] || itemsPorTipo[tipo].length === 0}
+                    disabled={girando[tipo] || itemsPorTipo[tipo].length === 0 || (saldoInsuficiente && dadoGratisPendiente[modo] !== tipo)}
                     className="w-full bg-[#D4A5A5] text-ritual-bg font-body font-medium py-3 rounded-2xl hover:opacity-90 transition-all disabled:opacity-50 text-sm"
                   >
                     {girando[tipo] ? 'Tirando...' : `Tirar ${ETIQUETA[tipo]}`}

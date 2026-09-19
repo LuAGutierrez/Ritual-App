@@ -2,6 +2,8 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { dentroDelTecho, type Intensidad } from '@/lib/intensidad'
+import { consumeCreditsAction, refundCreditsAction } from './credits'
+import { type StartRoundResult } from '@/lib/credits'
 import type { EstoAquelloRound, MatchStats, UserContext } from '@/types'
 
 export async function getEstoAquelloPageDataAction(): Promise<{
@@ -23,7 +25,7 @@ export async function startEstoAquelloRoundAction(
   techo: Intensidad = 'intensa',
   excluir: string[] = [],
   categoriaPreferida: string | null = null
-): Promise<EstoAquelloRound | null> {
+): Promise<StartRoundResult<EstoAquelloRound>> {
   const supabase = await createClient()
 
   const { data: filtrados } = await supabase
@@ -31,7 +33,7 @@ export async function startEstoAquelloRoundAction(
     .select('option_a, option_b, intensidad, categoria')
     .eq('picante', intensidad === 'picante')
 
-  if (!filtrados || filtrados.length === 0) return null
+  if (!filtrados || filtrados.length === 0) return { round: null, error: 'no_content' }
 
   // Techo elegido en la propia pantalla del juego -- ver comentario en
   // app/actions/eleccion.ts.
@@ -66,6 +68,13 @@ export async function startEstoAquelloRoundAction(
 
   const par = pool[Math.floor(Math.random() * pool.length)]
 
+  // Cobro antes de crear la ronda -- ver comentario equivalente en
+  // startEleccionRoundAction.
+  const cobrado = await consumeCreditsAction('esto_aquello_ronda')
+  if (!cobrado.ok) {
+    return { round: null, error: cobrado.error === 'insufficient_credits' ? 'insufficient_credits' : 'unknown', balance: cobrado.balance }
+  }
+
   const { data: members } = await supabase
     .from('couple_members')
     .select('user_id')
@@ -86,18 +95,25 @@ export async function startEstoAquelloRoundAction(
     .single()
 
   // couple_esto_aquello_rounds_one_active (migración 047): mismo caso
-  // que Elección -- la pareja ya tenía una ronda sin revelar.
+  // que Elección -- la pareja ya tenía una ronda sin revelar. Se
+  // refunda porque esta llamada no creó una ronda nueva.
   if (error?.code === '23505') {
+    await refundCreditsAction(cobrado.idempotencyKey)
     const { data: existente } = await supabase
       .from('couple_esto_aquello_rounds')
       .select('*')
       .eq('couple_id', coupleId)
       .is('revealed_at', null)
       .single()
-    return existente as EstoAquelloRound | null
+    return { round: existente as EstoAquelloRound }
   }
 
-  return data as EstoAquelloRound | null
+  if (error || !data) {
+    await refundCreditsAction(cobrado.idempotencyKey)
+    return { round: null, error: 'unknown' }
+  }
+
+  return { round: data as EstoAquelloRound }
 }
 
 export async function submitEstoAquelloChoiceAction(

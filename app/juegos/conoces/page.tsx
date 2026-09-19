@@ -11,7 +11,8 @@ import {
 } from '@/app/actions/conoces'
 import { generarConocesInsightAction } from '@/app/actions/conoces-insight'
 import { useCredits, notifyCreditsChanged } from '@/hooks/useCredits'
-import { CREDIT_COST } from '@/lib/credits'
+import { CREDIT_COST, GAME_ROUND_COST } from '@/lib/credits'
+import CreditsBadge from '@/components/CreditsBadge'
 import { useDobleONada } from '@/lib/hooks/useDobleONada'
 import { getCategoriaPreferida } from '@/lib/categoriaPreferida'
 import { getTecho, type TechoLabel } from '@/lib/juegosConfig'
@@ -123,16 +124,20 @@ export default function ConocesPage() {
     setStarting(true)
     setError(null)
     const techo = techoLabel.toLowerCase() as Intensidad
-    const nuevo = await startConocesRoundAction(ctx.couple.id, techo, vistosRef.current, getCategoriaPreferida())
-    if (!nuevo) {
+    const resultado = await startConocesRoundAction(ctx.couple.id, techo, vistosRef.current, getCategoriaPreferida())
+    if (resultado.error === 'insufficient_credits') {
+      setError('No te alcanzan los créditos para jugar esta ronda.')
+    } else if (!resultado.round) {
       setError('No se pudo empezar la ronda. Intentá de nuevo.')
     } else {
-      setRound(nuevo)
+      setRound(resultado.round)
       setInsight(null)
       setInsightError(null)
-      vistosRef.current = [...vistosRef.current, nuevo.pregunta]
+      vistosRef.current = [...vistosRef.current, resultado.round.pregunta]
       if (esDobleONada) doble.aceptar()
       else doble.reset()
+      refetchCredits()
+      notifyCreditsChanged()
     }
     setStarting(false)
   }
@@ -176,7 +181,8 @@ export default function ConocesPage() {
   const revelado = !!round?.revealed_at
   const acerto = revelado && round?.subject_choice === round?.guesser_choice
   const doble = useDobleONada(revelado, acerto, round?.id)
-  const saldoInsuficiente = !!credits && credits.total < CREDIT_COST.conoces_insight
+  const saldoInsuficienteInsight = !!credits && credits.total < CREDIT_COST.conoces_insight
+  const saldoInsuficienteRonda = !!credits && credits.total < GAME_ROUND_COST
 
   // Le da al listener de Realtime de couple_conoces_insights (arriba, en
   // subscribeToCouple) la ronda actual sin que ese callback -- armado una
@@ -258,12 +264,15 @@ export default function ConocesPage() {
           <h1 className="font-display text-xl text-ritual-cream tracking-wide">¿Cuánto me conoces?</h1>
           <p className="text-ritual-muted text-xs font-body mt-0.5">Uno responde sobre sí, el otro adivina</p>
         </div>
-        <button
-          onClick={() => router.push('/juegos')}
-          className="text-ritual-muted text-xs font-body hover:text-ritual-text transition-colors py-2 px-2"
-        >
-          ← Juegos
-        </button>
+        <div className="flex items-center gap-2">
+          <CreditsBadge />
+          <button
+            onClick={() => router.push('/juegos')}
+            className="text-ritual-muted text-xs font-body hover:text-ritual-text transition-colors py-2 px-2"
+          >
+            ← Juegos
+          </button>
+        </div>
       </header>
 
       <main className="flex-1 px-5 pb-28 flex flex-col justify-center max-w-md mx-auto w-full">
@@ -296,11 +305,19 @@ export default function ConocesPage() {
             </div>
             <button
               onClick={() => empezarRonda(false)}
-              disabled={starting}
+              disabled={starting || saldoInsuficienteRonda}
               className="w-full bg-ritual-gold text-ritual-bg font-body font-medium py-4 rounded-2xl disabled:opacity-50"
             >
-              {starting ? 'Empezando...' : 'Empezar ronda'}
+              {starting ? 'Empezando...' : `Empezar ronda (${GAME_ROUND_COST} créditos)`}
             </button>
+            {saldoInsuficienteRonda && (
+              <p className="text-ritual-muted text-xs font-body text-center">
+                Te faltan créditos.{' '}
+                <button onClick={() => router.push('/precios')} className="text-ritual-gold underline">
+                  Comprar más
+                </button>
+              </p>
+            )}
           </div>
         )}
 
@@ -379,12 +396,12 @@ export default function ConocesPage() {
               <div className="space-y-2">
                 <button
                   onClick={generarInsight}
-                  disabled={insightLoading || saldoInsuficiente}
+                  disabled={insightLoading || saldoInsuficienteInsight}
                   className="w-full bg-ritual-bg-soft border border-ritual-gold/30 text-ritual-gold font-body text-sm font-medium py-3.5 rounded-2xl hover:bg-ritual-gold/10 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   {insightLoading ? 'Pensando...' : `✨ Generar insight (${CREDIT_COST.conoces_insight} créditos)`}
                 </button>
-                {saldoInsuficiente && !insightLoading && (
+                {saldoInsuficienteInsight && !insightLoading && (
                   <p className="text-ritual-muted text-xs font-body text-center">
                     Te faltan créditos.{' '}
                     <button onClick={() => router.push('/precios')} className="text-ritual-gold underline">
@@ -399,9 +416,10 @@ export default function ConocesPage() {
             {doble.ofrecer && (
               <button
                 onClick={() => empezarRonda(true)}
-                className="w-full bg-ritual-gold/15 border border-ritual-gold/40 text-ritual-gold font-body font-medium py-4 rounded-2xl hover:bg-ritual-gold/20 transition-all"
+                disabled={saldoInsuficienteRonda}
+                className="w-full bg-ritual-gold/15 border border-ritual-gold/40 text-ritual-gold font-body font-medium py-4 rounded-2xl hover:bg-ritual-gold/20 transition-all disabled:opacity-50"
               >
-                ¿Van doble o nada?
+                ¿Van doble o nada? ({GAME_ROUND_COST} créditos)
               </button>
             )}
             <button

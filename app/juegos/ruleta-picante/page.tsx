@@ -5,10 +5,14 @@ import { useRouter } from 'next/navigation'
 import { getRuletaPicanteItemsAction } from '@/app/actions/ruleta-picante'
 import { logContenidoRechazadoAction, getRechazadosAction } from '@/app/actions/contenido-rechazado'
 import { logRondaJugadaAction, getUltimaCategoriaRondaAction } from '@/app/actions/rondas-jugadas'
+import { consumeCreditsAction } from '@/app/actions/credits'
+import { useCredits, notifyCreditsChanged } from '@/hooks/useCredits'
+import { GAME_ROUND_COST } from '@/lib/credits'
 import { dentroDelTecho, type Intensidad } from '@/lib/intensidad'
 import { getCategoriaPreferida } from '@/lib/categoriaPreferida'
 import { getTecho, type TechoLabel } from '@/lib/juegosConfig'
 import type { RuletaPicanteItem } from '@/types'
+import CreditsBadge from '@/components/CreditsBadge'
 
 function pickIndex(total: number, vistos: Set<number>): number {
   const disponibles = Array.from({ length: total }, (_, i) => i).filter(i => !vistos.has(i))
@@ -25,7 +29,10 @@ export default function RuletaPicantePage() {
   const [items, setItems] = useState<RuletaPicanteItem[]>([])
   const [rechazados, setRechazados] = useState<Set<string>>(new Set())
   const [techoLabel, setTechoLabel] = useState<TechoLabel>('Intensa')
+  const [error, setError] = useState<string | null>(null)
   const ultimaCategoriaRef = useRef<string | null>(null)
+  const { credits, refetch: refetchCredits } = useCredits()
+  const saldoInsuficiente = !!credits && credits.total < GAME_ROUND_COST
 
   useEffect(() => {
     getRuletaPicanteItemsAction().then(setItems)
@@ -61,9 +68,23 @@ export default function RuletaPicantePage() {
     return preferidos.length >= 3 ? preferidos : porVariedad
   })()
 
-  function girar() {
+  // Cobro antes de girar (18/09/2026, ver GAME_ROUND_COST en
+  // lib/credits.ts) -- mismo criterio que Verdad o Reto: el pool
+  // completo se trae una sola vez, así que se cobra acá, antes de
+  // animar el giro, en vez de en un round-trip server-side aparte.
+  async function girar() {
     if (itemsDisponibles.length === 0) return
+    setError(null)
     setGirando(true)
+    const cobrado = await consumeCreditsAction('ruleta_picante_ronda')
+    if (!cobrado.ok) {
+      setGirando(false)
+      setError(cobrado.error === 'insufficient_credits' ? 'No te alcanzan los créditos para girar de nuevo.' : 'No se pudo girar. Intentá de nuevo.')
+      return
+    }
+    refetchCredits()
+    notifyCreditsChanged()
+
     setTimeout(() => {
       setVistos(prev => {
         const idx = pickIndex(itemsDisponibles.length, prev)
@@ -121,26 +142,51 @@ export default function RuletaPicantePage() {
     <div className="min-h-dvh bg-ritual-bg flex flex-col">
       <header className="px-5 pt-8 pb-4 flex items-center justify-between">
         <h1 className="font-display text-xl text-ritual-cream tracking-wide">🔥 Ruleta Picante</h1>
-        <button
-          onClick={() => router.push('/juegos')}
-          className="text-ritual-muted text-xs font-body hover:text-ritual-text transition-colors py-2 px-2"
-        >
-          ← Juegos
-        </button>
+        <div className="flex items-center gap-2">
+          <CreditsBadge />
+          <button
+            onClick={() => router.push('/juegos')}
+            className="text-ritual-muted text-xs font-body hover:text-ritual-text transition-colors py-2 px-2"
+          >
+            ← Juegos
+          </button>
+        </div>
       </header>
 
       <main className="flex-1 px-5 pb-28 flex flex-col justify-center max-w-md mx-auto w-full">
+        {error && (
+          <div className="bg-red-500/10 border border-red-500/20 rounded-2xl p-4 mb-6">
+            <p className="text-red-400/80 text-sm font-body text-center">{error}</p>
+            {saldoInsuficiente && (
+              <p className="text-ritual-muted text-xs font-body text-center mt-2">
+                <button onClick={() => router.push('/precios')} className="text-ritual-gold underline">
+                  Comprar créditos
+                </button>
+              </p>
+            )}
+          </div>
+        )}
+
         {!promptItem ? (
           <div className="space-y-6 animate-fade-up">
             <div className="text-center">
               <button
                 onClick={girar}
-                disabled={items.length === 0}
+                disabled={items.length === 0 || girando || saldoInsuficiente}
                 className="w-full bg-[#D4A5A5]/10 border border-[#D4A5A5]/30 rounded-3xl py-16 hover:border-[#D4A5A5]/50 transition-all disabled:opacity-50"
               >
                 <span className="text-4xl">🎡</span>
                 <p className="font-display text-xl text-ritual-cream mt-4">Tocá para girar</p>
+                <p className="text-ritual-muted text-xs font-body mt-1">{GAME_ROUND_COST} créditos</p>
               </button>
+              {saldoInsuficiente && !error && (
+                <p className="text-ritual-muted text-xs font-body text-center mt-3">
+                  Te faltan créditos.{' '}
+                  <button onClick={() => router.push('/precios')} className="text-ritual-gold underline">
+                    Comprar más
+                  </button>
+                </p>
+              )}
             </div>
           </div>
         ) : (
@@ -154,14 +200,22 @@ export default function RuletaPicantePage() {
             </div>
             <button
               onClick={girar}
-              disabled={girando}
+              disabled={girando || saldoInsuficiente}
               className="w-full bg-[#D4A5A5] text-ritual-bg font-body font-medium py-4 rounded-2xl hover:opacity-90 transition-all disabled:opacity-50"
             >
-              {girando ? 'Girando...' : 'Girar de nuevo'}
+              {girando ? 'Girando...' : `Girar de nuevo (${GAME_ROUND_COST} créditos)`}
             </button>
+            {saldoInsuficiente && !error && (
+              <p className="text-ritual-muted text-xs font-body text-center">
+                Te faltan créditos.{' '}
+                <button onClick={() => router.push('/precios')} className="text-ritual-gold underline">
+                  Comprar más
+                </button>
+              </p>
+            )}
             <button
               onClick={pasar}
-              disabled={girando}
+              disabled={girando || saldoInsuficiente}
               className="w-full text-ritual-muted/70 font-body text-xs py-2 hover:text-ritual-text transition-colors disabled:opacity-40"
             >
               No quiero hacer esta, paso

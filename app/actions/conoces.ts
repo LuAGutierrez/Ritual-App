@@ -3,6 +3,8 @@
 import { createClient } from '@/lib/supabase/server'
 import { siguienteTurno } from '@/lib/turnos'
 import { dentroDelTecho, type Intensidad } from '@/lib/intensidad'
+import { consumeCreditsAction, refundCreditsAction } from './credits'
+import { type StartRoundResult } from '@/lib/credits'
 import type { ConocesRound, ConocesStats, UserContext } from '@/types'
 
 export async function getConocesPageDataAction(): Promise<{
@@ -34,7 +36,7 @@ export async function startConocesRoundAction(
   techo: Intensidad = 'intensa',
   excluir: string[] = [],
   categoriaPreferida: string | null = null
-): Promise<ConocesRound | null> {
+): Promise<StartRoundResult<ConocesRound>> {
   const supabase = await createClient()
 
   const { data: items } = await supabase
@@ -42,7 +44,7 @@ export async function startConocesRoundAction(
     .select('pregunta, opciones, intensidad, categoria')
     .eq('picante', false)
 
-  if (!items || items.length === 0) return null
+  if (!items || items.length === 0) return { round: null, error: 'no_content' }
 
   // Techo elegido en la propia pantalla del juego -- ver comentario en
   // app/actions/eleccion.ts.
@@ -77,8 +79,15 @@ export async function startConocesRoundAction(
 
   const cambioDeRoles = Math.random() < PROBABILIDAD_CAMBIO_DE_ROLES
   const turno = await siguienteTurno(supabase, coupleId, 'couple_conoces_rounds', 'subject_user_id', cambioDeRoles)
-  if (!turno) return null
+  if (!turno) return { round: null, error: 'unknown' }
   const { user1, user2, actorId: subjectUserId } = turno
+
+  // Cobro antes de crear la ronda -- ver comentario equivalente en
+  // startEleccionRoundAction.
+  const cobrado = await consumeCreditsAction('conoces_ronda')
+  if (!cobrado.ok) {
+    return { round: null, error: cobrado.error === 'insufficient_credits' ? 'insufficient_credits' : 'unknown', balance: cobrado.balance }
+  }
 
   const { data, error } = await supabase
     .from('couple_conoces_rounds')
@@ -94,18 +103,25 @@ export async function startConocesRoundAction(
     .single()
 
   // couple_conoces_rounds_one_active (migración 047): mismo caso que
-  // Elección -- la pareja ya tenía una ronda sin revelar.
+  // Elección -- la pareja ya tenía una ronda sin revelar. Se refunda
+  // porque esta llamada no creó una ronda nueva.
   if (error?.code === '23505') {
+    await refundCreditsAction(cobrado.idempotencyKey)
     const { data: existente } = await supabase
       .from('couple_conoces_rounds')
       .select('*')
       .eq('couple_id', coupleId)
       .is('revealed_at', null)
       .single()
-    return existente as ConocesRound | null
+    return { round: existente as ConocesRound }
   }
 
-  return data as ConocesRound | null
+  if (error || !data) {
+    await refundCreditsAction(cobrado.idempotencyKey)
+    return { round: null, error: 'unknown' }
+  }
+
+  return { round: data as ConocesRound }
 }
 
 export async function submitConocesSubjectChoiceAction(

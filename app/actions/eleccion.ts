@@ -2,6 +2,8 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { dentroDelTecho, type Intensidad } from '@/lib/intensidad'
+import { consumeCreditsAction, refundCreditsAction } from './credits'
+import { type StartRoundResult } from '@/lib/credits'
 import type { EleccionRound, MatchStats, UserContext } from '@/types'
 
 // Junta contexto + ronda activa + stats en un solo round-trip (ver
@@ -27,7 +29,7 @@ export async function startEleccionRoundAction(
   techo: Intensidad = 'intensa',
   excluir: string[] = [],
   categoriaPreferida: string | null = null
-): Promise<EleccionRound | null> {
+): Promise<StartRoundResult<EleccionRound>> {
   const supabase = await createClient()
 
   const { data: filtrados } = await supabase
@@ -35,7 +37,7 @@ export async function startEleccionRoundAction(
     .select('option_a, option_b, premio, intensidad, categoria')
     .eq('picante', intensidad === 'picante')
 
-  if (!filtrados || filtrados.length === 0) return null
+  if (!filtrados || filtrados.length === 0) return { round: null, error: 'no_content' }
 
   // Techo de intensidad elegido en la propia pantalla del juego (antes
   // vivía en couples.intensidad_maxima, configurado en /perfil -- se
@@ -80,6 +82,16 @@ export async function startEleccionRoundAction(
 
   const prompt = pool[Math.floor(Math.random() * pool.length)]
 
+  // Cobro antes de crear la ronda (18/09/2026, ver GAME_ROUND_COST en
+  // lib/credits.ts) -- mismo criterio "cobro antes de generar" que
+  // generarConIAAction. Si el insert de abajo termina siendo el caso
+  // "ya había una ronda activa" (23505), se refunda: esta llamada no
+  // creó nada nuevo, solo trajo la ronda que ya pagó el otro miembro.
+  const cobrado = await consumeCreditsAction('eleccion_ronda')
+  if (!cobrado.ok) {
+    return { round: null, error: cobrado.error === 'insufficient_credits' ? 'insufficient_credits' : 'unknown', balance: cobrado.balance }
+  }
+
   const { data: members } = await supabase
     .from('couple_members')
     .select('user_id')
@@ -103,18 +115,25 @@ export async function startEleccionRoundAction(
   // couple_eleccion_rounds_one_active (migración 047): la pareja ya
   // tenía una ronda sin revelar -- probablemente los dos tocaron
   // "Empezar ronda" casi al mismo tiempo. En vez de fallar, devolvemos
-  // esa ronda existente para que este cliente también la vea.
+  // esa ronda existente para que este cliente también la vea, y
+  // refundamos el cobro de arriba porque no se creó una ronda nueva.
   if (error?.code === '23505') {
+    await refundCreditsAction(cobrado.idempotencyKey)
     const { data: existente } = await supabase
       .from('couple_eleccion_rounds')
       .select('*')
       .eq('couple_id', coupleId)
       .is('revealed_at', null)
       .single()
-    return existente as EleccionRound | null
+    return { round: existente as EleccionRound }
   }
 
-  return data as EleccionRound | null
+  if (error || !data) {
+    await refundCreditsAction(cobrado.idempotencyKey)
+    return { round: null, error: 'unknown' }
+  }
+
+  return { round: data as EleccionRound }
 }
 
 // Igual que submit_ritual_response: la escritura pasa por una funcion

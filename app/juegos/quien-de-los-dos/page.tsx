@@ -10,9 +10,12 @@ import {
 } from '@/app/actions/quien-de-los-dos'
 import { getCategoriaPreferida } from '@/lib/categoriaPreferida'
 import { getIntensidadTab, getTecho, type IntensidadTab as Intensidad, type TechoLabel } from '@/lib/juegosConfig'
+import { useCredits, notifyCreditsChanged } from '@/hooks/useCredits'
+import { GAME_ROUND_COST } from '@/lib/credits'
 import type { QuienDeLosDosRound, MatchStats, UserContext } from '@/types'
 import type { Intensidad as Techo } from '@/lib/intensidad'
 import PageLoader from '@/components/PageLoader'
+import CreditsBadge from '@/components/CreditsBadge'
 
 // Evento especial "Todos los Ojos": puro encuadre, sin cambiar la
 // mecánica (que ya es "ambos eligen y se revela junto"). Se deriva
@@ -30,6 +33,7 @@ export default function QuienDeLosDosPage() {
   const supabase = createClient()
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null)
   const vistosRef = useRef<string[]>([])
+  const { credits, refetch: refetchCredits } = useCredits()
 
   const [ctx, setCtx] = useState<UserContext | null>(null)
   const [round, setRound] = useState<QuienDeLosDosRound | null>(null)
@@ -119,15 +123,21 @@ export default function QuienDeLosDosPage() {
     setStarting(true)
     setError(null)
     const techo = techoLabel.toLowerCase() as Techo
-    const nuevo = await startQuienDeLosDosRoundAction(ctx.couple.id, intensidad, techo, vistosRef.current, getCategoriaPreferida())
-    if (!nuevo) {
+    const resultado = await startQuienDeLosDosRoundAction(ctx.couple.id, intensidad, techo, vistosRef.current, getCategoriaPreferida())
+    if (resultado.error === 'insufficient_credits') {
+      setError('No te alcanzan los créditos para jugar esta ronda.')
+    } else if (!resultado.round) {
       setError('No se pudo empezar la ronda. Intentá de nuevo.')
     } else {
-      setRound(nuevo)
-      vistosRef.current = [...vistosRef.current, nuevo.pregunta]
+      setRound(resultado.round)
+      vistosRef.current = [...vistosRef.current, resultado.round.pregunta]
+      refetchCredits()
+      notifyCreditsChanged()
     }
     setStarting(false)
   }
+
+  const saldoInsuficiente = !!credits && credits.total < GAME_ROUND_COST
 
   async function handleElegir(choice: 0 | 1 | 2) {
     if (!round) return
@@ -201,12 +211,15 @@ export default function QuienDeLosDosPage() {
           <h1 className="font-display text-xl text-ritual-cream tracking-wide">¿Quién de los dos?</h1>
           <p className="text-ritual-muted text-xs font-body mt-0.5">Elijan en secreto, vean si coinciden</p>
         </div>
-        <button
-          onClick={() => router.push('/juegos')}
-          className="text-ritual-muted text-xs font-body hover:text-ritual-text transition-colors py-2 px-2"
-        >
-          ← Juegos
-        </button>
+        <div className="flex items-center gap-2">
+          <CreditsBadge />
+          <button
+            onClick={() => router.push('/juegos')}
+            className="text-ritual-muted text-xs font-body hover:text-ritual-text transition-colors py-2 px-2"
+          >
+            ← Juegos
+          </button>
+        </div>
       </header>
 
       <main className="flex-1 px-5 pb-28 flex flex-col justify-center max-w-md mx-auto w-full">
@@ -241,11 +254,19 @@ export default function QuienDeLosDosPage() {
               </p>
               <button
                 onClick={empezarRonda}
-                disabled={starting}
+                disabled={starting || saldoInsuficiente}
                 className="w-full bg-ritual-gold text-ritual-bg font-body font-medium py-4 rounded-2xl disabled:opacity-50"
               >
-                {starting ? 'Empezando...' : 'Empezar ronda'}
+                {starting ? 'Empezando...' : `Empezar ronda (${GAME_ROUND_COST} créditos)`}
               </button>
+              {saldoInsuficiente && (
+                <p className="text-ritual-muted text-xs font-body text-center">
+                  Te faltan créditos.{' '}
+                  <button onClick={() => router.push('/precios')} className="text-ritual-gold underline">
+                    Comprar más
+                  </button>
+                </p>
+              )}
             </div>
           </div>
         )}
